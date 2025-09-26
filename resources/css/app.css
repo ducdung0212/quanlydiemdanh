@@ -1,0 +1,17 @@
+@tailwind base;
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Minimal component layer — keep this tiny so you author styles using Tailwind utilities in templates */
+@layer components {
+  /* small helper: rounded-card for panels */
+  .rounded-card {
+	@apply bg-white rounded-lg shadow-md;
+  }
+}
+
+	/* .login-footer { @apply mt-6 text-center text-sm text-gray-600; }
+
+	.btn-gradient { @apply text-white font-semibold rounded-full px-6 py-2 shadow-md; }
+	.btn-gradient { background: linear-gradient(90deg,#2563eb,#1e40af); } */
