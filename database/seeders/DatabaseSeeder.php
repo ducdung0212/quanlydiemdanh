@@ -16,12 +16,16 @@ class DatabaseSeeder extends Seeder
     {
         // User::factory(10)->create();
 
-        User::factory()->create([
-        'name' => 'Admin',
-        'email' => 'admin@example.com',
-        'password' => Hash::make('123456'),
-        'role' => 'admin',
-    ]);
+        // ensure there is a single admin account and update its email/password if needed
+        User::updateOrCreate(
+            ['role' => 'admin'],
+            [
+                'name' => 'Admin',
+                'email' => 'buihoangducdung04@gmail.com',
+                'password' => Hash::make('123456'),
+                'role' => 'admin',
+            ]
+        );
     //viết thêm middleware redirect để khi login thì admin tự vào /admin, lecturer tự vào /lecturer luôn 
     }
 }
