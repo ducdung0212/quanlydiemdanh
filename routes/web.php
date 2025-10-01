@@ -20,8 +20,6 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/product/add', function () {
         return view('admin.add-product');
     })->name('product.add');
-
-    
 });
 
 Route::middleware('auth')->group(function () {
