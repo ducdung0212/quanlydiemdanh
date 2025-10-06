@@ -16,6 +16,10 @@
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/sweetalert.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
+<<<<<<< HEAD
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/user_css.css') }}">
+=======
+>>>>>>> 9724218ca1a645288955bc6066cade5bfda4bff6
 </head>
 
 <div class="header-dashboard">
