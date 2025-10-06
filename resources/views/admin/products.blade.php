@@ -1,4 +1,4 @@
-GIT ADD<body class="body">
+GIT<body class="body">
     <div id="wrapper">
         <div id="page" class="">
             <div class="layout-wrap">
@@ -113,73 +113,105 @@ GIT ADD<body class="body">
     </div>
 
     <!-- Modal Thêm tài khoản -->
-    <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="addAccountModalLabel">Thêm tài khoản mới</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="addAccountForm">
-                        <div class="mb-3">
-                            <label for="username" class="form-label">Tên</label>
-                            <input type="text" class="form-control" id="username" name="username" required>
-                        </div>
-                         <div class="mb-3">
-                            <label for="username" class="form-label">Email</label>
-                            <input type="text" class="form-control" id="email" name="email" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="password" class="form-label">Mật khẩu</label>
-                            <input type="password" class="form-control" id="password" name="password" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="confirmPassword" class="form-label">Xác nhận mật khẩu</label>
-                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required>
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Thêm</button>
-                </div>
+<div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
+            <div class="modal-header" style="border-bottom: 1px solid #eee; padding: 20px 25px;">
+                <h5 class="modal-title" id="addAccountModalLabel" style="font-size: 1.3rem; font-weight: 600;">Thêm tài khoản mới</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 25px;">
+                <form id="addAccountForm">
+                    <div class="mb-4">
+                        <label for="username" class="form-label" style="font-weight: 500;">Tên</label>
+                        <input type="text" class="form-control" id="username" name="username" required 
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="mb-4">
+                        <label for="email" class="form-label" style="font-weight: 500;">Email</label>
+                        <input type="email" class="form-control" id="email" name="email" required
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="mb-4">
+                        <label for="password" class="form-label" style="font-weight: 500;">Mật khẩu</label>
+                        <input type="password" class="form-control" id="password" name="password" required
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="mb-4">
+                        <label for="confirmPassword" class="form-label" style="font-weight: 500;">Xác nhận mật khẩu</label>
+                        <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #eee; padding: 20px 25px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
+                        style="border-radius: 8px; padding: 10px 20px; border: none;">Hủy</button>
+                <button type="button" class="btn btn-primary"
+                        style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">Thêm</button>
             </div>
         </div>
     </div>
+</div>
 
-    <!-- Modal Sửa tài khoản -->
-    <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true">
-        <div class="modal-dialog">
-            <div class="modal-content">
-                <div class="modal-header">
-                    <h5 class="modal-title" id="editAccountModalLabel">Sửa tài khoản</h5>
-                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                </div>
-                <div class="modal-body">
-                    <form id="editAccountForm">
-                        <div class="mb-3">
-                            <label for="editUsername" class="form-label">Tài khoản</label>
-                            <input type="text" class="form-control" id="editUsername" name="username" value="admin123" required>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editPassword" class="form-label">Mật khẩu mới</label>
-                            <input type="password" class="form-control" id="editPassword" name="password">
-                            <div class="form-text">Để trống nếu không muốn thay đổi mật khẩu</div>
-                        </div>
-                        <div class="mb-3">
-                            <label for="editConfirmPassword" class="form-label">Xác nhận mật khẩu mới</label>
-                            <input type="password" class="form-control" id="editConfirmPassword" name="confirmPassword">
-                        </div>
-                    </form>
-                </div>
-                <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
-                    <button type="button" class="btn btn-primary">Lưu thay đổi</button>
-                </div>
+<!-- Modal Sửa tài khoản -->
+<div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true" data-bs-backdrop="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
+            <div class="modal-header" style="border-bottom: 1px solid #eee; padding: 20px 25px;">
+                <h5 class="modal-title" id="editAccountModalLabel" style="font-size: 1.3rem; font-weight: 600;">Sửa tài khoản</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body" style="padding: 25px;">
+                <form id="editAccountForm">
+                    <div class="mb-4">
+                        <label for="editUsername" class="form-label" style="font-weight: 500;">Tài khoản</label>
+                        <input type="text" class="form-control" id="editUsername" name="username" value="admin123" required
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                    <div class="mb-4">
+                        <label for="editPassword" class="form-label" style="font-weight: 500;">Mật khẩu mới</label>
+                        <input type="password" class="form-control" id="editPassword" name="password"
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                        <div class="form-text" style="margin-top: 5px;">Để trống nếu không muốn thay đổi mật khẩu</div>
+                    </div>
+                    <div class="mb-4">
+                        <label for="editConfirmPassword" class="form-label" style="font-weight: 500;">Xác nhận mật khẩu mới</label>
+                        <input type="password" class="form-control" id="editConfirmPassword" name="confirmPassword"
+                               style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
+                    </div>
+                </form>
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid #eee; padding: 20px 25px;">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
+                        style="border-radius: 8px; padding: 10px 20px; border: none;">Hủy</button>
+                <button type="button" class="btn btn-primary"
+                        style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">Lưu thay đổi</button>
             </div>
         </div>
     </div>
+</div>
+
+<style>
+.modal-backdrop {
+    display: none !important;
+}
+.modal {
+    backdrop-filter: none !important;
+}
+.form-control:focus {
+    border-color: #2377FC !important;
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+.btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+</style>
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
