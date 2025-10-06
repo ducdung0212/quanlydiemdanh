@@ -170,11 +170,14 @@ GIT<body class="body">
                                style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                     </div>
                     <div class="mb-4">
+<<<<<<< HEAD
                         <label for="editUsername" class="form-label" style="font-weight: 500;">Email</label>
                         <input type="text" class="form-control" id="editUsername" name="username" value="admin123" required
                                style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                     </div>
                     <div class="mb-4">
+=======
+>>>>>>> 9724218ca1a645288955bc6066cade5bfda4bff6
                         <label for="editPassword" class="form-label" style="font-weight: 500;">Mật khẩu mới</label>
                         <input type="password" class="form-control" id="editPassword" name="password"
                                style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
@@ -198,7 +201,28 @@ GIT<body class="body">
 </div>
 
 <style>
+<<<<<<< HEAD
 
+=======
+.modal-backdrop {
+    display: none !important;
+}
+.modal {
+    backdrop-filter: none !important;
+}
+.form-control:focus {
+    border-color: #2377FC !important;
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+.btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+>>>>>>> 9724218ca1a645288955bc6066cade5bfda4bff6
 </style>
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
