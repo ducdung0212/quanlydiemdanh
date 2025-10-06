@@ -1,0 +1,169 @@
+.modal-backdrop {
+    display: none !important;
+}
+
+.modal {
+    backdrop-filter: none !important;
+}
+
+/* Khi focus vào input */
+.form-control:focus {
+    border-color: #2377FC !important;
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+
+/* Nút chung */
+.btn {
+    font-weight: 500;
+    transition: all 0.2s ease;
+}
+
+.btn:hover {
+    transform: translateY(-1px);
+}
+
+/* ==============================
+   Tùy chỉnh giao diện modal Sửa tài khoản
+   ============================== */
+#editAccountModal .modal-dialog {
+    max-width: 950px !important; /* Modal dài hơn một chút */
+}
+
+#editAccountModal {
+    font-size: 1.3rem !important; /* Tăng kích thước tổng thể */
+}
+
+#editAccountModal .modal-title {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+}
+
+#editAccountModal .modal-header {
+    padding: 30px 45px !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+#editAccountModal .modal-body {
+    padding: 45px 50px !important;
+}
+
+#editAccountModal .modal-footer {
+    padding: 30px 45px !important;
+    border-top: 1px solid #eee !important;
+}
+
+/* Label và input */
+#editAccountModal .form-label {
+    font-size: 1.4rem !important;
+    margin-bottom: 14px !important;
+    font-weight: 600 !important;
+}
+
+#editAccountModal .form-control {
+    font-size: 1.25rem !important;
+    padding: 18px 20px !important;
+    border-radius: 10px !important;
+    border: 1px solid #ccc !important;
+    margin-bottom: 25px !important; /* Tăng khoảng cách giữa các trường */
+}
+
+#editAccountModal .form-text {
+    font-size: 1.1rem !important;
+    margin-top: 10px !important;
+    color: #555 !important;
+}
+
+/* Nút trong modal */
+#editAccountModal .btn {
+    font-size: 1.25rem !important;
+    padding: 14px 30px !important;
+    border-radius: 10px !important;
+}
+
+#editAccountModal .btn-primary {
+    background-color: #2377FC !important;
+    border: none !important;
+}
+
+#editAccountModal .btn-secondary {
+    border: none !important;
+}
+
+/* Đổ bóng nhẹ quanh modal */
+#editAccountModal .modal-content {
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 14px !important;
+}
+/* ==============================
+   Tùy chỉnh giao diện modal Thêm tài khoản
+   ============================== */
+#addAccountModal .modal-dialog {
+    max-width: 950px !important; /* Modal dài hơn */
+}
+
+#addAccountModal {
+    font-size: 1.3rem !important; /* Cỡ chữ tổng thể to hơn */
+}
+
+#addAccountModal .modal-title {
+    font-size: 2rem !important;
+    font-weight: 700 !important;
+}
+
+#addAccountModal .modal-header {
+    padding: 30px 45px !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+#addAccountModal .modal-body {
+    padding: 45px 50px !important;
+}
+
+#addAccountModal .modal-footer {
+    padding: 30px 45px !important;
+    border-top: 1px solid #eee !important;
+}
+
+/* Label và input */
+#addAccountModal .form-label {
+    font-size: 1.4rem !important;
+    margin-bottom: 14px !important;
+    font-weight: 600 !important;
+}
+
+#addAccountModal .form-control {
+    font-size: 1.25rem !important;
+    padding: 18px 20px !important;
+    border-radius: 10px !important;
+    border: 1px solid #ccc !important;
+    margin-bottom: 25px !important;
+}
+
+#addAccountModal .form-text {
+    font-size: 1.1rem !important;
+    margin-top: 10px !important;
+    color: #555 !important;
+}
+
+/* Nút trong modal */
+#addAccountModal .btn {
+    font-size: 1.25rem !important;
+    padding: 14px 30px !important;
+    border-radius: 10px !important;
+}
+
+#addAccountModal .btn-primary {
+    background-color: #2377FC !important;
+    border: none !important;
+}
+
+#addAccountModal .btn-secondary {
+    border: none !important;
+}
+
+/* Đổ bóng nhẹ quanh modal */
+#addAccountModal .modal-content {
+    box-shadow: 0 15px 50px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 14px !important;
+}
+
