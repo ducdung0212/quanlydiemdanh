@@ -1,4 +1,4 @@
-<x-guest-layout>
+ <x-guest-layout>
     <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-white to-sky-50">
         <div class="w-full max-w-[1400px] mx-auto px-6 py-20">
             <div class="relative rounded-3xl overflow-hidden shadow-md">
