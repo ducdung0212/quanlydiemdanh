@@ -7,6 +7,7 @@ Route::get('/', function () {
     return view('auth/login');
 });
 
+
 Route::middleware(['auth', 'verified'])->group(function () {
     // Dashboard
     Route::get('/dashboard', function () {
@@ -14,12 +15,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('dashboard');
 
     // Products
-    Route::get('/products', function () {
-        return view('admin.products');
-    })->name('products');
+    Route::get('/user', function () {
+        return view('admin.add-user');
+    })->name('user');
     Route::get('/product/add', function () {
         return view('admin.add-product');
     })->name('product.add');
+    Route::get('/student', function () {
+        return view('admin.add-student');
+    })->name('student');
+
 });
 
 Route::middleware('auth')->group(function () {
