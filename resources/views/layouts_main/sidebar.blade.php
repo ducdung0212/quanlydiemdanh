@@ -24,13 +24,13 @@
             <ul class="menu-list">
                 <li class="menu-item has-children">
                     <a href="javascript:void(0);" class="menu-item-button">
-                        <div class="icon"><i class="icon-shopping-cart"></i></div>
+                         <div class="icon"><i class="icon-user"></i></div>
                         <div class="text">User</div>
                     </a>
                     <ul class="sub-menu">
                        
                         <li class="sub-menu-item">
-                            <a href="{{ route('products') }}" class="">
+                            <a href="{{ route('user') }}" class="">
                                 <div class="text">Add User</div>
                             </a>
                         </li>
@@ -38,13 +38,13 @@
                 </li>
                 <li class="menu-item has-children">
                     <a href="javascript:void(0);" class="menu-item-button">
-                        <div class="icon"><i class="icon-layers"></i></div>
-                        <div class="text">Brand</div>
+                          <div class="icon"><i class="icon-user"></i></div>
+                        <div class="text">Student</div>
                     </a>
                     <ul class="sub-menu">
                         <li class="sub-menu-item">
-                            <a href="{{-- {{ route('brand.add') }} --}}" class="">
-                                <div class="text">New Brand</div>
+                            <a href="{{ route('student') }}" class="">
+                                <div class="text">Add Student</div>
                             </a>
                         </li>
                         <li class="sub-menu-item">

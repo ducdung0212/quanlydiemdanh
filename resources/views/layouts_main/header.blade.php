@@ -59,7 +59,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Dog Food
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Dog Food
                                                 Rachael Ray Nutrish®</a>
                                         </div>
                                     </div>
@@ -73,7 +73,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Natural
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Natural
                                                 Dog Food Healthy Dog Food</a>
                                         </div>
                                     </div>
@@ -87,7 +87,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Freshpet
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Freshpet
                                                 Healthy Dog Food and Cat</a>
                                         </div>
                                     </div>
@@ -110,7 +110,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Sojos
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Sojos
                                                 Crunchy Natural Grain Free...</a>
                                         </div>
                                     </div>
@@ -124,7 +124,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Kristin
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Kristin
                                                 Watson</a>
                                         </div>
                                     </div>
@@ -138,7 +138,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Mega
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Mega
                                                 Pumpkin Bone</a>
                                         </div>
                                     </div>
@@ -152,7 +152,7 @@
                                     </div>
                                     <div class="flex items-center justify-between gap20 flex-grow">
                                         <div class="name">
-                                            <a href="{{ route('products') }}" class="body-text">Mega
+                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Mega
                                                 Pumpkin Bone</a>
                                         </div>
                                     </div>
@@ -170,10 +170,7 @@
                 <div class="dropdown">
                     <button class="btn btn-secondary dropdown-toggle" type="button"
                         id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
-                        <span class="header-item">
-                            <span class="text-tiny">1</span>
-                            <i class="icon-bell"></i>
-                        </span>
+                       
                     </button>
                     <ul class="dropdown-menu dropdown-menu-end has-content"
                         aria-labelledby="dropdownMenuButton2">
@@ -244,7 +241,7 @@
                                 <img src="{{ asset('images/avatar/user-1.png') }}" alt="">
                             </span>
                             <span class="flex flex-column">
-                                <span class="body-title mb-2">Kristin Watson</span>
+                                <span class="body-title mb-2">Đức Dũng</span>
                                 <span class="text-tiny">Admin</span>
                             </span>
                         </span>
