@@ -98,7 +98,32 @@
     border-top: 1px solid #eee !important;
 }
 
-/* 5. Tùy chỉnh giao diện modal Import Excel */
+/* 5. Tùy chỉnh giao diện modal Xem chi tiết sinh viên */
+#viewStudentModal .modal-dialog {
+    max-width: 800px !important;
+}
+
+#viewStudentModal .modal-header {
+    padding: 25px 30px !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+#viewStudentModal .modal-title {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+#viewStudentModal .modal-body {
+    padding: 30px !important;
+}
+
+#viewStudentModal .modal-footer {
+    padding: 25px 30px !important;
+    border-top: 1px solid #eee !important;
+}
+
+/* 6. Tùy chỉnh giao diện modal Import Excel */
 #importExcelModal .modal-dialog {
     max-width: 600px !important;
 }
@@ -123,9 +148,10 @@
     border-top: 1px solid #eee !important;
 }
 
-/* 6. Label và input - TĂNG KÍCH THƯỚC CHỮ */
+/* 7. Label và input - TĂNG KÍCH THƯỚC CHỮ */
 #addStudentModal .form-label,
 #editStudentModal .form-label,
+#viewStudentModal .form-label,
 #importExcelModal .form-label {
     font-size: 15px !important;
     margin-bottom: 10px !important;
@@ -135,6 +161,7 @@
 
 #addStudentModal .form-control,
 #editStudentModal .form-control,
+#viewStudentModal .form-control,
 #importExcelModal .form-control {
     font-size: 16px !important;
     padding: 14px 16px !important;
@@ -144,17 +171,19 @@
     margin-bottom: 20px !important;
 }
 
-/* 7. Focus state cho input */
+/* 8. Focus state cho input */
 #addStudentModal .form-control:focus,
 #editStudentModal .form-control:focus,
+#viewStudentModal .form-control:focus,
 #importExcelModal .form-control:focus {
     border-color: #2377FC !important;
     box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
 }
 
-/* 8. Nút trong modal */
+/* 9. Nút trong modal */
 #addStudentModal .btn,
 #editStudentModal .btn,
+#viewStudentModal .btn,
 #importExcelModal .btn {
     font-size: 14px !important;
     padding: 12px 24px !important;
@@ -165,12 +194,14 @@
 
 #addStudentModal .btn:hover,
 #editStudentModal .btn:hover,
+#viewStudentModal .btn:hover,
 #importExcelModal .btn:hover {
     transform: translateY(-1px) !important;
 }
 
 #addStudentModal .btn-primary,
 #editStudentModal .btn-primary,
+#viewStudentModal .btn-primary,
 #importExcelModal .btn-primary {
     background-color: #2377FC !important;
     border: none !important;
@@ -178,12 +209,14 @@
 
 #addStudentModal .btn-primary:hover,
 #editStudentModal .btn-primary:hover,
+#viewStudentModal .btn-primary:hover,
 #importExcelModal .btn-primary:hover {
     background-color: #1c68e0 !important;
 }
 
 #addStudentModal .btn-secondary,
 #editStudentModal .btn-secondary,
+#viewStudentModal .btn-secondary,
 #importExcelModal .btn-secondary {
     background-color: #6c757d !important;
     border: none !important;
@@ -191,151 +224,420 @@
 
 #addStudentModal .btn-secondary:hover,
 #editStudentModal .btn-secondary:hover,
+#viewStudentModal .btn-secondary:hover,
 #importExcelModal .btn-secondary:hover {
     background-color: #5a6268 !important;
 }
 
-/* 9. Đổ bóng modal */
+/* 10. Đổ bóng modal */
 #addStudentModal .modal-content,
 #editStudentModal .modal-content,
+#viewStudentModal .modal-content,
 #importExcelModal .modal-content {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
     border-radius: 12px !important;
     border: none !important;
 }
 
-/* 10. Tìm kiếm */
+/* 8. Tìm kiếm */
 .wg-filter .form-control {
     font-size: 14px !important;
     padding: 10px 15px !important;
 }
 
-/* 11. Link ảnh trong bảng */
-.avatar-link {
-    color: #2377FC !important;
-    text-decoration: none !important;
+/* Đảm bảo container flex hoạt động đúng */
+.wg-box .flex.items-center.justify-between.gap10.flex-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+.wg-filter {
+    flex-grow: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+}
+
+/* Đảm bảo các nút bên phải thẳng hàng */
+.flex.items-center.gap10 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 !important;
+}
+
+/* Responsive cho mobile */
+@media (max-width: 768px) {
+    .wg-filter .form-search {
+        max-width: 100% !important;
+        margin-bottom: 15px !important;
+        height: 46px !important;
+    }
+    
+    .wg-box .flex.items-center.justify-between.gap10.flex-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .wg-filter {
+        width: 100% !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .flex.items-center.gap10 {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    
+    .tf-button {
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+    
+    .wg-filter .form-search fieldset.name input {
+        padding: 10px 14px !important;
+    }
+    
+    .wg-filter .form-search .button-submit button {
+        padding: 0 16px !important;
+    }
+}
+
+/* 12. Tùy chỉnh các nút chính */
+.tf-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
     font-weight: 500 !important;
-    padding: 6px 12px !important;
-    border: 1px solid #2377FC !important;
-    border-radius: 6px !important;
+    font-size: 14px !important;
     transition: all 0.2s ease !important;
-    display: inline-block !important;
-    font-size: 13px !important;
-}
-
-.avatar-link:hover {
-    background-color: #2377FC !important;
-    color: white !important;
     text-decoration: none !important;
 }
 
-.text-muted {
-    color: #6c757d !important;
-    font-style: italic !important;
+.tf-button.style-1 {
+    background: #2377FC !important;
+    color: white !important;
+    border: none !important;
 }
 
-/* 12. Nút import Excel */
+.tf-button.style-1:hover {
+    background: #1c68e0 !important;
+    transform: translateY(-1px) !important;
+}
+
 .tf-button.style-2 {
-    background-color: #28a745 !important;
-    border-color: #28a745 !important;
+    background: white !important;
+    color: #2377FC !important;
+    border: 1px solid #2377FC !important;
 }
 
 .tf-button.style-2:hover {
-    background-color: #218838 !important;
-    border-color: #1e7e34 !important;
+    background: #f8f9fa !important;
+    transform: translateY(-1px) !important;
 }
 
-/* 13. Form text trong modal import */
-#importExcelModal .form-text {
-    font-size: 13px !important;
-    color: #6c757d !important;
-}
-
-#importExcelModal .form-text ul {
-    margin-top: 8px !important;
-    margin-bottom: 0 !important;
-    padding-left: 20px !important;
-}
-
-#importExcelModal .form-text li {
-    margin-bottom: 4px !important;
-}
-
-/* 14. Responsive cho mobile */
-@media (max-width: 768px) {
-    .table-responsive {
-        border: 1px solid #dee2e6 !important;
-    }
-    
-    #addStudentModal .modal-dialog,
-    #editStudentModal .modal-dialog,
-    #importExcelModal .modal-dialog {
-        margin: 20px !important;
-        max-width: calc(100% - 40px) !important;
-    }
-    
-    #addStudentModal .modal-body,
-    #editStudentModal .modal-body,
-    #importExcelModal .modal-body {
-        padding: 20px !important;
-    }
-    
-    #addStudentModal .form-control,
-    #editStudentModal .form-control,
-    #importExcelModal .form-control {
-        font-size: 16px !important;
-        padding: 12px 14px !important;
-    }
-    
-    .table th,
-    .table td {
-        padding: 8px 6px !important;
-        font-size: 14px !important;
-    }
-    
-    .avatar-link {
-        padding: 4px 8px !important;
-        font-size: 12px !important;
-    }
-}
-
-/* 15. Text danger cho delete */
-.text-danger {
-    color: #dc3545 !important;
-}
-
-.text-danger:hover {
-    color: #c82333 !important;
-}
-
-/* 16. Loading state */
-.loading {
-    text-align: center;
-    padding: 20px;
-    color: #666;
-}
-
-/* 17. Icon action */
+/* 13. Tùy chỉnh icon trong bảng */
 .list-icon-function .item {
-    width: 35px !important;
-    height: 35px !important;
+    width: 36px !important;
+    height: 36px !important;
     border-radius: 6px !important;
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
     transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.list-icon-function .item.view {
+    background: rgba(40, 167, 69, 0.1) !important;
+    color: #28a745 !important;
+}
+
+.list-icon-function .item.view:hover {
+    background: #28a745 !important;
+    color: white !important;
 }
 
 .list-icon-function .item.edit {
-    background-color: #e7f3ff !important;
-    color: #2377FC !important;
+    background: rgba(255, 193, 7, 0.1) !important;
+    color: #ffc107 !important;
+}
+
+.list-icon-function .item.edit:hover {
+    background: #ffc107 !important;
+    color: white !important;
 }
 
 .list-icon-function .item.delete {
-    background-color: #ffeaea !important;
+    background: rgba(220, 53, 69, 0.1) !important;
     color: #dc3545 !important;
 }
 
-.list-icon-function .item:hover {
-    transform: scale(1.1) !important;
+.list-icon-function .item.delete:hover {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+/* 14. Responsive */
+@media (max-width: 768px) {
+    .wg-box .table-responsive {
+        overflow-x: auto !important;
+    }
+    
+    .modal-dialog {
+        margin: 20px !important;
+    }
+    
+    #addStudentModal .modal-dialog,
+    #editStudentModal .modal-dialog,
+    #viewStudentModal .modal-dialog {
+        max-width: calc(100% - 40px) !important;
+    }
+    
+    .form-search {
+        max-width: 100% !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .flex.items-center.justify-between.gap10.flex-wrap {
+        flex-direction: column !important;
+        align-items: flex-start !important;
+    }
+    
+    .flex.items-center.gap10 {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    
+    .tf-button {
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+}
+
+/* 15. Tùy chỉnh hiển thị thông tin chi tiết */
+#viewStudentModal .modal-body {
+    font-size: 16px !important;
+}
+
+/* Tăng kích thước font cho các nhãn thông tin */
+#viewStudentModal strong {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Tăng kích thước font cho nội dung thông tin */
+#viewStudentModal div[id^="view"] {
+    font-size: 17px !important;
+    color: #555 !important;
+    margin-bottom: 20px !important;
+    line-height: 1.5 !important;
+}
+
+/* Đặc biệt tăng kích thước cho mã sinh viên */
+#viewStudentModal .text-primary {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #2377FC !important;
+}
+
+/* Tăng kích thước cho tiêu đề modal */
+#viewStudentModal .modal-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+}
+
+/* Cải thiện khoảng cách giữa các phần tử */
+#viewStudentModal .row.mb-4 {
+    margin-bottom: 35px !important;
+}
+
+#viewStudentModal .mb-3 {
+    margin-bottom: 25px !important;
+}
+
+/* Tăng kích thước cho thông báo không có ảnh */
+#noAvatar {
+    font-size: 16px !important;
+    padding: 25px !important;
+}
+
+/* Responsive - Điều chỉnh cho màn hình nhỏ */
+@media (max-width: 768px) {
+    #viewStudentModal div[id^="view"] {
+        font-size: 16px !important;
+    }
+    
+    #viewStudentModal .text-primary {
+        font-size: 17px !important;
+    }
+    
+    #viewStudentModal strong {
+        font-size: 15px !important;
+    }
+}
+
+/* Tùy chỉnh thêm cho layout ảnh và thông tin */
+#viewStudentModal .col-md-3 {
+    padding-right: 25px !important;
+}
+
+#viewStudentModal .col-md-9 {
+    padding-left: 25px !important;
+}
+
+/* Cải thiện hiển thị trên mobile */
+@media (max-width: 576px) {
+    #viewStudentModal .col-md-3,
+    #viewStudentModal .col-md-9 {
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+    
+    #studentAvatarContainer {
+        margin-bottom: 25px !important;
+    }
+}
+/* 16. Tùy chỉnh các trường bắt buộc */
+.form-label[for]:after {
+    content: " *" !important;
+    color: #dc3545 !important;
+}
+
+/* 17. Tùy chỉnh form text */
+.form-text {
+    font-size: 13px !important;
+    color: #6c757d !important;
+    margin-top: 5px !important;
+}
+
+.form-text ul {
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
+    padding-left: 20px !important;
+}
+
+.form-text li {
+    margin-bottom: 3px !important;
+}
+
+/* 18. Tùy chỉnh file input */
+.form-control[type="file"] {
+    padding: 12px !important;
+}
+
+/* 19. Tùy chỉnh breadcrumb */
+.breadcrumbs {
+    font-size: 14px !important;
+}
+
+.breadcrumbs a {
+    color: #2377FC !important;
+    text-decoration: none !important;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline !important;
+}
+
+.breadcrumbs .text-tiny {
+    font-size: 14px !important;
+}
+
+/* 20. Tùy chỉnh tiêu đề trang */
+h3 {
+    font-size: 1.8rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin: 0 !important;
+}
+/* 21. Tùy chỉnh phân trang */
+.wgp-pagination {
+    padding: 20px 0 10px 0 !important;
+    border-top: 1px solid #eee !important;
+    margin-top: 20px !important;
+}
+
+.pagination-controls {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.pagination {
+    margin-bottom: 0 !important;
+    gap: 5px !important;
+}
+
+.pagination .page-item {
+    margin: 0 2px !important;
+}
+
+.pagination .page-link {
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    color: #2377FC !important;
+    background: white !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.pagination .page-link:hover {
+    background: #f8f9fa !important;
+    border-color: #2377FC !important;
+    color: #2377FC !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: #2377FC !important;
+    border-color: #2377FC !important;
+    color: white !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d !important;
+    background: #f8f9fa !important;
+    border-color: #ddd !important;
+    cursor: not-allowed !important;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+
+/* Icon trong phân trang */
+.pagination .page-link i {
+    font-size: 12px !important;
+}
+
+/* Responsive cho phân trang */
+@media (max-width: 768px) {
+    .wgp-pagination {
+        flex-direction: column !important;
+        gap: 15px !important;
+        align-items: center !important;
+    }
+    
+    .pagination-controls {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .pagination {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
 }
