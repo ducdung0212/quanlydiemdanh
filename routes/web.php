@@ -16,7 +16,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     // Products
     Route::get('/user', function () {
-        return view('admin.add-user');
+        return view('admin.user');
     })->name('user');
     Route::get('/product/add', function () {
         return view('admin.add-product');
