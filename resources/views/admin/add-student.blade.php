@@ -57,11 +57,7 @@
                                                     <th>Mã SV</th>
                                                     <th>Tên</th>
                                                     <th>Lớp</th>
-                                                    <th>Khoa</th>
-                                                    <th>SĐT</th>
-                                                    <th>Giới tính</th>
-                                                    <th>Link Ảnh</th>
-                                                    <th style="width: 120px">Action</th>
+                                                    <th style="width: 150px">Action</th>
                                                 </tr>
                                             </thead>
                                             <tbody id="students-table-body">
@@ -71,9 +67,18 @@
                                     </div>
 
                                     <div class="divider"></div>
-                                    <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                                        <!-- Phân trang -->
-                                    </div>
+                                   <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
+    <div class="text-tiny text-secondary">
+        Hiển thị <span id="pagination-start">1</span>-<span id="pagination-end">5</span> của <span id="pagination-total">5</span> sinh viên
+    </div>
+    <div class="pagination-controls">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-end mb-0" id="pagination-container">
+                <!-- Phân trang sẽ được tạo tự động bằng JavaScript -->
+            </ul>
+        </nav>
+    </div>
+</div>
                                 </div>
                             </div>
                         </div>
@@ -112,7 +117,7 @@
                                 <input type="text" class="form-control" id="class" name="class" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="faculty" class="form-label">Khoa *</label>
+                                <label for="faculty" class="form-label">Mã khoa *</label>
                                 <input type="text" class="form-control" id="faculty" name="faculty" required>
                             </div>
                         </div>
@@ -123,13 +128,8 @@
                                 <input type="tel" class="form-control" id="phone" name="phone" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="gender" class="form-label">Giới Tính *</label>
-                                <select class="form-control" id="gender" name="gender" required>
-                                    <option value="">Chọn giới tính</option>
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                    <option value="Khác">Khác</option>
-                                </select>
+                                <label for="email" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="email" name="email" required>
                             </div>
                         </div>
 
@@ -175,7 +175,7 @@
                                 <input type="text" class="form-control" id="editClass" name="class" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="editFaculty" class="form-label">Khoa *</label>
+                                <label for="editFaculty" class="form-label">Mã khoa *</label>
                                 <input type="text" class="form-control" id="editFaculty" name="faculty" required>
                             </div>
                         </div>
@@ -186,12 +186,8 @@
                                 <input type="tel" class="form-control" id="editPhone" name="phone" required>
                             </div>
                             <div class="col-md-6 mb-4">
-                                <label for="editGender" class="form-label">Giới Tính *</label>
-                                <select class="form-control" id="editGender" name="gender" required>
-                                    <option value="Nam">Nam</option>
-                                    <option value="Nữ">Nữ</option>
-                                    <option value="Khác">Khác</option>
-                                </select>
+                                <label for="editEmail" class="form-label">Email *</label>
+                                <input type="email" class="form-control" id="editEmail" name="email" required>
                             </div>
                         </div>
 
@@ -204,6 +200,59 @@
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
                     <button type="button" class="btn btn-primary" id="btnEditStudent">Lưu thay đổi</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal Xem chi tiết sinh viên -->
+    <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true" data-bs-backdrop="false">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="viewStudentModalLabel">Thông tin chi tiết sinh viên</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="row mb-4">
+                        <div class="col-md-3 text-center">
+                            <div id="studentAvatarContainer">
+                                <img id="studentAvatar" src="" alt="Ảnh đại diện" class="img-fluid rounded" style="max-height: 200px;">
+                                <div id="noAvatar" class="text-muted mt-2" style="display: none;">Không có ảnh</div>
+                            </div>
+                        </div>
+                        <div class="col-md-9">
+                            <div class="row">
+                                <div class="col-md-6 mb-3">
+                                    <strong>Mã Sinh Viên:</strong>
+                                    <div id="viewStudentCode" class="text-primary"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Họ và Tên:</strong>
+                                    <div id="viewFullName"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Lớp:</strong>
+                                    <div id="viewClass"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Mã khoa:</strong>
+                                    <div id="viewFaculty"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Số Điện Thoại:</strong>
+                                    <div id="viewPhone"></div>
+                                </div>
+                                <div class="col-md-6 mb-3">
+                                    <strong>Email:</strong>
+                                    <div id="viewEmail"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Đóng</button>
                 </div>
             </div>
         </div>
@@ -231,9 +280,9 @@
                                     <li>Mã Sinh Viên</li>
                                     <li>Họ và Tên</li>
                                     <li>Lớp</li>
-                                    <li>Khoa</li>
+                                    <li>Mã khoa</li>
                                     <li>Số Điện Thoại</li>
-                                    <li>Giới Tính</li>
+                                    <li>Email</li>
                                     <li>Link Ảnh (tuỳ chọn)</li>
                                 </ul>
                             </div>
@@ -257,6 +306,271 @@
     <script src="{{ asset('js/main.js') }}"></script>
 
     <script>
+        // Biến phân trang
+let currentPage = 1;
+const itemsPerPage = 5;
+
+// Hàm phân trang
+function setupPagination(students = currentStudents) {
+    const totalPages = Math.ceil(students.length / itemsPerPage);
+    const paginationContainer = document.getElementById('pagination-container');
+    const paginationStart = document.getElementById('pagination-start');
+    const paginationEnd = document.getElementById('pagination-end');
+    const paginationTotal = document.getElementById('pagination-total');
+    
+    // Cập nhật thông tin hiển thị
+    const startIndex = (currentPage - 1) * itemsPerPage + 1;
+    const endIndex = Math.min(currentPage * itemsPerPage, students.length);
+    
+    paginationStart.textContent = startIndex;
+    paginationEnd.textContent = endIndex;
+    paginationTotal.textContent = students.length;
+    
+    // Xóa phân trang cũ
+    paginationContainer.innerHTML = '';
+    
+    // Nút Previous
+    const prevItem = document.createElement('li');
+    prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+    prevItem.innerHTML = `
+        <a class="page-link" href="#" data-page="${currentPage - 1}">
+            <i class="icon-chevron-left"></i>
+        </a>
+    `;
+    paginationContainer.appendChild(prevItem);
+    
+    // Các nút trang
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    // Điều chỉnh nếu không đủ số trang hiển thị
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    // Nút trang đầu
+    if (startPage > 1) {
+        const firstPageItem = document.createElement('li');
+        firstPageItem.className = 'page-item';
+        firstPageItem.innerHTML = `
+            <a class="page-link" href="#" data-page="1">1</a>
+        `;
+        paginationContainer.appendChild(firstPageItem);
+        
+        if (startPage > 2) {
+            const ellipsisItem = document.createElement('li');
+            ellipsisItem.className = 'page-item disabled';
+            ellipsisItem.innerHTML = `<span class="page-link">...</span>`;
+            paginationContainer.appendChild(ellipsisItem);
+        }
+    }
+    
+    // Các trang số
+    for (let i = startPage; i <= endPage; i++) {
+        const pageItem = document.createElement('li');
+        pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+        pageItem.innerHTML = `
+            <a class="page-link" href="#" data-page="${i}">${i}</a>
+        `;
+        paginationContainer.appendChild(pageItem);
+    }
+    
+    // Nút trang cuối
+    if (endPage < totalPages) {
+        if (endPage < totalPages - 1) {
+            const ellipsisItem = document.createElement('li');
+            ellipsisItem.className = 'page-item disabled';
+            ellipsisItem.innerHTML = `<span class="page-link">...</span>`;
+            paginationContainer.appendChild(ellipsisItem);
+        }
+        
+        const lastPageItem = document.createElement('li');
+        lastPageItem.className = 'page-item';
+        lastPageItem.innerHTML = `
+            <a class="page-link" href="#" data-page="${totalPages}">${totalPages}</a>
+        `;
+        paginationContainer.appendChild(lastPageItem);
+    }
+    
+    // Nút Next
+    const nextItem = document.createElement('li');
+    nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+    nextItem.innerHTML = `
+        <a class="page-link" href="#" data-page="${currentPage + 1}">
+            <i class="icon-chevron-right"></i>
+        </a>
+    `;
+    paginationContainer.appendChild(nextItem);
+    
+    // Gắn sự kiện cho các nút phân trang
+    attachPaginationEvents(students);
+}
+
+// Gắn sự kiện cho phân trang
+function attachPaginationEvents(students = currentStudents) {
+    document.querySelectorAll('.page-link').forEach(link => {
+        link.addEventListener('click', function(e) {
+            e.preventDefault();
+            if (this.closest('.page-item').classList.contains('disabled')) {
+                return;
+            }
+            
+            const page = parseInt(this.dataset.page);
+            if (page && page !== currentPage) {
+                currentPage = page;
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedStudents = students.slice(startIndex, endIndex);
+                
+                listStudents(paginatedStudents);
+                setupPagination(students);
+            }
+        });
+    });
+}
+
+// Cập nhật hàm listStudents để hỗ trợ phân trang
+function listStudents(students = currentStudents) {
+    const tbody = document.getElementById('students-table-body');
+    tbody.innerHTML = '';
+
+    // Nếu không có students được truyền vào, sử dụng phân trang
+    if (students === currentStudents) {
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        students = currentStudents.slice(startIndex, endIndex);
+    }
+
+    if (students.length > 0) {
+        const globalIndex = (currentPage - 1) * itemsPerPage;
+        
+        students.forEach((student, index) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td class="text-center">${globalIndex + index + 1}</td>
+                <td>${student.student_code}</td>
+                <td>${student.full_name}</td>
+                <td>${student.class}</td>
+                <td>
+                    <div class="list-icon-function">
+                        <a href="#" class="view-student" data-id="${student.id}" 
+                           data-code="${student.student_code}" 
+                           data-name="${student.full_name}" 
+                           data-class="${student.class}" 
+                           data-faculty="${student.faculty}" 
+                           data-phone="${student.phone}" 
+                           data-email="${student.email}" 
+                           data-avatar="${student.avatar_url}" 
+                           data-bs-toggle="modal" data-bs-target="#viewStudentModal">
+                            <div class="item view">
+                                <i class="icon-eye"></i>
+                            </div>
+                        </a>
+                        <a href="#" class="edit-student" data-id="${student.id}" 
+                           data-code="${student.student_code}" 
+                           data-name="${student.full_name}" 
+                           data-class="${student.class}" 
+                           data-faculty="${student.faculty}" 
+                           data-phone="${student.phone}" 
+                           data-email="${student.email}" 
+                           data-avatar="${student.avatar_url}" 
+                           data-bs-toggle="modal" data-bs-target="#editStudentModal">
+                            <div class="item edit">
+                                <i class="icon-edit-3"></i>
+                            </div>
+                        </a>
+                        <a href="#" class="delete-student" data-id="${student.id}">
+                            <div class="item text-danger delete">
+                                <i class="icon-trash-2"></i>
+                            </div>
+                        </a>
+                    </div>
+                </td>
+            `;
+            tbody.appendChild(tr);
+        });
+
+        attachEventListeners();
+    } else {
+        tbody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>';
+    }
+}
+
+// Cập nhật hàm tìm kiếm để reset về trang 1
+document.getElementById('searchForm').addEventListener('submit', function(e) {
+    e.preventDefault();
+    const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
+    
+    if (searchValue) {
+        const filteredStudents = currentStudents.filter(student => 
+            student.student_code.toLowerCase().includes(searchValue) ||
+            student.full_name.toLowerCase().includes(searchValue) ||
+            student.class.toLowerCase().includes(searchValue) ||
+            student.faculty.toLowerCase().includes(searchValue) ||
+            student.phone.includes(searchValue) ||
+            student.email.toLowerCase().includes(searchValue)
+        );
+        currentPage = 1; // Reset về trang 1 khi tìm kiếm
+        listStudents(filteredStudents);
+        setupPagination(filteredStudents);
+    } else {
+        currentPage = 1; // Reset về trang 1 khi xóa tìm kiếm
+        listStudents();
+        setupPagination();
+    }
+});
+
+// Cập nhật hàm reset tìm kiếm
+document.getElementById('searchInput').addEventListener('input', function() {
+    if (this.value.trim() === '') {
+        currentPage = 1; // Reset về trang 1 khi xóa tìm kiếm
+        listStudents();
+        setupPagination();
+    }
+});
+
+// Cập nhật các hàm thêm, sửa, xóa để refresh phân trang
+function refreshAfterDataChange() {
+    currentPage = 1; // Reset về trang 1 sau khi thay đổi dữ liệu
+    listStudents();
+    setupPagination();
+}
+
+// Cập nhật các hàm thao tác dữ liệu để gọi refreshAfterDataChange
+document.getElementById('btnAddStudent').addEventListener('click', function() {
+    // ... code thêm sinh viên hiện tại ...
+    
+    // Sau khi thêm thành công
+    refreshAfterDataChange();
+});
+
+document.getElementById('btnEditStudent').addEventListener('click', function() {
+    // ... code sửa sinh viên hiện tại ...
+    
+    // Sau khi sửa thành công
+    refreshAfterDataChange();
+});
+
+function deleteStudent(id) {
+    // ... code xóa sinh viên hiện tại ...
+    
+    // Sau khi xóa thành công
+    refreshAfterDataChange();
+}
+
+document.getElementById('btnImportExcel').addEventListener('click', function() {
+    // ... code import excel hiện tại ...
+    
+    // Sau khi import thành công
+    refreshAfterDataChange();
+});
+
+// Khởi tạo phân trang khi trang được tải
+document.addEventListener('DOMContentLoaded', function() {
+    listStudents();
+    setupPagination();
+});
         // Dữ liệu mẫu để demo giao diện
         const sampleStudents = [
             {
@@ -264,9 +578,9 @@
                 student_code: "SV001",
                 full_name: "Nguyễn Văn A",
                 class: "CNTT01",
-                faculty: "Công nghệ Thông tin",
+                faculty: "CNTT",
                 phone: "0123456789",
-                gender: "Nam",
+                email: "nguyenvana@example.com",
                 avatar_url: "https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&crop=face"
             },
             {
@@ -274,9 +588,9 @@
                 student_code: "SV002",
                 full_name: "Trần Thị B",
                 class: "KT02",
-                faculty: "Kế Toán",
+                faculty: "KT",
                 phone: "0987654321",
-                gender: "Nữ",
+                email: "tranthib@example.com",
                 avatar_url: "https://images.unsplash.com/photo-1494790108755-2616b612b786?w=150&h=150&fit=crop&crop=face"
             },
             {
@@ -284,9 +598,9 @@
                 student_code: "SV003",
                 full_name: "Lê Văn C",
                 class: "QT03",
-                faculty: "Quản Trị Kinh Doanh",
+                faculty: "QTKD",
                 phone: "0369852147",
-                gender: "Nam",
+                email: "levanc@example.com",
                 avatar_url: ""
             },
             {
@@ -294,9 +608,9 @@
                 student_code: "SV004",
                 full_name: "Phạm Thị D",
                 class: "CNTT01",
-                faculty: "Công nghệ Thông tin",
+                faculty: "CNTT",
                 phone: "0912345678",
-                gender: "Nữ",
+                email: "phamthid@example.com",
                 avatar_url: "https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&crop=face"
             },
             {
@@ -304,16 +618,15 @@
                 student_code: "SV005",
                 full_name: "Hoàng Văn E",
                 class: "KT02",
-                faculty: "Kế Toán",
+                faculty: "KT",
                 phone: "0945678123",
-                gender: "Nam",
+                email: "hoangvane@example.com",
                 avatar_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&crop=face"
             }
         ];
 
         let currentStudents = [...sampleStudents];
 
-        // Load danh sách students
         function listStudents(students = currentStudents) {
             const tbody = document.getElementById('students-table-body');
             tbody.innerHTML = '';
@@ -326,24 +639,28 @@
                         <td>${student.student_code}</td>
                         <td>${student.full_name}</td>
                         <td>${student.class}</td>
-                        <td>${student.faculty}</td>
-                        <td>${student.phone}</td>
-                        <td>${student.gender}</td>
-                        <td>
-                            ${student.avatar_url ? 
-                                `<a href="${student.avatar_url}" target="_blank" class="avatar-link">Xem ảnh</a>` : 
-                                '<span class="text-muted">Không có</span>'
-                            }
-                        </td>
                         <td>
                             <div class="list-icon-function">
+                                <a href="#" class="view-student" data-id="${student.id}" 
+                                   data-code="${student.student_code}" 
+                                   data-name="${student.full_name}" 
+                                   data-class="${student.class}" 
+                                   data-faculty="${student.faculty}" 
+                                   data-phone="${student.phone}" 
+                                   data-email="${student.email}" 
+                                   data-avatar="${student.avatar_url}" 
+                                   data-bs-toggle="modal" data-bs-target="#viewStudentModal">
+                                    <div class="item view">
+                                        <i class="icon-eye"></i>
+                                    </div>
+                                </a>
                                 <a href="#" class="edit-student" data-id="${student.id}" 
                                    data-code="${student.student_code}" 
                                    data-name="${student.full_name}" 
                                    data-class="${student.class}" 
                                    data-faculty="${student.faculty}" 
                                    data-phone="${student.phone}" 
-                                   data-gender="${student.gender}" 
+                                   data-email="${student.email}" 
                                    data-avatar="${student.avatar_url}" 
                                    data-bs-toggle="modal" data-bs-target="#editStudentModal">
                                     <div class="item edit">
@@ -363,7 +680,7 @@
 
                 attachEventListeners();
             } else {
-                tbody.innerHTML = '<tr><td colspan="9" class="text-center">Không có dữ liệu</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>';
             }
         }
 
@@ -390,7 +707,7 @@
                     const className = this.dataset.class;
                     const faculty = this.dataset.faculty;
                     const phone = this.dataset.phone;
-                    const gender = this.dataset.gender;
+                    const email = this.dataset.email;
                     const avatarUrl = this.dataset.avatar;
                     
                     document.getElementById('editStudentId').value = id;
@@ -399,8 +716,43 @@
                     document.getElementById('editClass').value = className;
                     document.getElementById('editFaculty').value = faculty;
                     document.getElementById('editPhone').value = phone;
-                    document.getElementById('editGender').value = gender;
+                    document.getElementById('editEmail').value = email;
                     document.getElementById('editAvatarUrl').value = avatarUrl || '';
+                });
+            });
+
+            // Gắn sự kiện cho nút view
+            document.querySelectorAll('.view-student').forEach(btn => {
+                btn.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    const id = parseInt(this.dataset.id);
+                    const studentCode = this.dataset.code;
+                    const fullName = this.dataset.name;
+                    const className = this.dataset.class;
+                    const faculty = this.dataset.faculty;
+                    const phone = this.dataset.phone;
+                    const email = this.dataset.email;
+                    const avatarUrl = this.dataset.avatar;
+                    
+                    document.getElementById('viewStudentCode').textContent = studentCode;
+                    document.getElementById('viewFullName').textContent = fullName;
+                    document.getElementById('viewClass').textContent = className;
+                    document.getElementById('viewFaculty').textContent = faculty;
+                    document.getElementById('viewPhone').textContent = phone;
+                    document.getElementById('viewEmail').textContent = email;
+                    
+                    // Xử lý hiển thị ảnh
+                    const avatarImg = document.getElementById('studentAvatar');
+                    const noAvatarDiv = document.getElementById('noAvatar');
+                    
+                    if (avatarUrl) {
+                        avatarImg.src = avatarUrl;
+                        avatarImg.style.display = 'block';
+                        noAvatarDiv.style.display = 'none';
+                    } else {
+                        avatarImg.style.display = 'none';
+                        noAvatarDiv.style.display = 'block';
+                    }
                 });
             });
         }
@@ -412,10 +764,10 @@
             const className = document.getElementById('class').value;
             const faculty = document.getElementById('faculty').value;
             const phone = document.getElementById('phone').value;
-            const gender = document.getElementById('gender').value;
+            const email = document.getElementById('email').value;
             const avatarUrl = document.getElementById('avatar_url').value;
 
-            if (!studentCode || !fullName || !className || !faculty || !phone || !gender) {
+            if (!studentCode || !fullName || !className || !faculty || !phone || !email) {
                 alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
                 return;
             }
@@ -428,7 +780,7 @@
                 class: className,
                 faculty: faculty,
                 phone: phone,
-                gender: gender,
+                email: email,
                 avatar_url: avatarUrl || ''
             };
 
@@ -453,10 +805,10 @@
             const className = document.getElementById('editClass').value;
             const faculty = document.getElementById('editFaculty').value;
             const phone = document.getElementById('editPhone').value;
-            const gender = document.getElementById('editGender').value;
+            const email = document.getElementById('editEmail').value;
             const avatarUrl = document.getElementById('editAvatarUrl').value;
 
-            if (!studentCode || !fullName || !className || !faculty || !phone || !gender) {
+            if (!studentCode || !fullName || !className || !faculty || !phone || !email) {
                 alert('Vui lòng điền đầy đủ thông tin bắt buộc!');
                 return;
             }
@@ -471,7 +823,7 @@
                     class: className,
                     faculty: faculty,
                     phone: phone,
-                    gender: gender,
+                    email: email,
                     avatar_url: avatarUrl || ''
                 };
             }
@@ -518,9 +870,9 @@
                     student_code: "SV006",
                     full_name: "Đỗ Thị F",
                     class: "NN01",
-                    faculty: "Ngoại Ngữ",
+                    faculty: "NN",
                     phone: "0978123456",
-                    gender: "Nữ",
+                    email: "dothif@example.com",
                     avatar_url: ""
                 },
                 {
@@ -528,9 +880,9 @@
                     student_code: "SV007",
                     full_name: "Vũ Văn G",
                     class: "CNTT02",
-                    faculty: "Công nghệ Thông tin",
+                    faculty: "CNTT",
                     phone: "0934567890",
-                    gender: "Nam",
+                    email: "vuvang@example.com",
                     avatar_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&crop=face"
                 }
             ];
@@ -559,7 +911,8 @@
                     student.full_name.toLowerCase().includes(searchValue) ||
                     student.class.toLowerCase().includes(searchValue) ||
                     student.faculty.toLowerCase().includes(searchValue) ||
-                    student.phone.includes(searchValue)
+                    student.phone.includes(searchValue) ||
+                    student.email.toLowerCase().includes(searchValue)
                 );
                 listStudents(filteredStudents);
             } else {
