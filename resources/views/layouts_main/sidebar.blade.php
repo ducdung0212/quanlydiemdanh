@@ -1,8 +1,13 @@
 <div class="section-menu-left">
     <div class="box-logo">
         <a href="{{ route('dashboard') }}" id="site-logo-inner">
+<<<<<<< HEAD
             <img class="" id="logo_header" alt="" src="{{ asset('images/logo/STU_logo.webp') }}"
                 data-light="{{ asset('images/logo/STU_logo.webp') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}">
+=======
+            <img class="" id="logo_header" alt="" src="{{ asset('images/logo/logo.png') }}"
+                data-light="{{ asset('images/logo/logo.png') }}" data-dark="{{ asset('images/logo/logo.png') }}">
+>>>>>>> f725b6f2ee2571d660b2d9fef4d80efe1bc2d0eb
         </a>
         <div class="button-show-hide">
             <i class="icon-menu-left"></i>
