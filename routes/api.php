@@ -3,6 +3,7 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\StudentController;
 
 /*
 |--------------------------------------------------------------------------
@@ -15,7 +16,5 @@ use App\Http\Controllers\UserController;
 |
 */
 
-Route::middleware('api')->get('/ping', function (Request $request) {
-    return response()->json(['pong' => true]);
-});
 Route::apiResource('users', UserController::class);
+Route::apiResource('students', \App\Http\Controllers\StudentController::class);

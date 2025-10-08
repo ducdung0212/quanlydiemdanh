@@ -16,10 +16,11 @@
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/sweetalert.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
+<<<<<<< Updated upstream
 <<<<<<< HEAD
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/user_css.css') }}">
 =======
->>>>>>> 9724218ca1a645288955bc6066cade5bfda4bff6
+>>>>>>> Stashed changes
+    <link rel="stylesheet" type="text/css" href="{{ asset('css/user_css.css') }}">
 </head>
 
 <div class="header-dashboard">
