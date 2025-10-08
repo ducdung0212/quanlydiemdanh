@@ -1,8 +1,9 @@
 <div class="section-menu-left">
     <div class="box-logo">
         <a href="{{ route('dashboard') }}" id="site-logo-inner">
+
             <img class="" id="logo_header" alt="" src="{{ asset('images/logo/STU_logo.webp') }}"
-                data-light="{{ asset('images/logo/STU_logo.webp') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}">
+                data-light="{{ asset('images/logo/STU_logo.webp') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}">        
         </a>
         <div class="button-show-hide">
             <i class="icon-menu-left"></i>
@@ -22,20 +23,15 @@
         </div>
         <div class="center-item">
             <ul class="menu-list">
-                <li class="menu-item has-children">
-                    <a href="javascript:void(0);" class="menu-item-button">
-                         <div class="icon"><i class="icon-user"></i></div>
+                <!-- User - Đã sửa thành menu đơn -->
+                <li class="menu-item">
+                    <a href="{{ route('user') }}" class="">
+                        <div class="icon"><i class="icon-user"></i></div>
                         <div class="text">User</div>
                     </a>
-                    <ul class="sub-menu">
-                       
-                        <li class="sub-menu-item">
-                            <a href="{{ route('user') }}" class="">
-                                <div class="text">Add User</div>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
+                
+                <!-- Student - Vẫn giữ menu con -->
                 <li class="menu-item has-children">
                     <a href="javascript:void(0);" class="menu-item-button">
                           <div class="icon"><i class="icon-user"></i></div>
@@ -54,6 +50,8 @@
                         </li>
                     </ul>
                 </li>
+                
+                <!-- Category - Vẫn giữ menu con -->
                 <li class="menu-item has-children">
                     <a href="javascript:void(0);" class="menu-item-button">
                         <div class="icon"><i class="icon-layers"></i></div>
@@ -73,6 +71,7 @@
                     </ul>
                 </li>
 
+                <!-- Order - Vẫn giữ menu con -->
                 <li class="menu-item has-children">
                     <a href="javascript:void(0);" class="menu-item-button">
                         <div class="icon"><i class="icon-file-plus"></i></div>
@@ -91,6 +90,8 @@
                         </li>
                     </ul>
                 </li>
+                
+                <!-- Các menu item khác -->
                 <li class="menu-item">
                     <a href="{{-- {{ route('slider') }} --}}" class="">
                         <div class="icon"><i class="icon-image"></i></div>
@@ -104,13 +105,7 @@
                     </a>
                 </li>
 
-                <li class="menu-item">
-                    <a href="{{-- {{ route('users') }} --}}" class="">
-                        <div class="icon"><i class="icon-user"></i></div>
-                        <div class="text">User</div>
-                    </a>
-                </li>
-
+                <!-- Đã xóa menu User trùng lặp ở dưới -->
                 <li class="menu-item">
                     <a href="{{-- {{ route('settings') }} --}}" class="">
                         <div class="icon"><i class="icon-settings"></i></div>
