@@ -17,7 +17,7 @@ class UserController extends Controller
         $limit=request()->query('limit',10);
         $users=User::latest();
         if($q){
-            $user->where(function($query) use ($q){
+            $users->where(function($query) use ($q){
                 $query->where('name','like',"%$q%");
                 $query->orWhere('email','like',"%$q%");
             });

@@ -1,4 +1,3 @@
-
 <body class="body">
     <div id="wrapper">
         <div id="page" class="">
@@ -33,7 +32,7 @@
                                         <div class="wg-filter flex-grow">
                                             <form class="form-search" id="searchForm">
                                                 <fieldset class="name">
-                                                    <input type="text" placeholder="Tìm kiếm tài khoản..." class="" name="name"
+                                                    <input type="text" placeholder="Tìm kiếm tài khoản..." class="" name="q"
                                                         tabindex="2" value="" aria-required="true" id="searchInput">
                                                 </fieldset>
                                                 <div class="button-submit">
@@ -41,14 +40,31 @@
                                                 </div>
                                             </form>
                                         </div>
-                                        <a class="tf-button style-1 w208" href="#" data-bs-toggle="modal" data-bs-target="#addAccountModal">
-                                            <i class="icon-plus"></i>Thêm mới
-                                        </a>
+                                        <div class="d-flex gap10 align-items-center">
+                                            <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
+                                                <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
+                                            </button>
+                                            <button class="btn btn-outline-primary" id="btnExport" style="padding: 8px 16px; border-radius: 8px;">
+                                                <i class="icon-download"></i> Export CSV
+                                            </button>
+                                            <select class="form-select" id="perPageSelect" style="width: auto; padding: 8px 12px; border-radius: 8px;">
+                                                <option value="5">5 / trang</option>
+                                                <option value="10">10 / trang</option>
+                                                <option value="20">20 / trang</option>
+                                                <option value="50">50 / trang</option>
+                                            </select>
+                                            <a class="tf-button style-1 w208" href="#" data-bs-toggle="modal" data-bs-target="#addAccountModal">
+                                                <i class="icon-plus"></i>Thêm mới
+                                            </a>
+                                        </div>
                                     </div>
                                     <div class="table-responsive">
                                         <table class="table table-striped table-bordered">
                                             <thead>
                                                 <tr>
+                                                    <th style="width: 50px">
+                                                        <input type="checkbox" id="selectAll" style="cursor: pointer;">
+                                                    </th>
                                                     <th style="width: 60px">STT</th>
                                                     <th>Tên</th>
                                                     <th>Email</th>
@@ -56,24 +72,22 @@
                                                 </tr>
                                             </thead>
                                             <tbody id="users-table-body">
-                                                <!-- Dữ liệu sẽ được load từ API -->
                                             </tbody>
                                         </table>
                                     </div>
 
                                     <div class="divider"></div>
                                     <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-    <div class="text-tiny text-secondary">
-        Hiển thị <span id="pagination-start">1</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> tài khoản
-    </div>
-    <div class="pagination-controls">
-        <nav aria-label="Page navigation">
-            <ul class="pagination justify-content-end mb-0" id="pagination-container">
-                <!-- Phân trang sẽ được tạo tự động bằng JavaScript -->
-            </ul>
-        </nav>
-    </div>
-</div>
+                                        <div class="text-tiny text-secondary">
+                                            Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> tài khoản
+                                        </div>
+                                        <div class="pagination-controls">
+                                            <nav aria-label="Page navigation">
+                                                <ul class="pagination justify-content-end mb-0" id="pagination-container">
+                                                </ul>
+                                            </nav>
+                                        </div>
+                                    </div>
                                 </div>
                             </div>
                         </div>
@@ -85,7 +99,7 @@
         </div>
     </div>
 
-    <!-- Modal Thêm tài khoản -->
+    <!-- Add Account Modal -->
     <div class="modal fade" id="addAccountModal" tabindex="-1" aria-labelledby="addAccountModalLabel" aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
@@ -97,7 +111,7 @@
                     <form id="addAccountForm">
                         <div class="mb-4">
                             <label for="username" class="form-label" style="font-weight: 500;">Tên</label>
-                            <input type="text" class="form-control" id="username" name="username" required 
+                            <input type="text" class="form-control" id="username" name="name" required 
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                         <div class="mb-4">
@@ -112,7 +126,7 @@
                         </div>
                         <div class="mb-4">
                             <label for="confirmPassword" class="form-label" style="font-weight: 500;">Xác nhận mật khẩu</label>
-                            <input type="password" class="form-control" id="confirmPassword" name="confirmPassword" required
+                            <input type="password" class="form-control" id="confirmPassword" name="password_confirmation" required
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                     </form>
@@ -121,13 +135,16 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal" 
                             style="border-radius: 8px; padding: 10px 20px; border: none;">Hủy</button>
                     <button type="button" class="btn btn-primary" id="btnAddAccount"
-                            style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">Thêm</button>
+                            style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">
+                        <span class="btn-text">Thêm</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-    <!-- Modal Sửa tài khoản -->
+    <!-- Edit Account Modal -->
     <div class="modal fade" id="editAccountModal" tabindex="-1" aria-labelledby="editAccountModalLabel" aria-hidden="true" data-bs-backdrop="false">
         <div class="modal-dialog modal-lg">
             <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
@@ -140,7 +157,7 @@
                         <input type="hidden" id="editUserId">
                         <div class="mb-4">
                             <label for="editUsername" class="form-label" style="font-weight: 500;">Tên</label>
-                            <input type="text" class="form-control" id="editUsername" name="username" required
+                            <input type="text" class="form-control" id="editUsername" name="name" required
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                         <div class="mb-4">
@@ -149,13 +166,13 @@
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                         <div class="mb-4">
-                            <label for="editPassword" class="form-label" style="font-weight: 500;">Mật khẩu mới(Để trống nếu không muốn thay đổi mật khẩu)</label>
+                            <label for="editPassword" class="form-label" style="font-weight: 500;">Mật khẩu mới (Để trống nếu không đổi)</label>
                             <input type="password" class="form-control" id="editPassword" name="password"
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                         <div class="mb-4">
                             <label for="editConfirmPassword" class="form-label" style="font-weight: 500;">Xác nhận mật khẩu mới</label>
-                            <input type="password" class="form-control" id="editConfirmPassword" name="confirmPassword"
+                            <input type="password" class="form-control" id="editConfirmPassword" name="password_confirmation"
                                    style="border-radius: 8px; padding: 12px; border: 1px solid #ddd;">
                         </div>
                     </form>
@@ -164,29 +181,16 @@
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal"
                             style="border-radius: 8px; padding: 10px 20px; border: none;">Hủy</button>
                     <button type="button" class="btn btn-primary" id="btnEditAccount"
-                            style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">Lưu thay đổi</button>
+                            style="border-radius: 8px; padding: 10px 20px; background-color: #2377FC; border: none;">
+                        <span class="btn-text">Lưu thay đổi</span>
+                        <span class="spinner-border spinner-border-sm d-none" role="status"></span>
+                    </button>
                 </div>
             </div>
         </div>
     </div>
 
-   <link href="{{ asset('css/user_css.css') }}" rel="stylesheet">
-
-<style>
-    .loading {
-        text-align: center;
-        padding: 20px;
-    }
-    .demo-notice {
-        background: #fff3cd;
-        border: 1px solid #ffeaa7;
-        border-radius: 8px;
-        padding: 10px 15px;
-        margin-bottom: 15px;
-        font-size: 14px;
-        color: #856404;
-    }
-</style>
+    <link href="{{ asset('css/user_css.css') }}" rel="stylesheet">
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
@@ -195,195 +199,259 @@
     <script src="{{ asset('js/main.js') }}"></script>
     <script>
         const apiBase = '/api/users';
-
-        // Biến phân trang
+        
         let currentPage = 1;
-        const itemsPerPage = 5;
-        let currentUsers = [];
+        let currentQuery = '';
+        let itemsPerPage = 5;
+        let paginationData = null;
+        let isLoading = false;
+        let selectedUsers = new Set();
 
-        // Dữ liệu mẫu để hiển thị khi API không có dữ liệu
-        const sampleUsers = [
-            {
-                id: 1,
-                name: "Nguyễn Văn Admin",
-                email: "admin@surfsoe.com"
-            },
-            {
-                id: 2,
-                name: "Trần Thị User",
-                email: "user@surfsoe.com"
-            },
-            {
-                id: 3,
-                name: "Lê Văn Manager",
-                email: "manager@surfsoe.com"
-            },
-            {
-                id: 4,
-                name: "Phạm Thị Editor",
-                email: "editor@surfsoe.com"
-            },
-            {
-                id: 5,
-                name: "Hoàng Văn Viewer",
-                email: "viewer@surfsoe.com"
-            },
-            {
-                id: 6,
-                name: "Đỗ Thị Tester",
-                email: "tester@surfsoe.com"
-            },
-            {
-                id: 7,
-                name: "Vũ Văn Developer",
-                email: "developer@surfsoe.com"
+        // Utility function for debouncing
+        const debounce = (func, delay) => {
+            let timeout;
+            return function(...args) {
+                const context = this;
+                clearTimeout(timeout);
+                timeout = setTimeout(() => func.apply(context, args), delay);
+            };
+        };
+
+        // Show/hide loading button state
+        function toggleButtonLoading(button, loading) {
+            const btnText = button.querySelector('.btn-text');
+            const spinner = button.querySelector('.spinner-border');
+            
+            if (loading) {
+                button.disabled = true;
+                btnText.classList.add('d-none');
+                spinner.classList.remove('d-none');
+            } else {
+                button.disabled = false;
+                btnText.classList.remove('d-none');
+                spinner.classList.add('d-none');
             }
-        ];
+        }
 
-        // Hàm phân trang - LUÔN HIỂN THỊ PHÂN TRANG
-        function setupPagination(users = currentUsers) {
-            const totalPages = Math.ceil(users.length / itemsPerPage);
+        // Fetches users from the API with server-side pagination
+        async function fetchUsers(page = 1, query = '', perPage = itemsPerPage) {
+            if (isLoading) return;
+            
+            isLoading = true;
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Đang tải...</td></tr>';
+            
+            try {
+                const url = `${apiBase}?page=${page}&limit=${perPage}&q=${encodeURIComponent(query)}`;
+                const response = await fetch(url);
+                
+                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
+                
+                const result = await response.json();
+                
+                if (result.success && result.data) {
+                    paginationData = result.data;
+                    currentPage = paginationData.current_page;
+                    currentQuery = query;
+                    itemsPerPage = perPage;
+                    updateURL(currentPage, currentQuery, itemsPerPage);
+                    renderUI();
+                } else {
+                    throw new Error('Invalid response format');
+                }
+            } catch (error) {
+                console.error("Failed to fetch users:", error);
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
+                paginationData = null;
+                renderUI();
+            } finally {
+                isLoading = false;
+            }
+        }
+
+        // Renders the table and pagination based on API response
+        function renderUI() {
+            const tbody = document.getElementById('users-table-body');
             const paginationContainer = document.getElementById('pagination-container');
             const paginationStart = document.getElementById('pagination-start');
             const paginationEnd = document.getElementById('pagination-end');
             const paginationTotal = document.getElementById('pagination-total');
-            
-            console.log('Setup pagination:', {
-                totalUsers: users.length,
-                totalPages: totalPages,
-                currentPage: currentPage,
-                itemsPerPage: itemsPerPage
-            });
 
-            // Cập nhật thông tin hiển thị
-            const startIndex = (currentPage - 1) * itemsPerPage;
-            const endIndex = Math.min(currentPage * itemsPerPage, users.length);
-            
-            paginationStart.textContent = startIndex + 1;
-            paginationEnd.textContent = endIndex;
-            paginationTotal.textContent = users.length;
-            
-            // Xóa phân trang cũ
-            paginationContainer.innerHTML = '';
-            
-            // LUÔN HIỂN THỊ PHÂN TRANG, ngay cả khi chỉ có 1 trang
-            // Nút Previous
-            const prevItem = document.createElement('li');
-            prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
-            prevItem.innerHTML = `
-                <a class="page-link" href="#" data-page="${currentPage - 1}">
-                    <i class="icon-chevron-left"></i>
-                </a>
-            `;
-            paginationContainer.appendChild(prevItem);
-            
-            // Các nút trang - HIỂN THỊ NGAY CẢ KHI CHỈ CÓ 1 TRANG
-            for (let i = 1; i <= totalPages; i++) {
-                const pageItem = document.createElement('li');
-                pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
-                pageItem.innerHTML = `
-                    <a class="page-link" href="#" data-page="${i}">${i}</a>
-                `;
-                paginationContainer.appendChild(pageItem);
-            }
-            
-            // Nút Next
-            const nextItem = document.createElement('li');
-            nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
-            nextItem.innerHTML = `
-                <a class="page-link" href="#" data-page="${currentPage + 1}">
-                    <i class="icon-chevron-right"></i>
-                </a>
-            `;
-            paginationContainer.appendChild(nextItem);
-            
-            // Gắn sự kiện cho các nút phân trang
-            attachPaginationEvents(users);
-        }
-
-        // Gắn sự kiện cho phân trang
-        function attachPaginationEvents(users = currentUsers) {
-            document.querySelectorAll('.page-link').forEach(link => {
-                link.addEventListener('click', function(e) {
-                    e.preventDefault();
-                    if (this.closest('.page-item').classList.contains('disabled')) {
-                        return;
-                    }
-                    
-                    const page = parseInt(this.dataset.page);
-                    if (page && page !== currentPage) {
-                        currentPage = page;
-                        const startIndex = (currentPage - 1) * itemsPerPage;
-                        const endIndex = startIndex + itemsPerPage;
-                        const paginatedUsers = users.slice(startIndex, endIndex);
-                        
-                        displayUsers(paginatedUsers);
-                        setupPagination(users);
-                    }
-                });
-            });
-        }
-
-        // Hiển thị danh sách users
-        function displayUsers(users) {
-            const tbody = document.getElementById('users-table-body');
             tbody.innerHTML = '';
+            paginationContainer.innerHTML = '';
 
+            if (!paginationData || !paginationData.data) {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>';
+                paginationStart.textContent = '0';
+                paginationEnd.textContent = '0';
+                paginationTotal.textContent = '0';
+                return;
+            }
+
+            const users = paginationData.data;
+            const from = paginationData.from || 0;
+            const to = paginationData.to || 0;
+            const total = paginationData.total || 0;
+            const lastPage = paginationData.last_page || 1;
+
+            // Update pagination info
+            paginationStart.textContent = from;
+            paginationEnd.textContent = to;
+            paginationTotal.textContent = total;
+
+            // Render table rows
             if (users.length > 0) {
-                const globalIndex = (currentPage - 1) * itemsPerPage;
-                
                 users.forEach((user, index) => {
                     const tr = document.createElement('tr');
+                    const isChecked = selectedUsers.has(user.id) ? 'checked' : '';
                     tr.innerHTML = `
-                        <td class="text-center">${globalIndex + index + 1}</td>
-                        <td>${user.name}</td>
-                        <td>${user.email}</td>
+                        <td class="text-center">
+                            <input type="checkbox" class="user-checkbox" value="${user.id}" ${isChecked} style="cursor: pointer;">
+                        </td>
+                        <td class="text-center">${from + index}</td>
+                        <td>${escapeHtml(user.name)}</td>
+                        <td>${escapeHtml(user.email)}</td>
                         <td>
                             <div class="list-icon-function">
-                                <a href="#" class="edit-user" data-id="${user.id}" data-name="${user.name}" data-email="${user.email}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
-                                    <div class="item edit">
-                                        <i class="icon-edit-3"></i>
-                                    </div>
+                                <a href="#" class="edit-user" data-id="${user.id}" data-name="${escapeHtml(user.name)}" data-email="${escapeHtml(user.email)}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
+                                    <div class="item edit"><i class="icon-edit-3"></i></div>
                                 </a>
                                 <a href="#" class="delete-user" data-id="${user.id}">
-                                    <div class="item text-danger delete">
-                                        <i class="icon-trash-2"></i>
-                                    </div>
+                                    <div class="item text-danger delete"><i class="icon-trash-2"></i></div>
                                 </a>
                             </div>
                         </td>
                     `;
                     tbody.appendChild(tr);
                 });
-
-                // Gắn sự kiện cho các nút
-                attachEventListeners();
             } else {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Không tìm thấy tài khoản nào</td></tr>';
             }
+
+            // Render pagination controls
+            if (lastPage > 1) {
+                const prevDisabled = currentPage === 1 ? 'disabled' : '';
+                paginationContainer.innerHTML += `
+                    <li class="page-item ${prevDisabled}">
+                        <a class="page-link" href="#" data-page="${currentPage - 1}">
+                            <i class="icon-chevron-left"></i>
+                        </a>
+                    </li>
+                `;
+
+                let startPage = Math.max(1, currentPage - 3);
+                let endPage = Math.min(lastPage, currentPage + 3);
+
+                if (currentPage <= 4) {
+                    endPage = Math.min(7, lastPage);
+                }
+                if (currentPage >= lastPage - 3) {
+                    startPage = Math.max(1, lastPage - 6);
+                }
+
+                if (startPage > 1) {
+                    paginationContainer.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="1">1</a>
+                        </li>
+                    `;
+                    if (startPage > 2) {
+                        paginationContainer.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                    }
+                }
+
+                for (let i = startPage; i <= endPage; i++) {
+                    const active = i === currentPage ? 'active' : '';
+                    paginationContainer.innerHTML += `
+                        <li class="page-item ${active}">
+                            <a class="page-link" href="#" data-page="${i}">${i}</a>
+                        </li>
+                    `;
+                }
+
+                if (endPage < lastPage) {
+                    if (endPage < lastPage - 1) {
+                        paginationContainer.innerHTML += `
+                            <li class="page-item disabled">
+                                <span class="page-link">...</span>
+                            </li>
+                        `;
+                    }
+                    paginationContainer.innerHTML += `
+                        <li class="page-item">
+                            <a class="page-link" href="#" data-page="${lastPage}">${lastPage}</a>
+                        </li>
+                    `;
+                }
+
+                const nextDisabled = currentPage === lastPage ? 'disabled' : '';
+                paginationContainer.innerHTML += `
+                    <li class="page-item ${nextDisabled}">
+                        <a class="page-link" href="#" data-page="${currentPage + 1}">
+                            <i class="icon-chevron-right"></i>
+                        </a>
+                    </li>
+                `;
+            }
+
+            attachActionEvents();
         }
 
-        // Gắn sự kiện cho các nút
-        function attachEventListeners() {
-            // Gắn sự kiện cho nút delete
-            document.querySelectorAll('.delete-user').forEach(btn => {
-                btn.addEventListener('click', async (e) => {
-                    e.preventDefault();
-                    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-                        const id = e.currentTarget.dataset.id;
-                        await deleteUser(id);
+        // Escape HTML to prevent XSS
+        function escapeHtml(text) {
+            const map = {
+                '&': '&amp;',
+                '<': '&lt;',
+                '>': '&gt;',
+                '"': '&quot;',
+                "'": '&#039;'
+            };
+            return text.replace(/[&<>"']/g, m => map[m]);
+        }
+
+        // Attach events for edit, delete, and pagination
+        function attachActionEvents() {
+            // Checkbox selection
+            document.querySelectorAll('.user-checkbox').forEach(checkbox => {
+                checkbox.addEventListener('change', (e) => {
+                    const userId = parseInt(e.target.value);
+                    if (e.target.checked) {
+                        selectedUsers.add(userId);
+                    } else {
+                        selectedUsers.delete(userId);
                     }
+                    updateBulkDeleteButton();
+                    updateSelectAllCheckbox();
                 });
             });
 
-            // Gắn sự kiện cho nút edit
-            document.querySelectorAll('.edit-user').forEach(btn => {
-                btn.addEventListener('click', (e) => {
+            // Select all checkbox
+            const selectAllCheckbox = document.getElementById('selectAll');
+            if (selectAllCheckbox) {
+                selectAllCheckbox.addEventListener('change', (e) => {
+                    const checkboxes = document.querySelectorAll('.user-checkbox');
+                    checkboxes.forEach(checkbox => {
+                        checkbox.checked = e.target.checked;
+                        const userId = parseInt(checkbox.value);
+                        if (e.target.checked) {
+                            selectedUsers.add(userId);
+                        } else {
+                            selectedUsers.delete(userId);
+                        }
+                    });
+                    updateBulkDeleteButton();
+                });
+            }
+
+            // Edit user
+            document.querySelectorAll('.edit-user').forEach(button => {
+                button.addEventListener('click', (e) => {
                     e.preventDefault();
-                    const id = e.currentTarget.dataset.id;
-                    const name = e.currentTarget.dataset.name;
-                    const email = e.currentTarget.dataset.email;
-                    
+                    const { id, name, email } = e.currentTarget.dataset;
                     document.getElementById('editUserId').value = id;
                     document.getElementById('editUsername').value = name;
                     document.getElementById('editEmail').value = email;
@@ -391,228 +459,267 @@
                     document.getElementById('editConfirmPassword').value = '';
                 });
             });
-        }
 
-        // Load danh sách users từ API - DÙNG DỮ LIỆU MẪU ĐỂ DEMO PHÂN TRANG
-        async function listUsers() {
-            try {
-                console.log('Đang gọi API:', apiBase);
-                const res = await fetch(apiBase);
-                console.log('API response status:', res.status);
-                
-                const json = await res.json();
-                console.log('API response data:', json);
-
-                let usingDemoData = false;
-                
-                // Kiểm tra cấu trúc response
-                if (json && json.success && json.data && Array.isArray(json.data.data) && json.data.data.length > 0) {
-                    currentUsers = json.data.data;
-                    console.log('Đã nhận dữ liệu từ API:', currentUsers.length, 'users');
-                } else if (json && Array.isArray(json) && json.length > 0) {
-                    // Nếu API trả về trực tiếp mảng
-                    currentUsers = json;
-                    console.log('Đã nhận dữ liệu từ API (direct array):', currentUsers.length, 'users');
-                } else {
-                    // Nếu API không có dữ liệu HOẶC chỉ có 1 user, dùng dữ liệu mẫu để demo phân trang
-                    currentUsers = [...sampleUsers];
-                    usingDemoData = true;
-                    console.log('Đang sử dụng dữ liệu mẫu để demo phân trang');
-                    
-                    // Hiển thị thông báo demo
-                    showDemoNotice();
-                }
-
-                // Áp dụng phân trang
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedUsers = currentUsers.slice(startIndex, endIndex);
-
-                displayUsers(paginatedUsers);
-                setupPagination(currentUsers);
-
-                console.log('Sau khi setup pagination:', {
-                    currentUsers: currentUsers.length,
-                    paginatedUsers: paginatedUsers.length,
-                    currentPage: currentPage,
-                    totalPages: Math.ceil(currentUsers.length / itemsPerPage)
+            document.querySelectorAll('.delete-user').forEach(button => {
+                button.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+                        const id = e.currentTarget.dataset.id;
+                        deleteUser(id);
+                    }
                 });
+            });
 
-            } catch (error) {
-                console.error('Error loading users:', error);
-                // Nếu API lỗi, dùng dữ liệu mẫu
-                currentUsers = [...sampleUsers];
-                const startIndex = (currentPage - 1) * itemsPerPage;
-                const endIndex = startIndex + itemsPerPage;
-                const paginatedUsers = currentUsers.slice(startIndex, endIndex);
-                
-                displayUsers(paginatedUsers);
-                setupPagination(currentUsers);
-                showDemoNotice();
-                console.log('API lỗi, đang sử dụng dữ liệu mẫu');
+            document.querySelectorAll('#pagination-container .page-link').forEach(link => {
+                link.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    if (e.currentTarget.parentElement.classList.contains('disabled')) return;
+                    const page = parseInt(e.currentTarget.dataset.page);
+                    if (page && page !== currentPage) {
+                        fetchUsers(page, currentQuery, itemsPerPage);
+                        window.scrollTo({ top: 0, behavior: 'smooth' });
+                    }
+                });
+            });
+        }
+
+        // Update bulk delete button visibility and count
+        function updateBulkDeleteButton() {
+            const btnBulkDelete = document.getElementById('btnBulkDelete');
+            const selectedCount = document.getElementById('selectedCount');
+            
+            if (selectedUsers.size > 0) {
+                btnBulkDelete.classList.remove('d-none');
+                selectedCount.textContent = selectedUsers.size;
+            } else {
+                btnBulkDelete.classList.add('d-none');
             }
         }
 
-        // Hiển thị thông báo demo
-        function showDemoNotice() {
-            // Kiểm tra xem đã có thông báo chưa
-            if (!document.querySelector('.demo-notice')) {
-                const notice = document.createElement('div');
-                notice.className = 'demo-notice';
-                notice.innerHTML = '🔍 <strong>Chế độ demo phân trang:</strong> Đang hiển thị dữ liệu mẫu để demo tính năng phân trang. Dữ liệu thực tế từ API sẽ được hiển thị khi có nhiều hơn 1 user.';
-                
-                const table = document.querySelector('.table-responsive');
-                if (table) {
-                    table.parentNode.insertBefore(notice, table);
-                }
+        // Update select all checkbox state
+        function updateSelectAllCheckbox() {
+            const selectAllCheckbox = document.getElementById('selectAll');
+            const checkboxes = document.querySelectorAll('.user-checkbox');
+            const allChecked = Array.from(checkboxes).every(cb => cb.checked);
+            const someChecked = Array.from(checkboxes).some(cb => cb.checked);
+            
+            if (selectAllCheckbox) {
+                selectAllCheckbox.checked = allChecked;
+                selectAllCheckbox.indeterminate = someChecked && !allChecked;
             }
         }
 
-        // Thêm user mới
+        // Handle Add User
         document.getElementById('btnAddAccount').addEventListener('click', async () => {
-            const name = document.getElementById('username').value;
-            const email = document.getElementById('email').value;
-            const password = document.getElementById('password').value;
-            const confirmPassword = document.getElementById('confirmPassword').value;
+            const button = document.getElementById('btnAddAccount');
+            const form = document.getElementById('addAccountForm');
+            const formData = new FormData(form);
+            const data = Object.fromEntries(formData.entries());
 
-            if (!name || !email || !password) {
-                alert('Vui lòng điền đầy đủ thông tin!');
-                return;
+            if (!data.name || !data.email || !data.password) {
+                return alert('Vui lòng điền đầy đủ thông tin.');
+            }
+            if (data.password !== data.password_confirmation) {
+                return alert('Mật khẩu xác nhận không khớp.');
             }
 
-            if (password !== confirmPassword) {
-                alert('Mật khẩu xác nhận không khớp!');
-                return;
-            }
+            toggleButtonLoading(button, true);
 
             try {
-                const res = await fetch(apiBase, {
+                const response = await fetch(apiBase, {
                     method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ name, email, password })
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'application/json' 
+                    },
+                    body: JSON.stringify(data)
                 });
-
-                const json = await res.json();
-
-                if (json.success) {
+                
+                if (response.ok) {
                     alert('Thêm tài khoản thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
-                    document.getElementById('addAccountForm').reset();
-                    refreshAfterDataChange();
+                    form.reset();
+                    fetchUsers(1, currentQuery, itemsPerPage);
                 } else {
-                    alert('Lỗi: ' + (json.message || 'Không thể thêm tài khoản'));
+                    const error = await response.json();
+                    alert('Lỗi: ' + (error.message || 'Không thể thêm tài khoản.'));
                 }
             } catch (error) {
-                console.error('Error adding user:', error);
-                alert('Có lỗi xảy ra khi thêm tài khoản!');
+                console.error("Add user failed:", error);
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+            } finally {
+                toggleButtonLoading(button, false);
             }
         });
 
-        // Cập nhật user
+        // Handle Edit User
         document.getElementById('btnEditAccount').addEventListener('click', async () => {
+            const button = document.getElementById('btnEditAccount');
             const id = document.getElementById('editUserId').value;
-            const name = document.getElementById('editUsername').value;
-            const email = document.getElementById('editEmail').value;
-            const password = document.getElementById('editPassword').value;
-            const confirmPassword = document.getElementById('editConfirmPassword').value;
+            const form = document.getElementById('editAccountForm');
+            const formData = new FormData(form);
+            let data = Object.fromEntries(formData.entries());
 
-            if (!name || !email) {
-                alert('Vui lòng điền đầy đủ thông tin!');
-                return;
+            if (!data.name || !data.email) {
+                return alert('Tên và Email không được để trống.');
+            }
+            if (data.password && data.password !== data.password_confirmation) {
+                return alert('Mật khẩu xác nhận không khớp.');
+            }
+            if (!data.password) {
+                delete data.password;
+                delete data.password_confirmation;
             }
 
-            if (password && password !== confirmPassword) {
-                alert('Mật khẩu xác nhận không khớp!');
-                return;
-            }
+            toggleButtonLoading(button, true);
 
             try {
-                const data = { name, email };
-                if (password) {
-                    data.password = password;
-                }
-
-                const res = await fetch(`${apiBase}/${id}`, {
+                const response = await fetch(`${apiBase}/${id}`, {
                     method: 'PUT',
-                    headers: { 'Content-Type': 'application/json' },
+                    headers: { 
+                        'Content-Type': 'application/json', 
+                        'Accept': 'application/json' 
+                    },
                     body: JSON.stringify(data)
                 });
 
-                const json = await res.json();
-
-                if (json.success) {
-                    alert('Cập nhật tài khoản thành công!');
+                if (response.ok) {
+                    alert('Cập nhật thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('editAccountModal')).hide();
-                    refreshAfterDataChange();
+                    fetchUsers(currentPage, currentQuery, itemsPerPage);
                 } else {
-                    alert('Lỗi: ' + (json.message || 'Không thể cập nhật tài khoản'));
+                    const error = await response.json();
+                    alert('Lỗi: ' + (error.message || 'Không thể cập nhật.'));
                 }
             } catch (error) {
-                console.error('Error updating user:', error);
-                alert('Có lỗi xảy ra khi cập nhật tài khoản!');
+                console.error("Update user failed:", error);
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
+            } finally {
+                toggleButtonLoading(button, false);
             }
         });
 
-        // Xóa user
+        // Handle Delete User
         async function deleteUser(id) {
             try {
-                const res = await fetch(`${apiBase}/${id}`, {
-                    method: 'DELETE'
+                const response = await fetch(`${apiBase}/${id}`, {
+                    method: 'DELETE',
+                    headers: { 'Accept': 'application/json' }
                 });
 
-                const json = await res.json();
-
-                if (json.success) {
+                if (response.ok) {
                     alert('Xóa tài khoản thành công!');
-                    refreshAfterDataChange();
+                    
+                    if (paginationData.data.length === 1 && currentPage > 1) {
+                        fetchUsers(currentPage - 1, currentQuery, itemsPerPage);
+                    } else {
+                        fetchUsers(currentPage, currentQuery, itemsPerPage);
+                    }
                 } else {
-                    alert('Lỗi: ' + (json.message || 'Không thể xóa tài khoản'));
+                    const error = await response.json();
+                    alert('Lỗi: ' + (error.message || 'Không thể xóa tài khoản.'));
                 }
             } catch (error) {
-                console.error('Error deleting user:', error);
-                alert('Có lỗi xảy ra khi xóa tài khoản!');
+                console.error("Delete user failed:", error);
+                alert('Có lỗi xảy ra, vui lòng thử lại.');
             }
         }
 
-        // Refresh sau khi thay đổi dữ liệu
-        function refreshAfterDataChange() {
-            currentPage = 1;
-            listUsers();
-        }
+        // Handle items per page change
+        document.getElementById('perPageSelect').addEventListener('change', (e) => {
+            const perPage = parseInt(e.target.value);
+            fetchUsers(1, currentQuery, perPage);
+        });
 
-        // Tìm kiếm
-        document.getElementById('searchForm').addEventListener('submit', function(e) {
+        // Export to CSV
+        document.getElementById('btnExport').addEventListener('click', async () => {
+            try {
+                const url = `${apiBase}?limit=10000&q=${encodeURIComponent(currentQuery)}`;
+                const response = await fetch(url);
+                const result = await response.json();
+                
+                if (result.success && result.data && result.data.data) {
+                    const users = result.data.data;
+                    let csv = 'STT,Tên,Email,Ngày tạo\n';
+                    
+                    users.forEach((user, index) => {
+                        const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : '';
+                        csv += `${index + 1},"${user.name}","${user.email}","${createdAt}"\n`;
+                    });
+                    
+                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+                    const link = document.createElement('a');
+                    const url = URL.createObjectURL(blob);
+                    link.setAttribute('href', url);
+                    link.setAttribute('download', `users_${new Date().getTime()}.csv`);
+                    link.style.visibility = 'hidden';
+                    document.body.appendChild(link);
+                    link.click();
+                    document.body.removeChild(link);
+                    
+                    alert('Export thành công!');
+                } else {
+                    alert('Không thể export dữ liệu.');
+                }
+            } catch (error) {
+                console.error('Export failed:', error);
+                alert('Có lỗi xảy ra khi export.');
+            }
+        });
+
+        // Search handler
+        const handleSearch = debounce((query) => {
+            fetchUsers(1, query, itemsPerPage);
+        }, 300);
+
+        document.getElementById('searchInput').addEventListener('input', (e) => {
+            handleSearch(e.target.value);
+        });
+
+        document.getElementById('searchForm').addEventListener('submit', (e) => {
             e.preventDefault();
-            const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
-            
-            if (searchValue) {
-                const filteredUsers = currentUsers.filter(user => 
-                    user.name.toLowerCase().includes(searchValue) ||
-                    user.email.toLowerCase().includes(searchValue)
-                );
-                currentPage = 1;
-                displayUsers(filteredUsers);
-                setupPagination(filteredUsers);
+            const query = document.getElementById('searchInput').value;
+            fetchUsers(1, query, itemsPerPage);
+        });
+
+        // URL State Management
+        function updateURL(page, query, perPage) {
+            const url = new URL(window.location);
+            url.searchParams.set('page', page);
+            url.searchParams.set('per_page', perPage);
+            if (query) {
+                url.searchParams.set('q', query);
             } else {
-                currentPage = 1;
-                listUsers();
+                url.searchParams.delete('q');
             }
+            window.history.pushState({}, '', url);
+        }
+
+        function getURLParams() {
+            const url = new URL(window.location);
+            return {
+                page: parseInt(url.searchParams.get('page')) || 1,
+                query: url.searchParams.get('q') || '',
+                perPage: parseInt(url.searchParams.get('per_page')) || 5
+            };
+        }
+
+        // Initial load from URL params
+        document.addEventListener('DOMContentLoaded', () => {
+            const params = getURLParams();
+            itemsPerPage = params.perPage;
+            document.getElementById('perPageSelect').value = params.perPage;
+            document.getElementById('searchInput').value = params.query;
+            fetchUsers(params.page, params.query, params.perPage);
         });
 
-        // Reset tìm kiếm
-        document.getElementById('searchInput').addEventListener('input', function() {
-            if (this.value.trim() === '') {
-                currentPage = 1;
-                listUsers();
-            }
-        });
-
-        // Load dữ liệu khi trang được tải
-        document.addEventListener('DOMContentLoaded', function() {
-            console.log('Trang đã tải xong, bắt đầu load dữ liệu...');
-            listUsers();
+        // Handle browser back/forward buttons
+        window.addEventListener('popstate', () => {
+            const params = getURLParams();
+            itemsPerPage = params.perPage;
+            document.getElementById('perPageSelect').value = params.perPage;
+            document.getElementById('searchInput').value = params.query;
+            fetchUsers(params.page, params.query, params.perPage);
         });
     </script>
 </body>
-</html>
-
