@@ -44,15 +44,6 @@
                                             <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
                                                 <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                                             </button>
-                                            <button class="btn btn-outline-primary" id="btnExport" style="padding: 8px 16px; border-radius: 8px;">
-                                                <i class="icon-download"></i> Export CSV
-                                            </button>
-                                            <select class="form-select" id="perPageSelect" style="width: auto; padding: 8px 12px; border-radius: 8px;">
-                                                <option value="5">5 / trang</option>
-                                                <option value="10">10 / trang</option>
-                                                <option value="20">20 / trang</option>
-                                                <option value="50">50 / trang</option>
-                                            </select>
                                             <a class="tf-button style-1 w208" href="#" data-bs-toggle="modal" data-bs-target="#addAccountModal">
                                                 <i class="icon-plus"></i>Thêm mới
                                             </a>
@@ -202,7 +193,7 @@
         
         let currentPage = 1;
         let currentQuery = '';
-        let itemsPerPage = 5;
+        let itemsPerPage = 10;
         let paginationData = null;
         let isLoading = false;
         let selectedUsers = new Set();
@@ -234,15 +225,15 @@
         }
 
         // Fetches users from the API with server-side pagination
-        async function fetchUsers(page = 1, query = '', perPage = itemsPerPage) {
+        async function fetchUsers(page = 1, query = '') {
             if (isLoading) return;
             
             isLoading = true;
             const tbody = document.getElementById('users-table-body');
-            tbody.innerHTML = '<tr><td colspan="4" class="text-center">Đang tải...</td></tr>';
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Đang tải...</td></tr>';
             
             try {
-                const url = `${apiBase}?page=${page}&limit=${perPage}&q=${encodeURIComponent(query)}`;
+                const url = `${apiBase}?page=${page}&limit=${itemsPerPage}&q=${encodeURIComponent(query)}`;
                 const response = await fetch(url);
                 
                 if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
@@ -253,15 +244,14 @@
                     paginationData = result.data;
                     currentPage = paginationData.current_page;
                     currentQuery = query;
-                    itemsPerPage = perPage;
-                    updateURL(currentPage, currentQuery, itemsPerPage);
+                    updateURL(currentPage, currentQuery);
                     renderUI();
                 } else {
                     throw new Error('Invalid response format');
                 }
             } catch (error) {
                 console.error("Failed to fetch users:", error);
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
                 paginationData = null;
                 renderUI();
             } finally {
@@ -281,7 +271,7 @@
             paginationContainer.innerHTML = '';
 
             if (!paginationData || !paginationData.data) {
-                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>';
+                tbody.innerHTML = '<tr><td colspan="5" class="text-center">Không có dữ liệu</td></tr>';
                 paginationStart.textContent = '0';
                 paginationEnd.textContent = '0';
                 paginationTotal.textContent = '0';
@@ -476,7 +466,7 @@
                     if (e.currentTarget.parentElement.classList.contains('disabled')) return;
                     const page = parseInt(e.currentTarget.dataset.page);
                     if (page && page !== currentPage) {
-                        fetchUsers(page, currentQuery, itemsPerPage);
+                        fetchUsers(page, currentQuery);
                         window.scrollTo({ top: 0, behavior: 'smooth' });
                     }
                 });
@@ -539,7 +529,7 @@
                     alert('Thêm tài khoản thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
                     form.reset();
-                    fetchUsers(1, currentQuery, itemsPerPage);
+                    fetchUsers(1, currentQuery);
                 } else {
                     const error = await response.json();
                     alert('Lỗi: ' + (error.message || 'Không thể thêm tài khoản.'));
@@ -586,7 +576,7 @@
                 if (response.ok) {
                     alert('Cập nhật thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('editAccountModal')).hide();
-                    fetchUsers(currentPage, currentQuery, itemsPerPage);
+                    fetchUsers(currentPage, currentQuery);
                 } else {
                     const error = await response.json();
                     alert('Lỗi: ' + (error.message || 'Không thể cập nhật.'));
@@ -611,9 +601,9 @@
                     alert('Xóa tài khoản thành công!');
                     
                     if (paginationData.data.length === 1 && currentPage > 1) {
-                        fetchUsers(currentPage - 1, currentQuery, itemsPerPage);
+                        fetchUsers(currentPage - 1, currentQuery);
                     } else {
-                        fetchUsers(currentPage, currentQuery, itemsPerPage);
+                        fetchUsers(currentPage, currentQuery);
                     }
                 } else {
                     const error = await response.json();
@@ -625,51 +615,9 @@
             }
         }
 
-        // Handle items per page change
-        document.getElementById('perPageSelect').addEventListener('change', (e) => {
-            const perPage = parseInt(e.target.value);
-            fetchUsers(1, currentQuery, perPage);
-        });
-
-        // Export to CSV
-        document.getElementById('btnExport').addEventListener('click', async () => {
-            try {
-                const url = `${apiBase}?limit=10000&q=${encodeURIComponent(currentQuery)}`;
-                const response = await fetch(url);
-                const result = await response.json();
-                
-                if (result.success && result.data && result.data.data) {
-                    const users = result.data.data;
-                    let csv = 'STT,Tên,Email,Ngày tạo\n';
-                    
-                    users.forEach((user, index) => {
-                        const createdAt = user.created_at ? new Date(user.created_at).toLocaleDateString('vi-VN') : '';
-                        csv += `${index + 1},"${user.name}","${user.email}","${createdAt}"\n`;
-                    });
-                    
-                    const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
-                    const link = document.createElement('a');
-                    const url = URL.createObjectURL(blob);
-                    link.setAttribute('href', url);
-                    link.setAttribute('download', `users_${new Date().getTime()}.csv`);
-                    link.style.visibility = 'hidden';
-                    document.body.appendChild(link);
-                    link.click();
-                    document.body.removeChild(link);
-                    
-                    alert('Export thành công!');
-                } else {
-                    alert('Không thể export dữ liệu.');
-                }
-            } catch (error) {
-                console.error('Export failed:', error);
-                alert('Có lỗi xảy ra khi export.');
-            }
-        });
-
         // Search handler
         const handleSearch = debounce((query) => {
-            fetchUsers(1, query, itemsPerPage);
+            fetchUsers(1, query);
         }, 300);
 
         document.getElementById('searchInput').addEventListener('input', (e) => {
@@ -679,14 +627,13 @@
         document.getElementById('searchForm').addEventListener('submit', (e) => {
             e.preventDefault();
             const query = document.getElementById('searchInput').value;
-            fetchUsers(1, query, itemsPerPage);
+            fetchUsers(1, query);
         });
 
         // URL State Management
-        function updateURL(page, query, perPage) {
+        function updateURL(page, query) {
             const url = new URL(window.location);
             url.searchParams.set('page', page);
-            url.searchParams.set('per_page', perPage);
             if (query) {
                 url.searchParams.set('q', query);
             } else {
@@ -699,27 +646,22 @@
             const url = new URL(window.location);
             return {
                 page: parseInt(url.searchParams.get('page')) || 1,
-                query: url.searchParams.get('q') || '',
-                perPage: parseInt(url.searchParams.get('per_page')) || 5
+                query: url.searchParams.get('q') || ''
             };
         }
 
         // Initial load from URL params
         document.addEventListener('DOMContentLoaded', () => {
             const params = getURLParams();
-            itemsPerPage = params.perPage;
-            document.getElementById('perPageSelect').value = params.perPage;
             document.getElementById('searchInput').value = params.query;
-            fetchUsers(params.page, params.query, params.perPage);
+            fetchUsers(params.page, params.query);
         });
 
         // Handle browser back/forward buttons
         window.addEventListener('popstate', () => {
             const params = getURLParams();
-            itemsPerPage = params.perPage;
-            document.getElementById('perPageSelect').value = params.perPage;
             document.getElementById('searchInput').value = params.query;
-            fetchUsers(params.page, params.query, params.perPage);
+            fetchUsers(params.page, params.query);
         });
     </script>
 </body>
