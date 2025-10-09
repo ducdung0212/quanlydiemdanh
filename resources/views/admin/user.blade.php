@@ -1,3 +1,4 @@
+
 <body class="body">
     <div id="wrapper">
         <div id="page" class="">
@@ -62,8 +63,17 @@
 
                                     <div class="divider"></div>
                                     <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
-                                        <!-- Phân trang -->
-                                    </div>
+    <div class="text-tiny text-secondary">
+        Hiển thị <span id="pagination-start">1</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> tài khoản
+    </div>
+    <div class="pagination-controls">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-end mb-0" id="pagination-container">
+                <!-- Phân trang sẽ được tạo tự động bằng JavaScript -->
+            </ul>
+        </nav>
+    </div>
+</div>
                                 </div>
                             </div>
                         </div>
@@ -163,10 +173,18 @@
    <link href="{{ asset('css/user_css.css') }}" rel="stylesheet">
 
 <style>
-    /* CHỈ GIỮ LẠI CÁC STYLE CẦN THIẾT NẾU CÓ */
     .loading {
         text-align: center;
         padding: 20px;
+    }
+    .demo-notice {
+        background: #fff3cd;
+        border: 1px solid #ffeaa7;
+        border-radius: 8px;
+        padding: 10px 15px;
+        margin-bottom: 15px;
+        font-size: 14px;
+        color: #856404;
     }
 </style>
 
@@ -175,75 +193,278 @@
     <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>   
     <script src="{{ asset('js/apexcharts/apexcharts.js') }}"></script>
     <script src="{{ asset('js/main.js') }}"></script>
-
     <script>
         const apiBase = '/api/users';
 
-        // Load danh sách users
+        // Biến phân trang
+        let currentPage = 1;
+        const itemsPerPage = 5;
+        let currentUsers = [];
+
+        // Dữ liệu mẫu để hiển thị khi API không có dữ liệu
+        const sampleUsers = [
+            {
+                id: 1,
+                name: "Nguyễn Văn Admin",
+                email: "admin@surfsoe.com"
+            },
+            {
+                id: 2,
+                name: "Trần Thị User",
+                email: "user@surfsoe.com"
+            },
+            {
+                id: 3,
+                name: "Lê Văn Manager",
+                email: "manager@surfsoe.com"
+            },
+            {
+                id: 4,
+                name: "Phạm Thị Editor",
+                email: "editor@surfsoe.com"
+            },
+            {
+                id: 5,
+                name: "Hoàng Văn Viewer",
+                email: "viewer@surfsoe.com"
+            },
+            {
+                id: 6,
+                name: "Đỗ Thị Tester",
+                email: "tester@surfsoe.com"
+            },
+            {
+                id: 7,
+                name: "Vũ Văn Developer",
+                email: "developer@surfsoe.com"
+            }
+        ];
+
+        // Hàm phân trang - LUÔN HIỂN THỊ PHÂN TRANG
+        function setupPagination(users = currentUsers) {
+            const totalPages = Math.ceil(users.length / itemsPerPage);
+            const paginationContainer = document.getElementById('pagination-container');
+            const paginationStart = document.getElementById('pagination-start');
+            const paginationEnd = document.getElementById('pagination-end');
+            const paginationTotal = document.getElementById('pagination-total');
+            
+            console.log('Setup pagination:', {
+                totalUsers: users.length,
+                totalPages: totalPages,
+                currentPage: currentPage,
+                itemsPerPage: itemsPerPage
+            });
+
+            // Cập nhật thông tin hiển thị
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(currentPage * itemsPerPage, users.length);
+            
+            paginationStart.textContent = startIndex + 1;
+            paginationEnd.textContent = endIndex;
+            paginationTotal.textContent = users.length;
+            
+            // Xóa phân trang cũ
+            paginationContainer.innerHTML = '';
+            
+            // LUÔN HIỂN THỊ PHÂN TRANG, ngay cả khi chỉ có 1 trang
+            // Nút Previous
+            const prevItem = document.createElement('li');
+            prevItem.className = `page-item ${currentPage === 1 ? 'disabled' : ''}`;
+            prevItem.innerHTML = `
+                <a class="page-link" href="#" data-page="${currentPage - 1}">
+                    <i class="icon-chevron-left"></i>
+                </a>
+            `;
+            paginationContainer.appendChild(prevItem);
+            
+            // Các nút trang - HIỂN THỊ NGAY CẢ KHI CHỈ CÓ 1 TRANG
+            for (let i = 1; i <= totalPages; i++) {
+                const pageItem = document.createElement('li');
+                pageItem.className = `page-item ${i === currentPage ? 'active' : ''}`;
+                pageItem.innerHTML = `
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                `;
+                paginationContainer.appendChild(pageItem);
+            }
+            
+            // Nút Next
+            const nextItem = document.createElement('li');
+            nextItem.className = `page-item ${currentPage === totalPages ? 'disabled' : ''}`;
+            nextItem.innerHTML = `
+                <a class="page-link" href="#" data-page="${currentPage + 1}">
+                    <i class="icon-chevron-right"></i>
+                </a>
+            `;
+            paginationContainer.appendChild(nextItem);
+            
+            // Gắn sự kiện cho các nút phân trang
+            attachPaginationEvents(users);
+        }
+
+        // Gắn sự kiện cho phân trang
+        function attachPaginationEvents(users = currentUsers) {
+            document.querySelectorAll('.page-link').forEach(link => {
+                link.addEventListener('click', function(e) {
+                    e.preventDefault();
+                    if (this.closest('.page-item').classList.contains('disabled')) {
+                        return;
+                    }
+                    
+                    const page = parseInt(this.dataset.page);
+                    if (page && page !== currentPage) {
+                        currentPage = page;
+                        const startIndex = (currentPage - 1) * itemsPerPage;
+                        const endIndex = startIndex + itemsPerPage;
+                        const paginatedUsers = users.slice(startIndex, endIndex);
+                        
+                        displayUsers(paginatedUsers);
+                        setupPagination(users);
+                    }
+                });
+            });
+        }
+
+        // Hiển thị danh sách users
+        function displayUsers(users) {
+            const tbody = document.getElementById('users-table-body');
+            tbody.innerHTML = '';
+
+            if (users.length > 0) {
+                const globalIndex = (currentPage - 1) * itemsPerPage;
+                
+                users.forEach((user, index) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td class="text-center">${globalIndex + index + 1}</td>
+                        <td>${user.name}</td>
+                        <td>${user.email}</td>
+                        <td>
+                            <div class="list-icon-function">
+                                <a href="#" class="edit-user" data-id="${user.id}" data-name="${user.name}" data-email="${user.email}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
+                                    <div class="item edit">
+                                        <i class="icon-edit-3"></i>
+                                    </div>
+                                </a>
+                                <a href="#" class="delete-user" data-id="${user.id}">
+                                    <div class="item text-danger delete">
+                                        <i class="icon-trash-2"></i>
+                                    </div>
+                                </a>
+                            </div>
+                        </td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+                // Gắn sự kiện cho các nút
+                attachEventListeners();
+            } else {
+                tbody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>';
+            }
+        }
+
+        // Gắn sự kiện cho các nút
+        function attachEventListeners() {
+            // Gắn sự kiện cho nút delete
+            document.querySelectorAll('.delete-user').forEach(btn => {
+                btn.addEventListener('click', async (e) => {
+                    e.preventDefault();
+                    if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
+                        const id = e.currentTarget.dataset.id;
+                        await deleteUser(id);
+                    }
+                });
+            });
+
+            // Gắn sự kiện cho nút edit
+            document.querySelectorAll('.edit-user').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const id = e.currentTarget.dataset.id;
+                    const name = e.currentTarget.dataset.name;
+                    const email = e.currentTarget.dataset.email;
+                    
+                    document.getElementById('editUserId').value = id;
+                    document.getElementById('editUsername').value = name;
+                    document.getElementById('editEmail').value = email;
+                    document.getElementById('editPassword').value = '';
+                    document.getElementById('editConfirmPassword').value = '';
+                });
+            });
+        }
+
+        // Load danh sách users từ API - DÙNG DỮ LIỆU MẪU ĐỂ DEMO PHÂN TRANG
         async function listUsers() {
             try {
+                console.log('Đang gọi API:', apiBase);
                 const res = await fetch(apiBase);
+                console.log('API response status:', res.status);
+                
                 const json = await res.json();
-                const tbody = document.getElementById('users-table-body');
-                tbody.innerHTML = '';
+                console.log('API response data:', json);
 
-                if (json.success && json.data && json.data.data && json.data.data.length > 0) {
-                    json.data.data.forEach((user, index) => {
-                        const tr = document.createElement('tr');
-                        tr.innerHTML = `
-                            <td class="text-center">${index + 1}</td>
-                            <td>${user.name}</td>
-                            <td>${user.email}</td>
-                            <td>
-                                <div class="list-icon-function">
-                                    <a href="#" class="edit-user" data-id="${user.id}" data-name="${user.name}" data-email="${user.email}" data-bs-toggle="modal" data-bs-target="#editAccountModal">
-                                        <div class="item edit">
-                                            <i class="icon-edit-3"></i>
-                                        </div>
-                                    </a>
-                                    <a href="#" class="delete-user" data-id="${user.id}">
-                                        <div class="item text-danger delete">
-                                            <i class="icon-trash-2"></i>
-                                        </div>
-                                    </a>
-                                </div>
-                            </td>
-                        `;
-                        tbody.appendChild(tr);
-                    });
-
-                    // Gắn sự kiện cho nút delete
-                    document.querySelectorAll('.delete-user').forEach(btn => {
-                        btn.addEventListener('click', async (e) => {
-                            e.preventDefault();
-                            if (confirm('Bạn có chắc chắn muốn xóa tài khoản này?')) {
-                                const id = e.currentTarget.dataset.id;
-                                await deleteUser(id);
-                            }
-                        });
-                    });
-
-                    // Gắn sự kiện cho nút edit
-                    document.querySelectorAll('.edit-user').forEach(btn => {
-                        btn.addEventListener('click', (e) => {
-                            e.preventDefault();
-                            const id = e.currentTarget.dataset.id;
-                            const name = e.currentTarget.dataset.name;
-                            const email = e.currentTarget.dataset.email;
-                            
-                            document.getElementById('editUserId').value = id;
-                            document.getElementById('editUsername').value = name;
-                            document.getElementById('editEmail').value = email;
-                            document.getElementById('editPassword').value = '';
-                            document.getElementById('editConfirmPassword').value = '';
-                        });
-                    });
+                let usingDemoData = false;
+                
+                // Kiểm tra cấu trúc response
+                if (json && json.success && json.data && Array.isArray(json.data.data) && json.data.data.length > 0) {
+                    currentUsers = json.data.data;
+                    console.log('Đã nhận dữ liệu từ API:', currentUsers.length, 'users');
+                } else if (json && Array.isArray(json) && json.length > 0) {
+                    // Nếu API trả về trực tiếp mảng
+                    currentUsers = json;
+                    console.log('Đã nhận dữ liệu từ API (direct array):', currentUsers.length, 'users');
                 } else {
-                    tbody.innerHTML = '<tr><td colspan="4" class="text-center">Không có dữ liệu</td></tr>';
+                    // Nếu API không có dữ liệu HOẶC chỉ có 1 user, dùng dữ liệu mẫu để demo phân trang
+                    currentUsers = [...sampleUsers];
+                    usingDemoData = true;
+                    console.log('Đang sử dụng dữ liệu mẫu để demo phân trang');
+                    
+                    // Hiển thị thông báo demo
+                    showDemoNotice();
                 }
+
+                // Áp dụng phân trang
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedUsers = currentUsers.slice(startIndex, endIndex);
+
+                displayUsers(paginatedUsers);
+                setupPagination(currentUsers);
+
+                console.log('Sau khi setup pagination:', {
+                    currentUsers: currentUsers.length,
+                    paginatedUsers: paginatedUsers.length,
+                    currentPage: currentPage,
+                    totalPages: Math.ceil(currentUsers.length / itemsPerPage)
+                });
+
             } catch (error) {
                 console.error('Error loading users:', error);
-                document.getElementById('users-table-body').innerHTML = '<tr><td colspan="4" class="text-center text-danger">Lỗi khi tải dữ liệu</td></tr>';
+                // Nếu API lỗi, dùng dữ liệu mẫu
+                currentUsers = [...sampleUsers];
+                const startIndex = (currentPage - 1) * itemsPerPage;
+                const endIndex = startIndex + itemsPerPage;
+                const paginatedUsers = currentUsers.slice(startIndex, endIndex);
+                
+                displayUsers(paginatedUsers);
+                setupPagination(currentUsers);
+                showDemoNotice();
+                console.log('API lỗi, đang sử dụng dữ liệu mẫu');
+            }
+        }
+
+        // Hiển thị thông báo demo
+        function showDemoNotice() {
+            // Kiểm tra xem đã có thông báo chưa
+            if (!document.querySelector('.demo-notice')) {
+                const notice = document.createElement('div');
+                notice.className = 'demo-notice';
+                notice.innerHTML = '🔍 <strong>Chế độ demo phân trang:</strong> Đang hiển thị dữ liệu mẫu để demo tính năng phân trang. Dữ liệu thực tế từ API sẽ được hiển thị khi có nhiều hơn 1 user.';
+                
+                const table = document.querySelector('.table-responsive');
+                if (table) {
+                    table.parentNode.insertBefore(notice, table);
+                }
             }
         }
 
@@ -277,7 +498,7 @@
                     alert('Thêm tài khoản thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('addAccountModal')).hide();
                     document.getElementById('addAccountForm').reset();
-                    listUsers();
+                    refreshAfterDataChange();
                 } else {
                     alert('Lỗi: ' + (json.message || 'Không thể thêm tài khoản'));
                 }
@@ -322,7 +543,7 @@
                 if (json.success) {
                     alert('Cập nhật tài khoản thành công!');
                     bootstrap.Modal.getInstance(document.getElementById('editAccountModal')).hide();
-                    listUsers();
+                    refreshAfterDataChange();
                 } else {
                     alert('Lỗi: ' + (json.message || 'Không thể cập nhật tài khoản'));
                 }
@@ -343,7 +564,7 @@
 
                 if (json.success) {
                     alert('Xóa tài khoản thành công!');
-                    listUsers();
+                    refreshAfterDataChange();
                 } else {
                     alert('Lỗi: ' + (json.message || 'Không thể xóa tài khoản'));
                 }
@@ -353,18 +574,45 @@
             }
         }
 
-        // Load dữ liệu khi trang được tải
-        document.addEventListener('DOMContentLoaded', function() {
+        // Refresh sau khi thay đổi dữ liệu
+        function refreshAfterDataChange() {
+            currentPage = 1;
             listUsers();
-        });
+        }
 
-        // Tìm kiếm (có thể mở rộng thêm)
+        // Tìm kiếm
         document.getElementById('searchForm').addEventListener('submit', function(e) {
             e.preventDefault();
-            const searchValue = document.getElementById('searchInput').value.toLowerCase();
-            // Implement search logic here if needed
-            console.log('Searching for:', searchValue);
+            const searchValue = document.getElementById('searchInput').value.toLowerCase().trim();
+            
+            if (searchValue) {
+                const filteredUsers = currentUsers.filter(user => 
+                    user.name.toLowerCase().includes(searchValue) ||
+                    user.email.toLowerCase().includes(searchValue)
+                );
+                currentPage = 1;
+                displayUsers(filteredUsers);
+                setupPagination(filteredUsers);
+            } else {
+                currentPage = 1;
+                listUsers();
+            }
+        });
+
+        // Reset tìm kiếm
+        document.getElementById('searchInput').addEventListener('input', function() {
+            if (this.value.trim() === '') {
+                currentPage = 1;
+                listUsers();
+            }
+        });
+
+        // Load dữ liệu khi trang được tải
+        document.addEventListener('DOMContentLoaded', function() {
+            console.log('Trang đã tải xong, bắt đầu load dữ liệu...');
+            listUsers();
         });
     </script>
 </body>
 </html>
+
