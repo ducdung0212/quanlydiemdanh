@@ -21,15 +21,30 @@ class UserRequest extends FormRequest
      */
     public function rules(): array
     {   
-        $id=$this->route()->user;
-        $emailRule ='required|email|unique:users,email';
-        if($id){
-            $emailRule .=",{$id}";
+        $id = $this->route()->user;
+        $emailRule = 'required|email|unique:users,email';
+        if ($id) {
+            $emailRule .= ",{$id}";
+            $name = $this->name;
+            $email = $this->email;
+            $password = $this->password;
+            $rules = [];
+            if ($name) {
+                $rules['name'] = 'required|min:4';
+            }
+            if ($email) {
+                $rules['email'] = $emailRule;
+            }
+            if ($password) {
+                $rules['password'] = 'required|min:6';
+            }
+            return $rules;
         }
+
         return [
-            'name'=>'required|min:4',
-            'email'=>$emailRule,
-            'password'=>'required|min:6',
+            'name' => 'required|min:4',
+            'email' => $emailRule,
+            'password' => 'required|min:6',
         ];
     }
     public function messages(){

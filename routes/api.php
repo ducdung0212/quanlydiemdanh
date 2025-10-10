@@ -17,4 +17,4 @@ use App\Http\Controllers\StudentController;
 */
 
 Route::apiResource('users', UserController::class);
-Route::apiResource('students', \App\Http\Controllers\StudentController::class);
+Route::apiResource('students', StudentController::class);
