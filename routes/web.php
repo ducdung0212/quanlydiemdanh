@@ -22,10 +22,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('admin.add-product');
     })->name('product.add');
     Route::get('/student', function () {
-        return view('admin.add-student');
+        return view('admin.student');
     })->name('student');
       Route::get('/teacher', function () {
-        return view('admin.add-teacher');
+        return view('admin.teacher');
     })->name('teacher');
     Route::get('/phancong', function () {
         return view('admin.phancong-teacher');

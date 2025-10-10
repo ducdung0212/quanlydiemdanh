@@ -297,7 +297,7 @@
         </div>
     </div>
 
-   <link href="{{ asset('css/teacher_css.css') }}" rel="stylesheet">
+   <link href="{{ asset('css/style.css') }}" rel="stylesheet">
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
