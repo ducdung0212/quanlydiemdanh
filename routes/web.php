@@ -24,6 +24,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/student', function () {
         return view('admin.add-student');
     })->name('student');
+      Route::get('/teacher', function () {
+        return view('admin.add-teacher');
+    })->name('teacher');
+    Route::get('/phancong', function () {
+        return view('admin.phancong-teacher');
+    })->name('phancong');
+
 
 });
 
