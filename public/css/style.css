@@ -6307,5 +6307,788 @@ select.h40 {
     width: 100%;
   }
 }
+/* ==============================
+   CSS CHUNG CHO CÁC TRANG QUẢN LÝ
+   ============================== */
+
+/* 1. Sửa lỗi căn chỉnh trong bảng */
+.wg-box .table td {
+    vertical-align: middle !important;
+    padding: 12px 8px !important;
+}
+
+.wg-box .table th {
+    vertical-align: middle !important;
+    padding: 12px 8px !important;
+}
+
+/* Đảm bảo chiều cao hàng đồng đều */
+.wg-box .table tbody tr {
+    height: 60px !important;
+}
+
+/* Căn giữa nội dung trong các ô bảng */
+#assignments-table-body td,
+#students-table-body td,
+#teachers-table-body td,
+#users-table-body td {
+    vertical-align: middle !important;
+    line-height: 1.4 !important;
+}
+
+/* Căn giữa số thứ tự */
+.wg-box .text-center {
+    text-align: center !important;
+    vertical-align: middle !important;
+}
+
+/* Căn giữa các icon action */
+.list-icon-function {
+    display: flex !important;
+    justify-content: center !important;
+    align-items: center !important;
+    height: 100% !important;
+    gap: 8px !important;
+}
+
+/* 2. Modal backdrop */
+.modal-backdrop {
+    display: none !important;
+}
+
+.modal {
+    backdrop-filter: none !important;
+}
+
+/* 3. Tùy chỉnh giao diện modal CHUNG */
+#addAssignmentModal .modal-dialog,
+#editAssignmentModal .modal-dialog,
+#viewAssignmentModal .modal-dialog,
+#addStudentModal .modal-dialog,
+#editStudentModal .modal-dialog,
+#viewStudentModal .modal-dialog,
+#addTeacherModal .modal-dialog,
+#editTeacherModal .modal-dialog,
+#viewTeacherModal .modal-dialog,
+#addAccountModal .modal-dialog,
+#editAccountModal .modal-dialog,
+#importExcelModal .modal-dialog {
+    max-width: 800px !important;
+}
+
+#importExcelModal .modal-dialog {
+    max-width: 600px !important;
+}
+
+/* Header modal */
+#addAssignmentModal .modal-header,
+#editAssignmentModal .modal-header,
+#viewAssignmentModal .modal-header,
+#addStudentModal .modal-header,
+#editStudentModal .modal-header,
+#viewStudentModal .modal-header,
+#addTeacherModal .modal-header,
+#editTeacherModal .modal-header,
+#viewTeacherModal .modal-header,
+#addAccountModal .modal-header,
+#editAccountModal .modal-header,
+#importExcelModal .modal-header {
+    padding: 25px 30px !important;
+    border-bottom: 1px solid #eee !important;
+}
+
+/* Title modal */
+#addAssignmentModal .modal-title,
+#editAssignmentModal .modal-title,
+#viewAssignmentModal .modal-title,
+#addStudentModal .modal-title,
+#editStudentModal .modal-title,
+#viewStudentModal .modal-title,
+#addTeacherModal .modal-title,
+#editTeacherModal .modal-title,
+#viewTeacherModal .modal-title,
+#addAccountModal .modal-title,
+#editAccountModal .modal-title,
+#importExcelModal .modal-title {
+    font-size: 1.4rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+/* Body modal */
+#addAssignmentModal .modal-body,
+#editAssignmentModal .modal-body,
+#viewAssignmentModal .modal-body,
+#addStudentModal .modal-body,
+#editStudentModal .modal-body,
+#viewStudentModal .modal-body,
+#addTeacherModal .modal-body,
+#editTeacherModal .modal-body,
+#viewTeacherModal .modal-body,
+#addAccountModal .modal-body,
+#editAccountModal .modal-body,
+#importExcelModal .modal-body {
+    padding: 30px !important;
+}
+
+/* Footer modal */
+#addAssignmentModal .modal-footer,
+#editAssignmentModal .modal-footer,
+#viewAssignmentModal .modal-footer,
+#addStudentModal .modal-footer,
+#editStudentModal .modal-footer,
+#viewStudentModal .modal-footer,
+#addTeacherModal .modal-footer,
+#editTeacherModal .modal-footer,
+#viewTeacherModal .modal-footer,
+#addAccountModal .modal-footer,
+#editAccountModal .modal-footer,
+#importExcelModal .modal-footer {
+    padding: 25px 30px !important;
+    border-top: 1px solid #eee !important;
+}
+
+/* 4. Label và input - TĂNG KÍCH THƯỚC CHỮ */
+#addAssignmentModal .form-label,
+#editAssignmentModal .form-label,
+#viewAssignmentModal .form-label,
+#addStudentModal .form-label,
+#editStudentModal .form-label,
+#viewStudentModal .form-label,
+#addTeacherModal .form-label,
+#editTeacherModal .form-label,
+#viewTeacherModal .form-label,
+#addAccountModal .form-label,
+#editAccountModal .form-label,
+#importExcelModal .form-label {
+    font-size: 15px !important;
+    margin-bottom: 10px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+#addAssignmentModal .form-control,
+#editAssignmentModal .form-control,
+#viewAssignmentModal .form-control,
+#addStudentModal .form-control,
+#editStudentModal .form-control,
+#viewStudentModal .form-control,
+#addTeacherModal .form-control,
+#editTeacherModal .form-control,
+#viewTeacherModal .form-control,
+#addAccountModal .form-control,
+#editAccountModal .form-control,
+#importExcelModal .form-control,
+#addAssignmentModal select,
+#editAssignmentModal select,
+#viewAssignmentModal select {
+    font-size: 16px !important;
+    padding: 14px 16px !important;
+    border-radius: 8px !important;
+    border: 1px solid #ddd !important;
+    height: auto !important;
+    margin-bottom: 20px !important;
+}
+
+/* 5. Focus state cho input và select */
+#addAssignmentModal .form-control:focus,
+#editAssignmentModal .form-control:focus,
+#viewAssignmentModal .form-control:focus,
+#addStudentModal .form-control:focus,
+#editStudentModal .form-control:focus,
+#viewStudentModal .form-control:focus,
+#addTeacherModal .form-control:focus,
+#editTeacherModal .form-control:focus,
+#viewTeacherModal .form-control:focus,
+#addAccountModal .form-control:focus,
+#editAccountModal .form-control:focus,
+#importExcelModal .form-control:focus,
+#addAssignmentModal select:focus,
+#editAssignmentModal select:focus,
+#viewAssignmentModal select:focus {
+    border-color: #2377FC !important;
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+
+/* 6. Nút trong modal */
+#addAssignmentModal .btn,
+#editAssignmentModal .btn,
+#viewAssignmentModal .btn,
+#addStudentModal .btn,
+#editStudentModal .btn,
+#viewStudentModal .btn,
+#addTeacherModal .btn,
+#editTeacherModal .btn,
+#viewTeacherModal .btn,
+#addAccountModal .btn,
+#editAccountModal .btn,
+#importExcelModal .btn {
+    font-size: 14px !important;
+    padding: 12px 24px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    transition: all 0.2s ease !important;
+}
+
+#addAssignmentModal .btn:hover,
+#editAssignmentModal .btn:hover,
+#viewAssignmentModal .btn:hover,
+#addStudentModal .btn:hover,
+#editStudentModal .btn:hover,
+#viewStudentModal .btn:hover,
+#addTeacherModal .btn:hover,
+#editTeacherModal .btn:hover,
+#viewTeacherModal .btn:hover,
+#addAccountModal .btn:hover,
+#editAccountModal .btn:hover,
+#importExcelModal .btn:hover {
+    transform: translateY(-1px) !important;
+}
+
+#addAssignmentModal .btn-primary,
+#editAssignmentModal .btn-primary,
+#viewAssignmentModal .btn-primary,
+#addStudentModal .btn-primary,
+#editStudentModal .btn-primary,
+#viewStudentModal .btn-primary,
+#addTeacherModal .btn-primary,
+#editTeacherModal .btn-primary,
+#viewTeacherModal .btn-primary,
+#addAccountModal .btn-primary,
+#editAccountModal .btn-primary,
+#importExcelModal .btn-primary {
+    background-color: #2377FC !important;
+    border: none !important;
+}
+
+#addAssignmentModal .btn-primary:hover,
+#editAssignmentModal .btn-primary:hover,
+#viewAssignmentModal .btn-primary:hover,
+#addStudentModal .btn-primary:hover,
+#editStudentModal .btn-primary:hover,
+#viewStudentModal .btn-primary:hover,
+#addTeacherModal .btn-primary:hover,
+#editTeacherModal .btn-primary:hover,
+#viewTeacherModal .btn-primary:hover,
+#addAccountModal .btn-primary:hover,
+#editAccountModal .btn-primary:hover,
+#importExcelModal .btn-primary:hover {
+    background-color: #1c68e0 !important;
+}
+
+#addAssignmentModal .btn-secondary,
+#editAssignmentModal .btn-secondary,
+#viewAssignmentModal .btn-secondary,
+#addStudentModal .btn-secondary,
+#editStudentModal .btn-secondary,
+#viewStudentModal .btn-secondary,
+#addTeacherModal .btn-secondary,
+#editTeacherModal .btn-secondary,
+#viewTeacherModal .btn-secondary,
+#addAccountModal .btn-secondary,
+#editAccountModal .btn-secondary,
+#importExcelModal .btn-secondary {
+    background-color: #6c757d !important;
+    border: none !important;
+}
+
+#addAssignmentModal .btn-secondary:hover,
+#editAssignmentModal .btn-secondary:hover,
+#viewAssignmentModal .btn-secondary:hover,
+#addStudentModal .btn-secondary:hover,
+#editStudentModal .btn-secondary:hover,
+#viewStudentModal .btn-secondary:hover,
+#addTeacherModal .btn-secondary:hover,
+#editTeacherModal .btn-secondary:hover,
+#viewTeacherModal .btn-secondary:hover,
+#addAccountModal .btn-secondary:hover,
+#editAccountModal .btn-secondary:hover,
+#importExcelModal .btn-secondary:hover {
+    background-color: #5a6268 !important;
+}
+
+/* 7. Đổ bóng modal */
+#addAssignmentModal .modal-content,
+#editAssignmentModal .modal-content,
+#viewAssignmentModal .modal-content,
+#addStudentModal .modal-content,
+#editStudentModal .modal-content,
+#viewStudentModal .modal-content,
+#addTeacherModal .modal-content,
+#editTeacherModal .modal-content,
+#viewTeacherModal .modal-content,
+#addAccountModal .modal-content,
+#editAccountModal .modal-content,
+#importExcelModal .modal-content {
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
+    border-radius: 12px !important;
+    border: none !important;
+}
+
+/* 8. Tìm kiếm */
+.wg-filter .form-control {
+    font-size: 14px !important;
+    padding: 10px 15px !important;
+}
+
+/* Đảm bảo container flex hoạt động đúng */
+.wg-box .flex.items-center.justify-between.gap10.flex-wrap {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: space-between !important;
+    gap: 10px !important;
+    flex-wrap: wrap !important;
+    width: 100% !important;
+}
+
+.wg-filter {
+    flex-grow: 1 !important;
+    display: flex !important;
+    align-items: center !important;
+    margin: 0 !important;
+}
+
+/* Đảm bảo các nút bên phải thẳng hàng */
+.flex.items-center.gap10 {
+    display: flex !important;
+    align-items: center !important;
+    gap: 10px !important;
+    margin: 0 !important;
+}
+
+/* 9. Tùy chỉnh các nút chính */
+.tf-button {
+    display: inline-flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    padding: 12px 20px !important;
+    border-radius: 8px !important;
+    font-weight: 500 !important;
+    font-size: 14px !important;
+    transition: all 0.2s ease !important;
+    text-decoration: none !important;
+}
+
+.tf-button.style-1 {
+    background: #2377FC !important;
+    color: white !important;
+    border: none !important;
+}
+
+.tf-button.style-1:hover {
+    background: #1c68e0 !important;
+    transform: translateY(-1px) !important;
+}
+
+.tf-button.style-2 {
+    background: white !important;
+    color: #2377FC !important;
+    border: 1px solid #2377FC !important;
+}
+
+.tf-button.style-2:hover {
+    background: #f8f9fa !important;
+    transform: translateY(-1px) !important;
+}
+
+/* 10. Tùy chỉnh icon trong bảng */
+.list-icon-function .item {
+    width: 36px !important;
+    height: 36px !important;
+    border-radius: 6px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    transition: all 0.2s ease !important;
+    cursor: pointer !important;
+}
+
+.list-icon-function .item.view {
+    background: rgba(40, 167, 69, 0.1) !important;
+    color: #28a745 !important;
+}
+
+.list-icon-function .item.view:hover {
+    background: #28a745 !important;
+    color: white !important;
+}
+
+.list-icon-function .item.edit {
+    background: rgba(255, 193, 7, 0.1) !important;
+    color: #ffc107 !important;
+}
+
+.list-icon-function .item.edit:hover {
+    background: #ffc107 !important;
+    color: white !important;
+}
+
+.list-icon-function .item.delete {
+    background: rgba(220, 53, 69, 0.1) !important;
+    color: #dc3545 !important;
+}
+
+.list-icon-function .item.delete:hover {
+    background: #dc3545 !important;
+    color: white !important;
+}
+
+/* 11. Tùy chỉnh hiển thị thông tin chi tiết */
+#viewAssignmentModal .modal-body,
+#viewStudentModal .modal-body,
+#viewTeacherModal .modal-body {
+    font-size: 16px !important;
+}
+
+/* Tăng kích thước font cho các nhãn thông tin */
+#viewAssignmentModal strong,
+#viewStudentModal strong,
+#viewTeacherModal strong {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin-bottom: 8px !important;
+}
+
+/* Tăng kích thước font cho nội dung thông tin */
+#viewAssignmentModal div[id^="view"],
+#viewStudentModal div[id^="view"],
+#viewTeacherModal div[id^="view"] {
+    font-size: 17px !important;
+    color: #555 !important;
+    margin-bottom: 20px !important;
+    line-height: 1.5 !important;
+}
+
+/* Đặc biệt tăng kích thước cho mã */
+#viewAssignmentModal .text-primary,
+#viewStudentModal .text-primary,
+#viewTeacherModal .text-primary {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #2377FC !important;
+}
+
+/* Tăng kích thước cho tiêu đề modal */
+#viewAssignmentModal .modal-title,
+#viewStudentModal .modal-title,
+#viewTeacherModal .modal-title {
+    font-size: 1.5rem !important;
+    font-weight: 700 !important;
+}
+
+/* 12. Tùy chỉnh textarea */
+#addAssignmentModal textarea,
+#editAssignmentModal textarea,
+#addStudentModal textarea,
+#editStudentModal textarea,
+#addTeacherModal textarea,
+#editTeacherModal textarea {
+    resize: vertical !important;
+    min-height: 100px !important;
+}
+
+/* 13. Tùy chỉnh các trường bắt buộc */
+.form-label[for]:after {
+    content: " *" !important;
+    color: #dc3545 !important;
+}
+
+/* 14. Tùy chỉnh breadcrumb */
+.breadcrumbs {
+    font-size: 14px !important;
+}
+
+.breadcrumbs a {
+    color: #2377FC !important;
+    text-decoration: none !important;
+}
+
+.breadcrumbs a:hover {
+    text-decoration: underline !important;
+}
+
+.breadcrumbs .text-tiny {
+    font-size: 14px !important;
+}
+
+/* 15. Tùy chỉnh tiêu đề trang */
+h3 {
+    font-size: 1.8rem !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+    margin: 0 !important;
+}
+
+/* 16. Tùy chỉnh phân trang */
+.wgp-pagination {
+    padding: 20px 0 10px 0 !important;
+    border-top: 1px solid #eee !important;
+    margin-top: 20px !important;
+}
+
+.pagination-controls {
+    display: flex !important;
+    align-items: center !important;
+}
+
+.pagination {
+    margin-bottom: 0 !important;
+    gap: 5px !important;
+}
+
+.pagination .page-item {
+    margin: 0 2px !important;
+}
+
+.pagination .page-link {
+    border: 1px solid #ddd !important;
+    border-radius: 6px !important;
+    padding: 8px 12px !important;
+    font-size: 14px !important;
+    color: #2377FC !important;
+    background: white !important;
+    min-width: 40px !important;
+    text-align: center !important;
+    transition: all 0.2s ease !important;
+}
+
+.pagination .page-link:hover {
+    background: #f8f9fa !important;
+    border-color: #2377FC !important;
+    color: #2377FC !important;
+}
+
+.pagination .page-item.active .page-link {
+    background: #2377FC !important;
+    border-color: #2377FC !important;
+    color: white !important;
+}
+
+.pagination .page-item.disabled .page-link {
+    color: #6c757d !important;
+    background: #f8f9fa !important;
+    border-color: #ddd !important;
+    cursor: not-allowed !important;
+}
+
+.pagination .page-link:focus {
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+
+/* Icon trong phân trang */
+.pagination .page-link i {
+    font-size: 12px !important;
+}
+
+/* 17. Tùy chỉnh select */
+select.form-control {
+    appearance: none !important;
+    background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' fill='none' viewBox='0 0 20 20'%3e%3cpath stroke='%236b7280' stroke-linecap='round' stroke-linejoin='round' stroke-width='1.5' d='m6 8 4 4 4-4'/%3e%3c/svg%3e") !important;
+    background-position: right 0.5rem center !important;
+    background-repeat: no-repeat !important;
+    background-size: 1.5em 1.5em !important;
+    padding-right: 2.5rem !important;
+}
+
+/* 18. Tùy chỉnh date input */
+input[type="date"].form-control {
+    position: relative;
+}
+
+input[type="date"].form-control::-webkit-calendar-picker-indicator {
+    background: transparent;
+    bottom: 0;
+    color: transparent;
+    cursor: pointer;
+    height: auto;
+    left: 0;
+    position: absolute;
+    right: 0;
+    top: 0;
+    width: auto;
+}
+
+/* 19. Tùy chỉnh form text */
+.form-text {
+    font-size: 13px !important;
+    color: #6c757d !important;
+    margin-top: 5px !important;
+}
+
+.form-text ul {
+    margin-top: 5px !important;
+    margin-bottom: 0 !important;
+    padding-left: 20px !important;
+}
+
+.form-text li {
+    margin-bottom: 3px !important;
+}
+
+/* 20. Tùy chỉnh file input */
+.form-control[type="file"] {
+    padding: 12px !important;
+}
+
+/* 21. Text danger cho delete */
+.text-danger {
+    color: #dc3545 !important;
+}
+
+.text-danger:hover {
+    color: #c82333 !important;
+}
+
+/* 22. Loading state */
+.loading {
+    text-align: center;
+    padding: 20px;
+    color: #666;
+}
+
+/* 23. Tùy chỉnh text thông tin phân trang */
+.text-tiny.text-secondary {
+    font-size: 14px !important;
+    color: #6c757d !important;
+}
+
+/* ==============================
+   RESPONSIVE DESIGN
+   ============================== */
+
+@media (max-width: 768px) {
+    /* Table responsive */
+    .wg-box .table-responsive {
+        overflow-x: auto !important;
+    }
+    
+    /* Modal responsive */
+    .modal-dialog {
+        margin: 20px !important;
+    }
+    
+    #addAssignmentModal .modal-dialog,
+    #editAssignmentModal .modal-dialog,
+    #viewAssignmentModal .modal-dialog,
+    #addStudentModal .modal-dialog,
+    #editStudentModal .modal-dialog,
+    #viewStudentModal .modal-dialog,
+    #addTeacherModal .modal-dialog,
+    #editTeacherModal .modal-dialog,
+    #viewTeacherModal .modal-dialog,
+    #addAccountModal .modal-dialog,
+    #editAccountModal .modal-dialog {
+        max-width: calc(100% - 40px) !important;
+    }
+    
+    /* Search responsive */
+    .wg-filter .form-search {
+        max-width: 100% !important;
+        margin-bottom: 15px !important;
+        height: 46px !important;
+    }
+    
+    .form-search {
+        max-width: 100% !important;
+        margin-bottom: 15px !important;
+    }
+    
+    /* Layout responsive */
+    .wg-box .flex.items-center.justify-between.gap10.flex-wrap {
+        flex-direction: column !important;
+        align-items: stretch !important;
+    }
+    
+    .wg-filter {
+        width: 100% !important;
+        margin-bottom: 15px !important;
+    }
+    
+    .flex.items-center.gap10 {
+        width: 100% !important;
+        justify-content: space-between !important;
+    }
+    
+    .tf-button {
+        flex: 1 !important;
+        max-width: 48% !important;
+    }
+    
+    /* Form responsive */
+    .wg-filter .form-search fieldset.name input {
+        padding: 10px 14px !important;
+    }
+    
+    .wg-filter .form-search .button-submit button {
+        padding: 0 16px !important;
+    }
+    
+    #addAccountModal .form-control,
+    #editAccountModal .form-control {
+        font-size: 16px !important;
+        padding: 12px 14px !important;
+    }
+    
+    /* Pagination responsive */
+    .wgp-pagination {
+        flex-direction: column !important;
+        gap: 15px !important;
+        align-items: center !important;
+    }
+    
+    .pagination-controls {
+        width: 100% !important;
+        justify-content: center !important;
+    }
+    
+    .pagination {
+        flex-wrap: wrap !important;
+        justify-content: center !important;
+    }
+    
+    /* View modal responsive */
+    #viewAssignmentModal div[id^="view"],
+    #viewStudentModal div[id^="view"],
+    #viewTeacherModal div[id^="view"] {
+        font-size: 16px !important;
+    }
+    
+    #viewAssignmentModal .text-primary,
+    #viewStudentModal .text-primary,
+    #viewTeacherModal .text-primary {
+        font-size: 17px !important;
+    }
+    
+    #viewAssignmentModal strong,
+    #viewStudentModal strong,
+    #viewTeacherModal strong {
+        font-size: 15px !important;
+    }
+}
+
+/* Mobile small screen */
+@media (max-width: 576px) {
+    #viewStudentModal .col-md-3,
+    #viewStudentModal .col-md-9,
+    #viewTeacherModal .col-md-3,
+    #viewTeacherModal .col-md-9 {
+        padding-right: 15px !important;
+        padding-left: 15px !important;
+        width: 100% !important;
+        text-align: center !important;
+    }
+    
+    #studentAvatarContainer,
+    #teacherAvatarContainer {
+        margin-bottom: 25px !important;
+    }
+    
+    .tf-button {
+        width: 100% !important;
+        max-width: 100% !important;
+    }
+}
 
 /*# sourceMappingURL=style.css.map */

@@ -4,7 +4,7 @@
     <a href="{{ route('dashboard') }}" id="stu-logo-main" style="display: block !important;">
         <img src="{{ asset('images/logo/STU_logo.webp') }}" alt="STU" 
              id="main-logo-img"
-             style="display: block !important; visibility: visible !important; opacity: 1 !important; height: 150px !important; width: auto !important; max-width: 300px !important; object-fit: contain !important;">
+             style="display: block !important; visibility: visible !important; opacity: 1 !important; height: 100px !important; width: auto !important; max-width: 330px !important; object-fit: contain !important;">
     </a>
    
     <!-- Keep old logo hidden -->
