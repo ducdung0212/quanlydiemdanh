@@ -15,3 +15,31 @@
 
 	.btn-gradient { @apply text-white font-semibold rounded-full px-6 py-2 shadow-md; }
 	.btn-gradient { background: linear-gradient(90deg,#2563eb,#1e40af); } */
+/* Logo styling */
+/* Logo styling for ALL possible logo elements */
+#stu-logo-main,
+#main-logo-img,
+#site-logo-inner,
+#logo_header {
+    display: block !important;
+    visibility: visible !important;
+    opacity: 1 !important;
+    width: auto !important;
+    height: 60px !important;
+    max-width: 200px !important;
+    object-fit: contain !important;
+}
+
+/* But hide the old one */
+#site-logo-inner,
+#logo_header {
+    display: none !important;
+}
+
+.box-logo {
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    padding: 15px 0 !important;
+    min-height: 80px !important;
+}
