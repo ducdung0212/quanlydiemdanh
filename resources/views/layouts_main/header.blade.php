@@ -25,7 +25,7 @@
         <div class="header-left">
             <a href="{{ route('dashboard') }}">
                 <img class="" id="logo_header_mobile" alt="" src="{{ asset('images/logo/STU_logo.webp') }}"
-                    data-light="{{ asset('images/logo/logo.png') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}"
+                    data-light="{{ asset('images/logo/STU_logo.webp') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}"
                     data-width="154px" data-height="52px" data-retina="{{ asset('images/logo/STU_logo.webp') }}">
             </a>
             <div class="button-show-hide">

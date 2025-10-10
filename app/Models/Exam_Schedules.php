@@ -1,0 +1,222 @@
+<?php
+
+namespace App\Models;
+
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+
+class Exam_Schedules extends Model
+{
+    use HasFactory;
+
+    /**
+     * The table associated with the model.
+     *
+     * @var string
+     */
+    protected $table = 'exam_schedules';
+
+    /**
+     * The attributes that are mass assignable.
+     *
+     * @var array<int, string>
+     */
+    protected $fillable = [
+        'subject_code',
+        'exam_date',
+        'exam_time',
+        'room',
+        'note',
+    ];
+
+    /**
+     * The attributes that should be cast.
+     *
+     * @var array<string, string>
+     */
+    protected $casts = [
+        'exam_date' => 'date',
+        'exam_time' => 'datetime:H:i:s',
+        'created_at' => 'datetime',
+        'updated_at' => 'datetime',
+    ];
+
+    /**
+     * Get the subject for this exam schedule.
+     */
+    public function subject(): BelongsTo
+    {
+        return $this->belongsTo(Subject::class, 'subject_code', 'subject_code');
+    }
+
+    /**
+     * Get all exam rosters for this schedule.
+     */
+    public function examRosters(): HasMany
+    {
+        return $this->hasMany(ExamRoster::class, 'exam_schedule_id');
+    }
+
+    /**
+     * Get all attendance records for this schedule.
+     */
+    public function attendanceRecords(): HasMany
+    {
+        return $this->hasMany(AttendanceRecord::class, 'exam_schedule_id');
+    }
+
+    /**
+     * Get all exam supervisors for this schedule.
+     */
+    public function examSupervisors(): HasMany
+    {
+        return $this->hasMany(ExamSupervisor::class, 'exam_schedule_id');
+    }
+
+    /**
+     * Get all students registered for this exam.
+     */
+    public function students(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Student::class,
+            'exam_rosters',
+            'exam_schedule_id',
+            'student_code'
+        )->withTimestamps();
+    }
+
+    /**
+     * Get all lecturers supervising this exam.
+     */
+    public function lecturers(): BelongsToMany
+    {
+        return $this->belongsToMany(
+            Lecturer::class,
+            'exam_supervisors',
+            'exam_schedule_id',
+            'lecturer_code'
+        )->withTimestamps();
+    }
+
+    /**
+     * Scope a query to only include exams for a specific subject.
+     */
+    public function scopeOfSubject($query, string $subjectCode)
+    {
+        return $query->where('subject_code', $subjectCode);
+    }
+
+    /**
+     * Scope a query to only include exams on a specific date.
+     */
+    public function scopeOnDate($query, string $date)
+    {
+        return $query->whereDate('exam_date', $date);
+    }
+
+    /**
+     * Scope a query to only include upcoming exams.
+     */
+    public function scopeUpcoming($query)
+    {
+        return $query->where('exam_date', '>=', now()->toDateString())
+            ->orderBy('exam_date')
+            ->orderBy('exam_time');
+    }
+
+    /**
+     * Scope a query to only include past exams.
+     */
+    public function scopePast($query)
+    {
+        return $query->where('exam_date', '<', now()->toDateString())
+            ->orderBy('exam_date', 'desc')
+            ->orderBy('exam_time', 'desc');
+    }
+
+    /**
+     * Scope a query to only include exams in a specific room.
+     */
+    public function scopeInRoom($query, string $room)
+    {
+        return $query->where('room', $room);
+    }
+
+    /**
+     * Get the total number of registered students.
+     */
+    public function getRegisteredCountAttribute(): int
+    {
+        return $this->examRosters()->count();
+    }
+
+    /**
+     * Get the total number of attended students.
+     */
+    public function getAttendedCountAttribute(): int
+    {
+        return $this->attendanceRecords()
+            ->where('rekognition_result', 'match')
+            ->count();
+    }
+
+    /**
+     * Get the attendance rate percentage.
+     */
+    public function getAttendanceRateAttribute(): float
+    {
+        $registered = $this->registered_count;
+        if ($registered === 0) {
+            return 0;
+        }
+        
+        return round(($this->attended_count / $registered) * 100, 2);
+    }
+
+    /**
+     * Check if the exam is upcoming.
+     */
+    public function isUpcoming(): bool
+    {
+        return $this->exam_date >= now()->toDateString();
+    }
+
+    /**
+     * Check if the exam is past.
+     */
+    public function isPast(): bool
+    {
+        return $this->exam_date < now()->toDateString();
+    }
+
+    /**
+     * Check if the exam is today.
+     */
+    public function isToday(): bool
+    {
+        return $this->exam_date->isToday();
+    }
+
+    /**
+     * Get the full exam information.
+     */
+    public function getFullInfoAttribute(): string
+    {
+        return ($this->subject ? $this->subject->name : 'N/A') . 
+               " - {$this->exam_date->format('d/m/Y')} " .
+               " - {$this->exam_time->format('H:i')} " .
+               " - Phòng {$this->room}";
+    }
+
+    /**
+     * Get the exam datetime combined.
+     */
+    public function getExamDateTimeAttribute(): string
+    {
+        return $this->exam_date->format('d/m/Y') . ' ' . $this->exam_time->format('H:i');
+    }
+}
