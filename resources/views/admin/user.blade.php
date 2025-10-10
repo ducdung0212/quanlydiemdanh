@@ -180,7 +180,7 @@
     </div>
 
     <link href="{{ asset('css/common_admin.css') }}" rel="stylesheet">
-    <link href="{{ asset('css/user_css.css') }}" rel="stylesheet">
+    <link href="{{ asset('css/style.css') }}" rel="stylesheet">
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="{{ asset('js/bootstrap.min.js') }}"></script>
