@@ -1,101 +1,72 @@
-/* ==============================
-   CSS RIÊNG CHO TRANG STUDENT - QUẢN LÝ SINH VIÊN
-   ============================== */
+/* Student-specific styles */
 
-/* 1. Sửa lỗi căn chỉnh trong bảng */
-.wg-box .table td {
-    vertical-align: middle !important;
-    padding: 12px 8px !important;
+/* Custom styles for student forms */
+.student-form-section {
+    margin-bottom: 20px;
 }
 
-.wg-box .table th {
-    vertical-align: middle !important;
-    padding: 12px 8px !important;
-}
-
-/* Đảm bảo chiều cao hàng đồng đều */
+/* Specific table styles for student list */
 .wg-box .table tbody tr {
-    height: 60px !important;
+    height: 60px;
 }
 
-/* Căn giữa nội dung trong các ô bảng */
 #students-table-body td {
-    vertical-align: middle !important;
-    line-height: 1.4 !important;
+    line-height: 1.4;
 }
 
-/* Căn giữa số thứ tự */
-.wg-box .text-center {
-    text-align: center !important;
-    vertical-align: middle !important;
-}
-
-/* Căn giữa các icon action */
-.list-icon-function {
-    display: flex !important;
-    justify-content: center !important;
-    align-items: center !important;
-    height: 100% !important;
-    gap: 8px !important;
-}
-
-/* 2. Modal backdrop */
-.modal-backdrop {
-    display: none !important;
-}
-
-.modal {
-    backdrop-filter: none !important;
-}
-
-/* 3. Tùy chỉnh giao diện modal Thêm sinh viên */
-#addStudentModal .modal-dialog {
-    max-width: 800px !important;
-}
-
-#addStudentModal .modal-header {
-    padding: 25px 30px !important;
-    border-bottom: 1px solid #eee !important;
-}
-
-#addStudentModal .modal-title {
-    font-size: 1.4rem !important;
-    font-weight: 600 !important;
-    color: #333 !important;
-}
-
-#addStudentModal .modal-body {
-    padding: 30px !important;
-}
-
-#addStudentModal .modal-footer {
-    padding: 25px 30px !important;
-    border-top: 1px solid #eee !important;
-}
-
-/* 4. Tùy chỉnh giao diện modal Sửa sinh viên */
+/* Modal sizes for student forms */
+#addStudentModal .modal-dialog,
 #editStudentModal .modal-dialog {
-    max-width: 800px !important;
+    max-width: 800px;
 }
 
-#editStudentModal .modal-header {
-    padding: 25px 30px !important;
-    border-bottom: 1px solid #eee !important;
+/* Photo preview in modals */
+.student-photo-preview {
+    width: 150px;
+    height: 150px;
+    object-fit: cover;
+    border-radius: 8px;
+    border: 1px solid #ddd;
 }
 
-#editStudentModal .modal-title {
-    font-size: 1.4rem !important;
-    font-weight: 600 !important;
-    color: #333 !important;
+/* Student details in view mode */
+.student-detail-label {
+    font-weight: 600;
+    color: #555;
+    margin-bottom: 4px;
 }
 
-#editStudentModal .modal-body {
-    padding: 30px !important;
+.student-detail-value {
+    color: #333;
+    margin-bottom: 16px;
 }
 
-#editStudentModal .modal-footer {
-    padding: 25px 30px !important;
-    border-top: 1px solid #eee !important;
+/* Import Excel section */
+.excel-import-guide {
+    background-color: #f8f9fa;
+    border-radius: 8px;
+    padding: 15px;
+    margin-top: 10px;
+}
+
+.excel-import-guide ul {
+    padding-left: 20px;
+    margin-bottom: 0;
+}
+
+/* View mode specific styles */
+.student-view-mode .detail-row {
+    margin-bottom: 15px;
+}
+
+.student-view-mode .label {
+    font-weight: 500;
+    color: #666;
+}
+
+.student-view-mode .value {
+    color: #333;
+    margin-top: 4px;
 }
 
 /* 5. Tùy chỉnh giao diện modal Xem chi tiết sinh viên */
