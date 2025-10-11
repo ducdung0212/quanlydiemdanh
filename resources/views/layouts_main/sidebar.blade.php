@@ -41,25 +41,14 @@
                 </li>
                 
                 <!-- Student -->
-                <li class="menu-item has-children">
-                    <a href="javascript:void(0);" class="menu-item-button">
+                <li class="menu-item">
+                    <a href="{{ route('student') }}" class="menu-item-button">
                         <div class="icon">
                             <img src="{{ asset('images/icon/student.svg') }}" alt="Student" class="svg-icon">
                         </div>
                         <div class="text">Student</div>
                     </a>
-                    <ul class="sub-menu">
-                        <li class="sub-menu-item">
-                            <a href="{{ route('student') }}" class="">
-                                <div class="text">Add Student</div>
-                            </a>
-                        </li>
-                        <li class="sub-menu-item">
-                            <a href="{{-- {{ route('brands') }} --}}" class="">
-                                <div class="text">Brands</div>
-                            </a>
-                        </li>
-                    </ul>
+    
                 </li>
                 
                 <!-- Teacher (đã đổi từ Category) -->
@@ -88,41 +77,6 @@
                         </li>
                     </ul>
                 </li>
-
-                <!-- Order -->
-                <li class="menu-item has-children">
-                    <a href="javascript:void(0);" class="menu-item-button">
-                        <div class="icon"><i class="icon-file-plus"></i></div>
-                        <div class="text">Order</div>
-                    </a>
-                    <ul class="sub-menu">
-                        <li class="sub-menu-item">
-                            <a href="{{-- {{ route('orders') }} --}}" class="">
-                                <div class="text">Orders</div>
-                            </a>
-                        </li>
-                        <li class="sub-menu-item">
-                            <a href="{{-- {{ route('order.tracking') }} --}}" class="">
-                                <div class="text">Order tracking</div>
-                            </a>
-                        </li>
-                    </ul>
-                </li>
-                
-                <!-- Các menu item khác -->
-                <li class="menu-item">
-                    <a href="{{-- {{ route('slider') }} --}}" class="">
-                        <div class="icon"><i class="icon-image"></i></div>
-                        <div class="text">Slider</div>
-                    </a>
-                </li>
-                <li class="menu-item">
-                    <a href="#" class="">
-                        <div class="icon"><i class="icon-grid"></i></div>
-                        <div class="text">Coupons</div>
-                    </a>
-                </li>
-
                 <!-- Settings -->
                 <li class="menu-item">
                     <a href="{{-- {{ route('settings') }} --}}" class="">

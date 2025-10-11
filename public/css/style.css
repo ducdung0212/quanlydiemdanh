@@ -6372,6 +6372,8 @@ select.h40 {
 #viewTeacherModal .modal-dialog,
 #addAccountModal .modal-dialog,
 #editAccountModal .modal-dialog,
+#addUserModal .modal-dialog,
+#editUserModal .modal-dialog,
 #importExcelModal .modal-dialog {
     max-width: 800px !important;
 }
@@ -6392,6 +6394,8 @@ select.h40 {
 #viewTeacherModal .modal-header,
 #addAccountModal .modal-header,
 #editAccountModal .modal-header,
+#addUserModal .modal-header,
+#editUserModal .modal-header,
 #importExcelModal .modal-header {
     padding: 25px 30px !important;
     border-bottom: 1px solid #eee !important;
@@ -6409,6 +6413,8 @@ select.h40 {
 #viewTeacherModal .modal-title,
 #addAccountModal .modal-title,
 #editAccountModal .modal-title,
+#addUserModal .modal-title,
+#editUserModal .modal-title,
 #importExcelModal .modal-title {
     font-size: 1.4rem !important;
     font-weight: 600 !important;
@@ -6427,6 +6433,8 @@ select.h40 {
 #viewTeacherModal .modal-body,
 #addAccountModal .modal-body,
 #editAccountModal .modal-body,
+#addUserModal .modal-body,
+#editUserModal .modal-body,
 #importExcelModal .modal-body {
     padding: 30px !important;
 }
@@ -6443,6 +6451,8 @@ select.h40 {
 #viewTeacherModal .modal-footer,
 #addAccountModal .modal-footer,
 #editAccountModal .modal-footer,
+#addUserModal .modal-footer,
+#editUserModal .modal-footer,
 #importExcelModal .modal-footer {
     padding: 25px 30px !important;
     border-top: 1px solid #eee !important;
@@ -6460,6 +6470,8 @@ select.h40 {
 #viewTeacherModal .form-label,
 #addAccountModal .form-label,
 #editAccountModal .form-label,
+#addUserModal .form-label,
+#editUserModal .form-label,
 #importExcelModal .form-label {
     font-size: 15px !important;
     margin-bottom: 10px !important;
@@ -6478,6 +6490,8 @@ select.h40 {
 #viewTeacherModal .form-control,
 #addAccountModal .form-control,
 #editAccountModal .form-control,
+#addUserModal .form-control,
+#editUserModal .form-control,
 #importExcelModal .form-control,
 #addAssignmentModal select,
 #editAssignmentModal select,
@@ -6502,6 +6516,8 @@ select.h40 {
 #viewTeacherModal .form-control:focus,
 #addAccountModal .form-control:focus,
 #editAccountModal .form-control:focus,
+#addUserModal .form-control:focus,
+#editUserModal .form-control:focus,
 #importExcelModal .form-control:focus,
 #addAssignmentModal select:focus,
 #editAssignmentModal select:focus,
@@ -6522,6 +6538,8 @@ select.h40 {
 #viewTeacherModal .btn,
 #addAccountModal .btn,
 #editAccountModal .btn,
+#addUserModal .btn,
+#editUserModal .btn,
 #importExcelModal .btn {
     font-size: 14px !important;
     padding: 12px 24px !important;
@@ -6541,6 +6559,8 @@ select.h40 {
 #viewTeacherModal .btn:hover,
 #addAccountModal .btn:hover,
 #editAccountModal .btn:hover,
+#addUserModal .btn:hover,
+#editUserModal .btn:hover,
 #importExcelModal .btn:hover {
     transform: translateY(-1px) !important;
 }
@@ -6556,6 +6576,8 @@ select.h40 {
 #viewTeacherModal .btn-primary,
 #addAccountModal .btn-primary,
 #editAccountModal .btn-primary,
+#addUserModal .btn-primary,
+#editUserModal .btn-primary,
 #importExcelModal .btn-primary {
     background-color: #2377FC !important;
     border: none !important;
@@ -6572,6 +6594,8 @@ select.h40 {
 #viewTeacherModal .btn-primary:hover,
 #addAccountModal .btn-primary:hover,
 #editAccountModal .btn-primary:hover,
+#addUserModal .btn-primary:hover,
+#editUserModal .btn-primary:hover,
 #importExcelModal .btn-primary:hover {
     background-color: #1c68e0 !important;
 }
@@ -6587,6 +6611,8 @@ select.h40 {
 #viewTeacherModal .btn-secondary,
 #addAccountModal .btn-secondary,
 #editAccountModal .btn-secondary,
+#addUserModal .btn-secondary,
+#editUserModal .btn-secondary,
 #importExcelModal .btn-secondary {
     background-color: #6c757d !important;
     border: none !important;
@@ -6603,6 +6629,8 @@ select.h40 {
 #viewTeacherModal .btn-secondary:hover,
 #addAccountModal .btn-secondary:hover,
 #editAccountModal .btn-secondary:hover,
+#addUserModal .btn-secondary:hover,
+#editUserModal .btn-secondary:hover,
 #importExcelModal .btn-secondary:hover {
     background-color: #5a6268 !important;
 }
@@ -6619,6 +6647,8 @@ select.h40 {
 #viewTeacherModal .modal-content,
 #addAccountModal .modal-content,
 #editAccountModal .modal-content,
+#addUserModal .modal-content,
+#editUserModal .modal-content,
 #importExcelModal .modal-content {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
     border-radius: 12px !important;

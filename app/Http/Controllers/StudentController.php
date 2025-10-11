@@ -5,6 +5,9 @@ namespace App\Http\Controllers;
 use App\Models\Student;
 use Illuminate\Http\Request;
 use App\Http\Requests\StudentRequest;
+use App\Imports\StudentImport;
+use Illuminate\Validation\ValidationException;
+use Maatwebsite\Excel\Facades\Excel;
 
 class StudentController extends Controller
 {
@@ -45,14 +48,21 @@ class StudentController extends Controller
      */
     public function store(StudentRequest $request)
     {
-        $student =new Student;
-        $student->fill($request->all());
-        $student->save();
-        return response()->json([
-            'success' => true,
-            'data' => $student,
-            'message'=>'Create Student Successfully'
-        ], 201);
+        try {
+            $student =new Student;
+            $student->fill($request->all());
+            $student->save();
+            return response()->json([
+                'success' => true,
+                'data' => $student,
+                'message'=>'Create Student Successfully'
+            ], 201);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),
+            ], 422);
+        }
     }
 
     /**
@@ -88,35 +98,42 @@ class StudentController extends Controller
      */
     public function update(StudentRequest $request,string $student_code)
     {
-        $student=Student::find($student_code);
-        if(!$student){
+        try {
+            $student=Student::find($student_code);
+            if(!$student){
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message'=>'Student Not Found'
+                ], 404);
+            }
+            if($request->student_code){
+                $student->student_code=$request->student_code;
+            }
+            if($request->full_name){
+                $student->full_name=$request->full_name;
+            }
+            if($request->class_code){
+                $student->class_code=$request->class_code;
+            }
+            if($request->email){
+                $student->email=$request->email;
+            }
+            if($request->phone){
+                $student->phone=$request->phone;
+            }   
+            $student->save();
+            return response()->json([
+                'success' => true,
+                'data' => $student,
+                'message'=>'Update Student Successfully'
+            ]);
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'data' => null,
-                'message'=>'Student Not Found'
-            ], 404);
+                'errors' => $e->errors(),
+            ], 422);
         }
-        if($request->student_code){
-            $student->student_code=$request->student_code;
-        }
-        if($request->full_name){
-            $student->full_name=$request->full_name;
-        }
-        if($request->class_code){
-            $student->class_code=$request->class_code;
-        }
-        if($request->email){
-            $student->email=$request->email;
-        }
-        if($request->phone){
-            $student->phone=$request->phone;
-        }   
-        $student->save();
-        return response()->json([
-            'success' => true,
-            'data' => $student,
-            'message'=>'Update Student Successfully'
-        ]);
     }
 
     /**
@@ -137,5 +154,38 @@ class StudentController extends Controller
             'success' => true,
             'message'=>'Delete Student Successfully'
         ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $studentCodes = $request->input('student_codes', []);
+        if (empty($studentCodes)) {
+            return response()->json(['success' => false, 'message' => 'Không có sinh viên nào được chọn'], 400);
+        }
+
+        Student::whereIn('student_code', $studentCodes)->delete();
+
+        return response()->json(['success' => true, 'message' => 'Đã xóa ' . count($studentCodes) . ' sinh viên thành công.']);
+    }
+
+    public function import(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|mimes:xlsx,xls'
+        ]);
+
+        try {
+            Excel::import(new StudentImport, $request->file('excel_file'));
+            return response()->json(['success' => true, 'message' => 'Import sinh viên thành công.']);
+        } catch (\Maatwebsite\Excel\Validators\ValidationException $e) {
+             $failures = $e->failures();
+             $errorMessages = [];
+             foreach ($failures as $failure) {
+                 $errorMessages[] = 'Dòng ' . $failure->row() . ': ' . implode(', ', $failure->errors());
+             }
+             return response()->json(['success' => false, 'message' => 'Lỗi dữ liệu: ' . implode('; ', $errorMessages)], 422);
+        } catch (\Exception $e) {
+            return response()->json(['success' => false, 'message' => 'Đã có lỗi xảy ra trong quá trình import: ' . $e->getMessage()], 500);
+        }
     }
 }
