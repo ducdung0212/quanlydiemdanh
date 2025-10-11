@@ -22,283 +22,36 @@
 </head>
 
 <div class="header-dashboard">
-    <div class="wrap">
-        <div class="header-left">
-            <a href="{{ route('dashboard') }}">
-                <img class="" id="logo_header_mobile" alt="" src="{{ asset('images/logo/STU_logo.webp') }}"
-                    data-light="{{ asset('images/logo/STU_logo.webp') }}" data-dark="{{ asset('images/logo/STU_logo.webp') }}"
-                    data-width="154px" data-height="52px" data-retina="{{ asset('images/logo/STU_logo.webp') }}">
-            </a>
-            <div class="button-show-hide">
-                <i class="icon-menu-left"></i>
-            </div>
-
-
-            <form class="form-search flex-grow">
-                <fieldset class="name">
-                    <input type="text" placeholder="Search here..." class="show-search" name="name"
-                        tabindex="2" value="" aria-required="true" required="">
-                </fieldset>
-                <div class="button-submit">
-                    <button class="" type="submit"><i class="icon-search"></i></button>
-                </div>
-                <div class="box-content-search" id="box-content-search">
-                    <ul class="mb-24">
-                        <li class="mb-14">
-                            <div class="body-title">Top selling product</div>
-                        </li>
-                        <li class="mb-14">
-                            <div class="divider"></div>
-                        </li>
-                        <li>
-                            <ul>
-                                <li class="product-item gap14 mb-10">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/17.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Dog Food
-                                                Rachael Ray Nutrish®</a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="mb-10">
-                                    <div class="divider"></div>
-                                </li>
-                                <li class="product-item gap14 mb-10">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/18.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Natural
-                                                Dog Food Healthy Dog Food</a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="mb-10">
-                                    <div class="divider"></div>
-                                </li>
-                                <li class="product-item gap14">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/19.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Freshpet
-                                                Healthy Dog Food and Cat</a>
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                    <ul class="">
-                        <li class="mb-14">
-                            <div class="body-title">Order product</div>
-                        </li>
-                        <li class="mb-14">
-                            <div class="divider"></div>
-                        </li>
-                        <li>
-                            <ul>
-                                <li class="product-item gap14 mb-10">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/20.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Sojos
-                                                Crunchy Natural Grain Free...</a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="mb-10">
-                                    <div class="divider"></div>
-                                </li>
-                                <li class="product-item gap14 mb-10">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/21.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Kristin
-                                                Watson</a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="mb-10">
-                                    <div class="divider"></div>
-                                </li>
-                                <li class="product-item gap14 mb-10">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/22.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Mega
-                                                Pumpkin Bone</a>
-                                        </div>
-                                    </div>
-                                </li>
-                                <li class="mb-10">
-                                    <div class="divider"></div>
-                                </li>
-                                <li class="product-item gap14">
-                                    <div class="image no-bg">
-                                        <img src="{{ asset('images/products/23.png') }}" alt="">
-                                    </div>
-                                    <div class="flex items-center justify-between gap20 flex-grow">
-                                        <div class="name">
-                                            <a href="{{-- {{ route('products') }} --}}" class="body-text">Mega
-                                                Pumpkin Bone</a>
-                                        </div>
-                                    </div>
-                                </li>
-                            </ul>
-                        </li>
-                    </ul>
-                </div>
-            </form>
-
-        </div>
-        <div class="header-grid">
-
-            <div class="popup-wrap message type-header">
-                <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button"
-                        id="dropdownMenuButton2" data-bs-toggle="dropdown" aria-expanded="false">
-                       
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end has-content"
-                        aria-labelledby="dropdownMenuButton2">
-                        <li>
-                            <h6>Notifications</h6>
-                        </li>
-                        <li>
-                            <div class="message-item item-1">
-                                <div class="image">
-                                    <i class="icon-noti-1"></i>
-                                </div>
-                                <div>
-                                    <div class="body-title-2">Discount available</div>
-                                    <div class="text-tiny">Morbi sapien massa, ultricies at rhoncus
-                                        at, ullamcorper nec diam</div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="message-item item-2">
-                                <div class="image">
-                                    <i class="icon-noti-2"></i>
-                                </div>
-                                <div>
-                                    <div class="body-title-2">Account has been verified</div>
-                                    <div class="text-tiny">Mauris libero ex, iaculis vitae rhoncus
-                                        et</div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="message-item item-3">
-                                <div class="image">
-                                    <i class="icon-noti-3"></i>
-                                </div>
-                                <div>
-                                    <div class="body-title-2">Order shipped successfully</div>
-                                    <div class="text-tiny">Integer aliquam eros nec sollicitudin
-                                        sollicitudin</div>
-                                </div>
-                            </div>
-                        </li>
-                        <li>
-                            <div class="message-item item-4">
-                                <div class="image">
-                                    <i class="icon-noti-4"></i>
-                                </div>
-                                <div>
-                                    <div class="body-title-2">Order pending: <span>ID 305830</span>
-                                    </div>
-                                    <div class="text-tiny">Ultricies at rhoncus at ullamcorper</div>
-                                </div>
-                            </div>
-                        </li>
-                        <li><a href="#" class="tf-button w-full">View all</a></li>
-                    </ul>
-                </div>
-            </div>
-
-
-
+    <div class="wrap" style="justify-content: flex-end;">
+        <div class="header-grid" style="display: flex; align-items: center; gap: 5px;">
             <div class="popup-wrap user type-header">
                 <div class="dropdown">
-                    <button class="btn btn-secondary dropdown-toggle" type="button"
-                        id="dropdownMenuButton3" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="dropdown-toggle" href="{{ route('profile.edit') }}" role="button" id="dropdownMenuLink" aria-expanded="false">
                         <span class="header-user wg-user">
                             <span class="image">
                                 <img src="{{ asset('images/avatar/user-1.png') }}" alt="">
                             </span>
                             <span class="flex flex-column">
-                                <span class="body-title mb-2">Đức Dũng</span>
+                                <span class="body-title mb-2">{{ Auth::user()->name }}</span>
                                 <span class="text-tiny">Admin</span>
                             </span>
                         </span>
-                    </button>
-                    <ul class="dropdown-menu dropdown-menu-end has-content"
-                        aria-labelledby="dropdownMenuButton3">
-                        <li>
-                            <a href="#" class="user-item">
-                                <div class="icon">
-                                    <i class="icon-user"></i>
-                                </div>
-                                <div class="body-title-2">Account</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="user-item">
-                                <div class="icon">
-                                    <i class="icon-mail"></i>
-                                </div>
-                                <div class="body-title-2">Inbox</div>
-                                <div class="number">27</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="user-item">
-                                <div class="icon">
-                                    <i class="icon-file-text"></i>
-                                </div>
-                                <div class="body-title-2">Taskboard</div>
-                            </a>
-                        </li>
-                        <li>
-                            <a href="#" class="user-item">
-                                <div class="icon">
-                                    <i class="icon-headphones"></i>
-                                </div>
-                                <div class="body-title-2">Support</div>
-                            </a>
-                        </li>
-                        <li>
-                            <form method="POST" action="{{ route('logout') }}" class="inline">
-                                @csrf
-                                <x-responsive-nav-link :href="route('logout')"
-                                    onclick="event.preventDefault(); this.closest('form').submit();"
-                                    class="user-item flex items-center gap-2 px-3 py-2 hover:bg-gray-100 rounded-md transition">
-                                    <div class="icon text-gray-600">
-                                        <i class="icon-log-out"></i>
-                                    </div>
-                                    <div class="body-title-2 text-gray-800 font-medium">
-                                        {{ __('Log Out') }}
-                                    </div>
-                                </x-responsive-nav-link>
-                            </form>             
-                        </li>
-                    </ul>
+                    </a>
                 </div>
             </div>
 
+            <div class="logout-button">
+                <form method="POST" action="{{ route('logout') }}" class="inline">
+                    @csrf
+                    <a href="{{ route('logout') }}"
+                        onclick="event.preventDefault(); this.closest('form').submit();"
+                        class="user-item flex items-center" 
+                        title="Đăng xuất"
+                        style="font-size: 24px; color: #555; text-decoration: none; margin-left:-70px ">
+                        <i class="icon-log-out"></i>
+                    </a>
+                </form>
+            </div>
         </div>
     </div>
 </div>

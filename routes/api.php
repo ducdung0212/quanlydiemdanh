@@ -18,3 +18,5 @@ use App\Http\Controllers\StudentController;
 
 Route::apiResource('users', UserController::class);
 Route::apiResource('students', StudentController::class);
+Route::post('students/bulk-delete', [StudentController::class, 'bulkDelete']);
+Route::post('students/import', [StudentController::class, 'import']);
