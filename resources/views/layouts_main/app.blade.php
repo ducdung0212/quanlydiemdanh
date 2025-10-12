@@ -13,7 +13,6 @@
     <link rel="stylesheet" href="{{ asset('icon/style.css') }}">
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}">
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/sweetalert.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/user_css.css') }}">
 </head>
@@ -42,6 +41,7 @@
     <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>   
     <script src="{{ asset('js/apexcharts/apexcharts.js') }}"></script>
     <script src="{{ asset('js/main.js') }}"></script>
+    <script src="{{ asset('js/admin-common.js') }}"></script>
     @stack('scripts')
 </body>
 </html>
