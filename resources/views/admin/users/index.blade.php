@@ -50,6 +50,7 @@
                         <th style="width: 60px">STT</th>
                         <th>Tên</th>
                         <th>Email</th>
+                        <th>Role</th>
                         <th style="width: 120px">Action</th>
                     </tr>
                 </thead>
@@ -110,7 +111,7 @@
         async function fetchUsers(page = 1, query = '') {
             if (isLoading) return;
             isLoading = true;
-            tableBody.innerHTML = `<tr><td colspan="5" class="text-center">Đang tải...</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center">Đang tải...</td></tr>`;
 
             try {
                 const url = `${API_BASE_URL}?page=${page}&limit=${ITEMS_PER_PAGE}&q=${encodeURIComponent(query)}`;
@@ -143,7 +144,7 @@
 
         function renderTable() {
             if (!paginationData || !paginationData.data || paginationData.data.length === 0) {
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center">${currentQuery ? 'Không tìm thấy tài khoản nào' : 'Không có dữ liệu'}</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center">${currentQuery ? 'Không tìm thấy tài khoản nào' : 'Không có dữ liệu'}</td></tr>`;
                 return;
             }
 
@@ -158,6 +159,7 @@
                         <td class="text-center">${from + index}</td>
                         <td>${escapeHtml(user.name)}</td>
                         <td>${escapeHtml(user.email)}</td>
+                        <td>${escapeHtml(user.role ? user.role.charAt(0).toUpperCase() + user.role.slice(1) : 'N/A')}</td>
                         <td>
                             <div class="list-icon-function">
                                 <a href="#" data-action="edit-user" data-id="${user.id}">
@@ -272,44 +274,18 @@
                 fetchUsers(1, searchInput.value.trim());
             });
 
+            // Add user button - load modal and initialize after shown
             document.querySelector('[data-bs-target="#addUserModal"]').addEventListener('click', async (e) => {
                 e.preventDefault();
                 addUserModal = await loadModal('/users/modals/create', 'addUserModal');
                 if (addUserModal) {
                     addUserModal.show();
-                    // Setup form submit handler for add user modal
-                    const addUserForm = document.getElementById('addUserForm');
-                    if (addUserForm) {
-                        addUserForm.addEventListener('submit', async function(event) {
-                            event.preventDefault();
-                            const button = addUserForm.querySelector('button[type="submit"]');
-                            toggleButtonLoading(button, true);
-                            clearValidationErrors(addUserForm);
-
-                            const formData = new FormData(addUserForm);
-                            const data = Object.fromEntries(formData.entries());
-
-                            try {
-                                const result = await apiFetch('/api/users', {
-                                    method: 'POST',
-                                    body: data
-                                });
-
-                                if (result.success) {
-                                    addUserModal.hide();
-                                    showToast('Thành công', result.message, 'success');
-                                    document.dispatchEvent(new CustomEvent('usersUpdated'));
-                                }
-                            } catch (error) {
-                                if (error.statusCode === 422 && error.errors) {
-                                    displayValidationErrors(addUserForm, error.errors);
-                                } else {
-                                    showToast('Lỗi', error.message || 'Không thể thêm tài khoản', 'danger');
-                                }
-                            } finally {
-                                toggleButtonLoading(button, false);
-                            }
-                        });
+                    
+                    // Gọi hàm khởi tạo SAU KHI modal đã hiển thị và có trong DOM
+                    if (typeof initializeCreateUserForm === 'function') {
+                        initializeCreateUserForm();
+                    } else {
+                        console.error('initializeCreateUserForm function not found');
                     }
                 }
             });
@@ -322,49 +298,16 @@
 
                 switch (action) {
                     case 'edit-user':
+                        // Load modal and initialize after shown
                         editUserModal = await loadModal(`/users/modals/edit/${id}`, 'editUserModal');
                         if (editUserModal) {
                             editUserModal.show();
-                            // Setup form submit handler for edit user modal
-                            const editUserForm = document.getElementById('editUserForm');
-                            const userId = document.getElementById('editUserId').value;
-                            if (editUserForm) {
-                                editUserForm.addEventListener('submit', async function(event) {
-                                    event.preventDefault();
-                                    const button = editUserForm.querySelector('button[type="submit"]');
-                                    toggleButtonLoading(button, true);
-                                    clearValidationErrors(editUserForm);
-
-                                    const formData = new FormData(editUserForm);
-                                    const data = Object.fromEntries(formData.entries());
-
-                                    // Remove password fields if empty
-                                    if (!data.password && !data.password_confirmation) {
-                                        delete data.password;
-                                        delete data.password_confirmation;
-                                    }
-
-                                    try {
-                                        const result = await apiFetch(`/api/users/${userId}`, {
-                                            method: 'PUT',
-                                            body: data
-                                        });
-
-                                        if (result.success) {
-                                            editUserModal.hide();
-                                            showToast('Thành công', result.message, 'success');
-                                            document.dispatchEvent(new CustomEvent('usersUpdated', { detail: { isEdit: true } }));
-                                        }
-                                    } catch (error) {
-                                        if (error.statusCode === 422 && error.errors) {
-                                            displayValidationErrors(editUserForm, error.errors);
-                                        } else {
-                                            showToast('Lỗi', error.message || 'Không thể cập nhật tài khoản', 'danger');
-                                        }
-                                    } finally {
-                                        toggleButtonLoading(button, false);
-                                    }
-                                });
+                            
+                            // Gọi hàm khởi tạo SAU KHI modal đã hiển thị và có trong DOM
+                            if (typeof initializeEditUserForm === 'function') {
+                                initializeEditUserForm();
+                            } else {
+                                console.error('initializeEditUserForm function not found');
                             }
                         }
                         break;
@@ -408,3 +351,136 @@
     });
     </script>
 @endpush
+
+@push('scripts')
+    <script>
+    // Định nghĩa hàm khởi tạo cho modal thêm user - sẽ được gọi SAU KHI modal đã có trong DOM
+    function initializeCreateUserForm() {
+        'use strict';
+        
+        const addUserForm = document.getElementById('addUserForm');
+        const addUserModal = document.getElementById('addUserModal');
+        
+        if (!addUserForm) {
+            console.error('addUserForm not found in DOM');
+            return;
+        }
+        
+        // Setup form submit handler
+        addUserForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const button = addUserForm.querySelector('button[type="submit"]');
+            toggleButtonLoading(button, true);
+            clearValidationErrors(addUserForm);
+
+            const formData = new FormData(addUserForm);
+            const data = Object.fromEntries(formData.entries());
+
+            try {
+                const result = await apiFetch('/api/users', {
+                    method: 'POST',
+                    body: data
+                });
+
+                if (result.success) {
+                    // Hide modal
+                    const modalInstance = bootstrap.Modal.getInstance(addUserModal);
+                    if (modalInstance) modalInstance.hide();
+                    
+                    // Show success message
+                    showToast('Thành công', result.message, 'success');
+                    
+                    // Trigger custom event to refresh user list
+                    document.dispatchEvent(new CustomEvent('usersUpdated'));
+                    
+                    // Reset form
+                    addUserForm.reset();
+                }
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(addUserForm, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể thêm tài khoản', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(button, false);
+            }
+        });
+        
+        // Clear validation errors when modal is hidden
+        addUserModal.addEventListener('hidden.bs.modal', function() {
+            addUserForm.reset();
+            clearValidationErrors(addUserForm);
+        });
+    }
+
+    // Định nghĩa hàm khởi tạo cho modal sửa user - sẽ được gọi SAU KHI modal đã có trong DOM
+    function initializeEditUserForm() {
+        'use strict';
+        
+        const editUserForm = document.getElementById('editUserForm');
+        const editUserModal = document.getElementById('editUserModal');
+        const userId = document.getElementById('editUserId')?.value;
+        
+        if (!editUserForm || !userId) {
+            console.error('editUserForm or userId not found in DOM');
+            return;
+        }
+        
+        // Setup form submit handler
+        editUserForm.addEventListener('submit', async function(event) {
+            event.preventDefault();
+            
+            const button = editUserForm.querySelector('button[type="submit"]');
+            toggleButtonLoading(button, true);
+            clearValidationErrors(editUserForm);
+
+            const formData = new FormData(editUserForm);
+            const data = Object.fromEntries(formData.entries());
+
+            // Remove password fields if empty
+            if (!data.password && !data.password_confirmation) {
+                delete data.password;
+                delete data.password_confirmation;
+            }
+
+            try {
+                const result = await apiFetch(`/api/users/${userId}`, {
+                    method: 'PUT',
+                    body: data
+                });
+
+                if (result.success) {
+                    // Hide modal
+                    const modalInstance = bootstrap.Modal.getInstance(editUserModal);
+                    if (modalInstance) modalInstance.hide();
+                    
+                    // Show success message
+                    showToast('Thành công', result.message, 'success');
+                    
+                    // Trigger custom event to refresh user list (keep current page)
+                    document.dispatchEvent(new CustomEvent('usersUpdated', { 
+                        detail: { isEdit: true } 
+                    }));
+                }
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(editUserForm, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể cập nhật tài khoản', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(button, false);
+            }
+        });
+        
+        // Clear validation errors when modal is hidden
+        editUserModal.addEventListener('hidden.bs.modal', function() {
+            clearValidationErrors(editUserForm);
+        });
+    }
+    </script>
+@endpush>
+
+

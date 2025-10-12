@@ -38,6 +38,7 @@ class UserRequest extends FormRequest
             if ($password) {
                 $rules['password'] = 'required|min:6';
             }
+            $rules['role'] = 'required|in:admin,lecturer';
             return $rules;
         }
 
@@ -45,6 +46,7 @@ class UserRequest extends FormRequest
             'name' => 'required|min:4',
             'email' => $emailRule,
             'password' => 'required|min:6',
+            'role' => 'required|in:admin,lecturer',
         ];
     }
     public function messages(){

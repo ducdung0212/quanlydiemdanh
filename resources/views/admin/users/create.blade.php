@@ -28,6 +28,15 @@
                         <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
                         <div class="invalid-feedback"></div>
                     </div>
+                    <div class="mb-4">
+                        <label for="role" class="form-label">Role *</label>
+                        <select class="form-control" id="role" name="role" required>
+                            <option value="">Chọn role</option>
+                            <option value="admin">Admin</option>
+                            <option value="lecturer" selected>Lecturer</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
