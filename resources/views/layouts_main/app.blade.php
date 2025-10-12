@@ -14,7 +14,6 @@
     <link rel="shortcut icon" href="{{ asset('images/favicon.ico') }}">
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
-    <link rel="stylesheet" type="text/css" href="{{ asset('css/user_css.css') }}">
 </head>
 <body>
     <div id="wrapper">

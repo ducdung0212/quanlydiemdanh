@@ -1,5 +1,5 @@
 <!-- Modal Sửa tài khoản -->
-<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true" data-bs-backdrop="false">
+<div class="modal fade" id="editUserModal" tabindex="-1" aria-labelledby="editUserModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -29,6 +29,15 @@
                         <input type="password" class="form-control" id="editPasswordConfirmation" name="password_confirmation">
                         <div class="invalid-feedback"></div>
                     </div>
+                    <div class="mb-4">
+                        <label for="editRole" class="form-label">Role *</label>
+                        <select class="form-control" id="editRole" name="role" required>
+                            <option value="">Chọn role</option>
+                            <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
+                            <option value="lecturer" {{ $user->role == 'lecturer' ? 'selected' : '' }}>Lecturer</option>
+                        </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
@@ -41,3 +50,4 @@
         </div>
     </div>
 </div>
+

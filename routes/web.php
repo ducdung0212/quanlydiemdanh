@@ -14,7 +14,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('admin.index');
     })->name('dashboard');
 
-    // Products
+  
     Route::get('/user', function () {
         return view('admin.users.index');
     })->name('user');
