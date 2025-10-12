@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class UserRequest extends FormRequest
 {
@@ -20,34 +21,28 @@ class UserRequest extends FormRequest
      * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
      */
     public function rules(): array
-    {   
-        $id = $this->route()->user;
-        $emailRule = 'required|email|unique:users,email';
-        if ($id) {
-            $emailRule .= ",{$id}";
-            $name = $this->name;
-            $email = $this->email;
-            $password = $this->password;
-            $rules = [];
-            if ($name) {
-                $rules['name'] = 'required|min:4';
-            }
-            if ($email) {
-                $rules['email'] = $emailRule;
-            }
-            if ($password) {
-                $rules['password'] = 'required|min:6';
-            }
-            $rules['role'] = 'required|in:admin,lecturer';
-            return $rules;
+    {
+        $userId = $this->route('user');
+
+        if ($this->isMethod('post')) {
+            return [
+                'name' => ['required', 'min:4'],
+                'email' => ['required', 'email', Rule::unique('users', 'email')],
+                'password' => ['required', 'min:6'],
+                'role' => ['required', Rule::in(['admin', 'lecturer'])],
+            ];
         }
 
-        return [
-            'name' => 'required|min:4',
-            'email' => $emailRule,
-            'password' => 'required|min:6',
-            'role' => 'required|in:admin,lecturer',
-        ];
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            return [
+                'name' => ['sometimes', 'required', 'min:4'],
+                'email' => ['sometimes', 'required', 'email', Rule::unique('users', 'email')->ignore($userId)],
+                'password' => ['sometimes', 'nullable', 'min:6'],
+                'role' => ['sometimes', 'required', Rule::in(['admin', 'lecturer'])],
+            ];
+        }
+
+        return [];
     }
     public function messages(){
         return[
@@ -62,6 +57,7 @@ class UserRequest extends FormRequest
             'name'=>'Tên người dùng',
             'email'=>'Email',
             'password'=>'Mật khẩu',
+            'role' => 'Chức vụ',
         ];
     }
 }
