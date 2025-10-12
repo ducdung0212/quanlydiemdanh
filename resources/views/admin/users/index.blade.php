@@ -127,7 +127,7 @@
                 }
             } catch (error) {
                 console.error("Failed to fetch users:", error);
-                tableBody.innerHTML = `<tr><td colspan="5" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>`;
+                tableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>`;
                 paginationData = null;
                 render();
             } finally {
@@ -365,6 +365,11 @@
             console.error('addUserForm not found in DOM');
             return;
         }
+
+        if (addUserForm.dataset.initialized === 'true') {
+            return;
+        }
+        addUserForm.dataset.initialized = 'true';
         
         // Setup form submit handler
         addUserForm.addEventListener('submit', async function(event) {
@@ -427,6 +432,11 @@
             console.error('editUserForm or userId not found in DOM');
             return;
         }
+
+        if (editUserForm.dataset.initialized === 'true') {
+            return;
+        }
+        editUserForm.dataset.initialized = 'true';
         
         // Setup form submit handler
         editUserForm.addEventListener('submit', async function(event) {
@@ -481,6 +491,6 @@
         });
     }
     </script>
-@endpush>
+@endpush
 
 

@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Hash;
 use App\Models\User;
 use App\Http\Requests\UserRequest;
 
@@ -13,13 +14,17 @@ class UserController extends Controller
      */
     public function index()
     {
-        $q=request()->query('q');
-        $limit=request()->query('limit',10);
-        $users=User::latest();
-        if($q){
-            $users->where(function($query) use ($q){
-                $query->where('name','like',"%$q%");
-                $query->orWhere('email','like',"%$q%");
+        $q = request()->query('q');
+        $limit = (int) request()->query('limit', 10);
+        $limit = max(1, min(100, $limit));
+
+        $users = User::select(['id', 'name', 'email', 'role', 'created_at'])
+            ->latest();
+
+        if ($q) {
+            $users->where(function ($query) use ($q) {
+                $query->where('name', 'like', "%$q%");
+                $query->orWhere('email', 'like', "%$q%");
             });
         }
         return response()->json([
@@ -42,9 +47,11 @@ class UserController extends Controller
      */
     public function store(UserRequest $request)
     {
-        $user =new User;
-        $user->fill($request->all());
-        $user->password=bcrypt($request->password);
+        $validated = $request->validated();
+
+        $user = new User;
+        $user->fill(collect($validated)->only(['name', 'email', 'role'])->toArray());
+        $user->password = Hash::make($validated['password']);
         $user->save();
         return response()->json([
             'success' => true,
@@ -87,7 +94,9 @@ class UserController extends Controller
      */
     public function update(UserRequest $request, string $id)
     {
-       $user = User::find($id);
+        $validated = $request->validated();
+
+        $user = User::find($id);
         if (!$user) {
             return response()->json(
                 [
@@ -98,17 +107,17 @@ class UserController extends Controller
             );
         }
 
-        if ($request->name) {
-            $user->name = $request->name;
+        if (array_key_exists('name', $validated)) {
+            $user->name = $validated['name'];
         }
-        if ($request->email) {
-            $user->email = $request->email;
+        if (array_key_exists('email', $validated)) {
+            $user->email = $validated['email'];
         }
-        if ($request->password) {
-            $user->password = bcrypt($request->password);
+        if (array_key_exists('role', $validated)) {
+            $user->role = $validated['role'];
         }
-        if ($request->role) {
-            $user->role = $request->role;
+        if (array_key_exists('password', $validated) && $validated['password']) {
+            $user->password = Hash::make($validated['password']);
         }
 
         $user->save();
