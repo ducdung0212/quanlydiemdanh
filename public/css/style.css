@@ -7121,4 +7121,222 @@ input[type="date"].form-control::-webkit-calendar-picker-indicator {
     }
 }
 
+/* Custom Toast Notification Styles - Large and Centered */
+.toast-container {
+    position: fixed !important;
+    top: 20px !important;
+    left: 50% !important;
+    transform: translateX(-50%) !important;
+    z-index: 9999 !important;
+    pointer-events: none !important;
+}
+
+.toast {
+    width: 500px !important;
+    max-width: 90vw !important;
+    font-size: 1.1rem !important;
+    pointer-events: auto !important;
+    background-color: rgba(255, 255, 255, 0.98) !important;
+    border: none !important;
+    box-shadow: 0 10px 40px rgba(0, 0, 0, 0.25) !important;
+    border-radius: 12px !important;
+    margin: 0 auto 15px !important;
+}
+
+.toast-header {
+    padding: 18px 25px !important;
+    font-size: 1.2rem !important;
+    font-weight: 600 !important;
+    border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+    border-top-left-radius: 12px !important;
+    border-top-right-radius: 12px !important;
+}
+
+.toast-body {
+    padding: 20px 25px !important;
+    font-size: 1.1rem !important;
+    line-height: 1.6 !important;
+    color: #333 !important;
+    font-weight: 500 !important;
+}
+
+.toast-header.bg-success {
+    background-color: #22C55E !important;
+}
+
+.toast-header.bg-danger {
+    background-color: #EF4444 !important;
+}
+
+.toast-header.bg-warning {
+    background-color: #FB923C !important;
+}
+
+.toast-header.bg-info {
+    background-color: #2377FC !important;
+}
+
+.toast-header .btn-close-white {
+    font-size: 1.1rem !important;
+    opacity: 0.9 !important;
+}
+
+.toast-header .btn-close-white:hover {
+    opacity: 1 !important;
+}
+
+/* Animation for toast */
+@keyframes slideDown {
+    from {
+        transform: translateY(-100%);
+        opacity: 0;
+    }
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+.toast.show {
+    animation: slideDown 0.3s ease-out !important;
+}
+
+/* Mobile responsive */
+@media (max-width: 576px) {
+    .toast {
+        width: 95vw !important;
+        font-size: 1rem !important;
+    }
+    
+    .toast-header {
+        font-size: 1.1rem !important;
+        padding: 15px 20px !important;
+    }
+    
+    .toast-body {
+        font-size: 1rem !important;
+        padding: 18px 20px !important;
+    }
+}
+
+/* Student View Modal Styles */
+.student-avatar-col {
+    padding-right: 30px !important;
+}
+
+.student-avatar-container {
+    min-height: 200px !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+}
+
+.student-avatar-img {
+    max-height: 250px !important;
+    max-width: 100% !important;
+    object-fit: cover !important;
+    border: 2px solid #e0e0e0 !important;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+    border-radius: 8px !important;
+}
+
+.student-no-avatar {
+    padding: 60px 20px !important;
+    background-color: #f5f5f5 !important;
+    border-radius: 8px !important;
+    color: #999 !important;
+    font-size: 14px !important;
+    text-align: center !important;
+}
+
+.student-no-avatar i {
+    font-size: 48px !important;
+    display: block !important;
+    margin-bottom: 10px !important;
+    opacity: 0.3 !important;
+}
+
+.student-no-avatar span {
+    display: block !important;
+}
+
+.student-info-main {
+    padding-bottom: 15px !important;
+    border-bottom: 1px solid #e9ecef !important;
+}
+
+.student-info-label {
+    font-size: 13px !important;
+    color: #6c757d !important;
+    font-weight: 500 !important;
+    margin-bottom: 5px !important;
+    display: block !important;
+}
+
+.student-info-code {
+    font-size: 18px !important;
+    font-weight: 700 !important;
+    color: #2377FC !important;
+}
+
+.student-info-name {
+    font-size: 16px !important;
+    font-weight: 600 !important;
+    color: #333 !important;
+}
+
+.student-info-value {
+    font-size: 15px !important;
+    color: #555 !important;
+}
+
+.student-info-email {
+    word-break: break-all !important;
+}
+
+/* Mobile responsive for student view */
+@media (max-width: 768px) {
+    .student-avatar-col {
+        padding-right: 15px !important;
+        margin-bottom: 20px !important;
+    }
+    
+    .student-avatar-container {
+        min-height: 150px !important;
+    }
+    
+    .student-avatar-img {
+        max-height: 200px !important;
+    }
+    
+    .student-info-code {
+        font-size: 16px !important;
+    }
+    
+    .student-info-name {
+        font-size: 15px !important;
+    }
+    
+    .student-info-value {
+        font-size: 14px !important;
+    }
+}
+
+/* Form Validation Styles */
+.is-invalid {
+    border-color: #dc3545 !important;
+}
+
+.invalid-feedback {
+    display: none;
+    width: 100%;
+    margin-top: .25rem;
+    font-size: .875em;
+    color: #dc3545;
+}
+
+.is-invalid ~ .invalid-feedback {
+    display: block;
+}
+
 /*# sourceMappingURL=style.css.map */

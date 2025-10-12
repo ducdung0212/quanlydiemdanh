@@ -77,22 +77,6 @@
 @endsection
 
 @push('scripts')
-    <style>
-        .is-invalid {
-            border-color: #dc3545 !important;
-        }
-        .invalid-feedback {
-            display: none;
-            width: 100%;
-            margin-top: .25rem;
-            font-size: .875em;
-            color: #dc3545;
-        }
-        .is-invalid ~ .invalid-feedback {
-            display: block;
-        }
-    </style>
-    
     <script>
     document.addEventListener('DOMContentLoaded', function () {
         // --- Configuration ---
@@ -121,142 +105,6 @@
         let isLoading = false;
         let selectedUsers = new Set();
         let addUserModal, editUserModal;
-        
-        // --- Utility Functions ---
-        async function apiFetch(url, options = {}) {
-            const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
-            const defaultHeaders = { 'Accept': 'application/json' };
-            if (csrfToken) defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
-
-            if (!(options.body instanceof FormData)) {
-                defaultHeaders['Content-Type'] = 'application/json';
-            }
-
-            const config = { ...options, headers: { ...defaultHeaders, ...options.headers } };
-            
-            if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
-                config.body = JSON.stringify(config.body);
-            }
-
-            const response = await fetch(url, config);
-
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: response.statusText, errors: {} }));
-                errorData.statusCode = response.status;
-                throw errorData;
-            }
-            return response.json();
-        }
-
-        function toggleButtonLoading(button, isLoading) {
-            if (!button) return;
-            const btnText = button.querySelector('.btn-text');
-            const spinner = button.querySelector('.spinner-border');
-            button.disabled = isLoading;
-            if (btnText) btnText.classList.toggle('d-none', isLoading);
-            if (spinner) spinner.classList.toggle('d-none', !isLoading);
-        }
-
-        function clearValidationErrors(form) {
-            form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
-            form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
-        }
-
-        function displayValidationErrors(form, errors) {
-            clearValidationErrors(form);
-            for (const [field, messages] of Object.entries(errors)) {
-                const fieldName = field.split('.')[0];
-                const input = form.querySelector(`[name="${fieldName}"]`) || form.querySelector(`[name="${fieldName}[]"]`);
-                if (input) {
-                    input.classList.add('is-invalid');
-                    let feedback = input.nextElementSibling;
-                    if (!feedback || !feedback.classList.contains('invalid-feedback')) {
-                        feedback = input.closest('.mb-3, .mb-4')?.querySelector('.invalid-feedback');
-                    }
-                    if (feedback) {
-                        feedback.textContent = messages.join(' ');
-                    }
-                }
-            }
-        }
-
-        function showToast(title, message, type = 'info') {
-            let toastContainer = document.getElementById('toast-container');
-            if (!toastContainer) {
-                toastContainer = document.createElement('div');
-                toastContainer.id = 'toast-container';
-                toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
-                document.body.appendChild(toastContainer);
-            }
-            
-            const toastId = 'toast-' + Date.now();
-            const toastHtml = `
-                <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
-                    <div class="toast-header bg-${type} text-white">
-                        <strong class="me-auto">${title}</strong>
-                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="toast" aria-label="Close"></button>
-                    </div>
-                    <div class="toast-body">${message}</div>
-                </div>`;
-            toastContainer.insertAdjacentHTML('beforeend', toastHtml);
-            const toastEl = document.getElementById(toastId);
-            const toast = new bootstrap.Toast(toastEl, { delay: 5000 });
-            toast.show();
-            toastEl.addEventListener('hidden.bs.toast', e => e.currentTarget.remove());
-        }
-
-        // Expose functions globally for modals
-        window.apiFetch = apiFetch;
-        window.toggleButtonLoading = toggleButtonLoading;
-        window.clearValidationErrors = clearValidationErrors;
-        window.displayValidationErrors = displayValidationErrors;
-        window.showToast = showToast;
-
-        async function loadModal(url, modalId) {
-            try {
-                const response = await fetch(url);
-                if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
-                const html = await response.text();
-                
-                const existingModal = document.querySelector('.modal');
-                if (existingModal) {
-                    const modalInstance = bootstrap.Modal.getInstance(existingModal);
-                    if (modalInstance) modalInstance.hide();
-                    existingModal.parentElement.remove();
-                }
-
-                const tempDiv = document.createElement('div');
-                tempDiv.innerHTML = html;
-                document.body.appendChild(tempDiv);
-                
-                const modalElement = document.getElementById(modalId);
-                if (!modalElement) {
-                    console.error(`Modal with id ${modalId} not found in loaded content.`);
-                    return null;
-                }
-                
-                const modal = new bootstrap.Modal(modalElement);
-                modalElement.addEventListener('hidden.bs.modal', () => tempDiv.remove());
-                return modal;
-            } catch (error) {
-                console.error('Failed to load modal:', error);
-                showToast('Lỗi', 'Không thể tải cửa sổ làm việc.', 'danger');
-                return null;
-            }
-        }
-        
-        const debounce = (func, delay) => {
-            let timeout;
-            return (...args) => {
-                clearTimeout(timeout);
-                timeout = setTimeout(() => func(...args), delay);
-            };
-        };
-
-        const escapeHtml = (text) => {
-            if (typeof text !== 'string') return text;
-            return text.replace(/[&<>"']/g, m => ({'&': '&amp;','<': '&lt;','>': '&gt;','"': '&quot;',"'": '&#039;'})[m]);
-        };
 
         // --- Core Application Logic ---
         async function fetchUsers(page = 1, query = '') {
@@ -327,59 +175,14 @@
         }
         
         function renderPagination() {
-            if (!paginationData || paginationData.last_page <= 1) {
+            if (!paginationData) {
                 paginationContainer.innerHTML = '';
-                paginationInfo.start.textContent = paginationData?.from || 0;
-                paginationInfo.end.textContent = paginationData?.to || 0;
-                paginationInfo.total.textContent = paginationData?.total || 0;
+                updatePaginationInfo(paginationInfo, paginationData);
                 return;
             }
-
-            const { current_page, last_page, from, to, total } = paginationData;
-            paginationInfo.start.textContent = from;
-            paginationInfo.end.textContent = to;
-            paginationInfo.total.textContent = total;
-
-            let paginationHtml = '';
-            const delta = 2;
-            const left = current_page - delta;
-            const right = current_page + delta + 1;
-            let range = [];
-            let rangeWithDots = [];
-            let l;
-
-            for (let i = 1; i <= last_page; i++) {
-                if (i == 1 || i == last_page || (i >= left && i < right)) {
-                    range.push(i);
-                }
-            }
-
-            for (let i of range) {
-                if (l) {
-                    if (i - l === 2) rangeWithDots.push(l + 1);
-                    else if (i - l !== 1) rangeWithDots.push('...');
-                }
-                rangeWithDots.push(i);
-                l = i;
-            }
-
-            paginationHtml += `<li class="page-item ${current_page === 1 ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${current_page - 1}">Previous</a></li>`;
-            rangeWithDots.forEach(page => {
-                if (page === '...') {
-                    paginationHtml += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
-                } else {
-                    paginationHtml += `<li class="page-item ${page === current_page ? 'active' : ''}"><a class="page-link" href="#" data-page="${page}">${page}</a></li>`;
-                }
-            });
-            paginationHtml += `<li class="page-item ${current_page === last_page ? 'disabled' : ''}"><a class="page-link" href="#" data-page="${current_page + 1}">Next</a></li>`;
-            paginationContainer.innerHTML = paginationHtml;
-        }
-
-        function updateURL(page, query) {
-            const url = new URL(window.location);
-            url.searchParams.set('page', page);
-            url.searchParams.set('q', query);
-            window.history.pushState({}, '', url);
+            
+            paginationContainer.innerHTML = renderPaginationHTML(paginationData);
+            updatePaginationInfo(paginationInfo, paginationData);
         }
 
         function updateBulkDeleteButton() {
@@ -419,6 +222,7 @@
 
         async function deleteUser(userId) {
             if (!confirm(`Bạn có chắc chắn muốn xóa tài khoản này?`)) return;
+            
             try {
                 const result = await apiFetch(`${API_BASE_URL}/${userId}`, { method: 'DELETE' });
                 if (result.success) {
@@ -595,9 +399,7 @@
         // --- Initialization ---
         function init() {
             setupEventListeners();
-            const urlParams = new URLSearchParams(window.location.search);
-            const page = parseInt(urlParams.get('page'), 10) || 1;
-            const query = urlParams.get('q') || '';
+            const { page, query } = getURLParams();
             searchInput.value = query;
             fetchUsers(page, query);
         }
