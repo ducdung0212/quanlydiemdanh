@@ -6336,6 +6336,14 @@ select.h40 {
     line-height: 1.4 !important;
 }
 
+#class.form-select,
+#editClass.form-select,
+#importExcelForm .column-mapping {
+  font-size: 16px !important;
+  min-height: 48px !important;
+  padding: 10px 12px !important;
+}
+
 /* Căn giữa số thứ tự */
 .wg-box .text-center {
     text-align: center !important;
@@ -6821,8 +6829,7 @@ select.h40 {
 
 /* 13. Tùy chỉnh các trường bắt buộc */
 .form-label[for]:after {
-    content: " *" !important;
-    color: #dc3545 !important;
+  content: "" !important;
 }
 
 /* 14. Tùy chỉnh breadcrumb */

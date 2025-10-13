@@ -1,4 +1,4 @@
-<!-- Modal Xem chi tiết sinh viên -->
+php<!-- Modal Xem chi tiết sinh viên -->
 <div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true" data-bs-backdrop="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -40,7 +40,7 @@
                             </div>
                             <div class="col-md-12 mb-3">
                                 <label class="student-info-label">Email:</label>
-                                <div class="student-info-value student-info-email">{{ $student->email }}</div>
+                                <div class="student-info-value student-info-email">{{ $student->email ?: 'Chưa cập nhật' }}</div>
                             </div>
                         </div>
                     </div>

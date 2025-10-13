@@ -122,4 +122,11 @@ return [
         'driver' => env('APP_MAINTENANCE_DRIVER', 'file'),
         'store' => env('APP_MAINTENANCE_STORE', 'database'),
     ],
+    /*
+    |--------------------------------------------------------------------------
+    | Import Excel
+    |--------------------------------------------------------------------------
+    */
+    Mattwebsite\Excel\ExcelServiceProvider::class,
+    'Excel' => Maatwebsite\Excel\Facades\Excel::class,
 ];

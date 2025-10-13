@@ -11,12 +11,12 @@
                     <input type="hidden" id="editStudentId" value="{{ $student->student_code }}">
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="editStudentCode" class="form-label">Mã Sinh Viên *</label>
+                            <label for="editStudentCode" class="form-label">Mã Sinh Viên <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editStudentCode" name="student_code" required value="{{ $student->student_code }}">
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6 mb-4">
-                            <label for="editFullName" class="form-label">Họ và Tên *</label>
+                            <label for="editFullName" class="form-label">Họ và Tên <span class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="editFullName" name="full_name" required value="{{ $student->full_name }}">
                             <div class="invalid-feedback"></div>
                         </div>
@@ -24,21 +24,28 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="editClass" class="form-label">Lớp *</label>
-                            <input type="text" class="form-control" id="editClass" name="class_code" required value="{{ $student->class_code }}">
+                            <label for="editClass" class="form-label">Lớp <span class="text-danger">*</span></label>
+                            <select class="form-select" id="editClass" name="class_code" required>
+                                <option value="" disabled {{ $student->class_code ? '' : 'selected' }}>Chọn lớp</option>
+                                @foreach ($classes as $class)
+                                    <option value="{{ $class->class_code }}" {{ $student->class_code === $class->class_code ? 'selected' : '' }}>
+                                        {{ $class->class_code }} - {{ $class->class_name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6 mb-4">
-                            <label for="editPhone" class="form-label">Số Điện Thoại *</label>
-                            <input type="tel" class="form-control" id="editPhone" name="phone" required value="{{ $student->phone }}">
+                            <label for="editPhone" class="form-label">Số Điện Thoại</label>
+                            <input type="tel" class="form-control" id="editPhone" name="phone" value="{{ $student->phone }}">
                             <div class="invalid-feedback"></div>
                         </div>
                     </div>
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="editEmail" class="form-label">Email *</label>
-                            <input type="email" class="form-control" id="editEmail" name="email" required value="{{ $student->email }}">
+                            <label for="editEmail" class="form-label">Email</label>
+                            <input type="email" class="form-control" id="editEmail" name="email" value="{{ $student->email }}">
                             <div class="invalid-feedback"></div>
                         </div>
                         <div class="col-md-6 mb-4">
