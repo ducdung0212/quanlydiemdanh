@@ -10,12 +10,12 @@
                 <div class="modal-body">
                     <input type="hidden" id="editUserId" value="{{ $user->id }}">
                     <div class="mb-4">
-                        <label for="editName" class="form-label">Tên *</label>
+                        <label for="editName" class="form-label">Tên <span class="text-danger">*</span></label>
                         <input type="text" class="form-control" id="editName" name="name" required value="{{ $user->name }}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
-                        <label for="editEmail" class="form-label">Email *</label>
+                        <label for="editEmail" class="form-label">Email <span class="text-danger">*</span></label>
                         <input type="email" class="form-control" id="editEmail" name="email" required value="{{ $user->email }}">
                         <div class="invalid-feedback"></div>
                     </div>
@@ -30,7 +30,7 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
-                        <label for="editRole" class="form-label">Role *</label>
+                        <label for="editRole" class="form-label">Role <span class="text-danger">*</span></label>
                         <select class="form-control" id="editRole" name="role" required>
                             <option value="">Chọn role</option>
                             <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>

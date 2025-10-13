@@ -61,14 +61,23 @@ Route::middleware('auth')->group(function () {
 
     // Routes for loading modals
     Route::get('/students/modals/create', function () {
-        return view('admin.students.create');
+        $classes = \App\Models\Classes::orderBy('class_code')->get();
+
+        return view('admin.students.create', [
+            'classes' => $classes,
+        ]);
     });
     Route::get('/students/modals/edit/{student_code}', function ($student_code) {
         $student = \App\Models\Student::find($student_code);
         if (!$student) {
             return response('Student not found', 404);
         }
-        return view('admin.students.edit', ['student' => $student]);
+        $classes = \App\Models\Classes::orderBy('class_code')->get();
+
+        return view('admin.students.edit', [
+            'student' => $student,
+            'classes' => $classes,
+        ]);
     });
     Route::get('/students/modals/view/{student_code}', function ($student_code) {
         $student = \App\Models\Student::find($student_code);

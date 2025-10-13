@@ -3,6 +3,7 @@
 namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class StudentRequest extends FormRequest
 {
@@ -21,43 +22,29 @@ class StudentRequest extends FormRequest
      */
     public function rules(): array
     {
-        $student_code=$this->route()->student;
-        $emailRule ='required|email|unique:students,email';
-        $phoneRule = 'nullable|string|max:15|unique:students,phone';
-        $student_codeRule = 'required|min:10|max:11|unique:students,student_code';
-        if($student_code){
-            $emailRule .=",{$student_code},student_code";
-            $phoneRule .= ",{$student_code},student_code";
-            $student_codeRule .= ",{$student_code},student_code";
-            $full_name=$this->full_name;
-            $class_code=$this->class_code;
-            $email=$this->email;
-            $phone=$this->phone;
-            $rules = [];
-            if ($student_code) {
-                $rules['student_code'] = $student_codeRule;
-            }
-            if ($class_code) {
-                $rules['class_code'] = ['required','exists:classes,class_code'];
-            }
-            if ($full_name) {
-                $rules['full_name'] = ['required','string','max:100'];
-            }
-            if ($email) {
-                $rules['email'] = $emailRule;
-            }
-            if ($phone) {
-                $rules['phone'] = $phoneRule;
-            }
-            return $rules;
+        $studentCode = $this->route('student');
+
+        if ($this->isMethod('post')) {
+            return [
+                'student_code' => ['required', 'min:10', 'max:11', Rule::unique('students', 'student_code')],
+                'class_code' => ['required', 'exists:classes,class_code'],
+                'full_name' => ['required', 'string', 'max:100'],
+                'email' => ['nullable', 'email', Rule::unique('students', 'email')],
+                'phone' => ['nullable', 'string', 'max:15', Rule::unique('students', 'phone')],
+            ];
         }
-        return [
-            'student_code' => $student_codeRule,
-            'class_code' => ['required','exists:classes,class_code'],
-            'full_name' => ['required','string','max:100'],
-            'email'=>$emailRule,
-            'phone'=>$phoneRule,
-        ];
+
+        if ($this->isMethod('put') || $this->isMethod('patch')) {
+            return [
+                'student_code' => ['sometimes', 'required', 'min:10', 'max:11', Rule::unique('students', 'student_code')->ignore($studentCode, 'student_code')],
+                'class_code' => ['sometimes', 'required', 'exists:classes,class_code'],
+                'full_name' => ['sometimes', 'required', 'string', 'max:100'],
+                'email' => ['sometimes', 'nullable', 'email', Rule::unique('students', 'email')->ignore($studentCode, 'student_code')],
+                'phone' => ['sometimes', 'nullable', 'string', 'max:15', Rule::unique('students', 'phone')->ignore($studentCode, 'student_code')],
+            ];
+        }
+
+        return [];
     }
 
     public function messages(): array
