@@ -51,31 +51,14 @@
     
                 </li>
                 
-                <!-- Teacher (đã đổi từ Category) -->
-                <li class="menu-item has-children">
-                    <a href="javascript:void(0);" class="menu-item-button">
+                <!-- Lecturer -->
+                <li class="menu-item ">
+                    <a href="{{ route('lecturer') }}" class="menu-item-button">
                         <div class="icon">
-                            <img src="{{ asset('images/icon/teacher.svg') }}" alt="Teacher" class="svg-icon">
+                            <img src="{{ asset('images/icon/teacher.svg') }}" alt="Lecturer" class="svg-icon">
                         </div>
-                        <div class="text">Teacher</div>
+                        <div class="text">Lecturer</div>
                     </a>
-                    <ul class="sub-menu">
-                        <li class="sub-menu-item">
-                            <a href="{{ route('teacher') }}" class="">
-                                <div class="text">Add Teacher</div>
-                            </a>
-                        </li>
-                        <li class="sub-menu-item">
-                            <a href="{{ route('phancong') }}" class="">
-                                <div class="text">Phân Công </div>
-                            </a>
-                        </li>
-                         <li class="sub-menu-item">
-                            <a href="{{-- {{ route('diemdanh') }} --}}" class="">
-                                <div class="text">Điểm Danh </div>
-                            </a>
-                        </li>
-                    </ul>
                 </li>
                 <!-- Settings -->
                 <li class="menu-item">

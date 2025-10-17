@@ -30,18 +30,12 @@ Route::middleware(['auth', 'verified'])->group(function () {
         }
         return view('admin.users.edit', ['user' => $user]);
     });
-    Route::get('/product/add', function () {
-        return view('admin.add-product');
-    })->name('product.add');
     Route::get('/student', function () {
         return view('admin.students.index');
     })->name('student');
-      Route::get('/teacher', function () {
-        return view('admin.teacher');
-    })->name('teacher');
-    Route::get('/phancong', function () {
-        return view('admin.phancong-teacher');
-    })->name('phancong');
+    Route::get('/lecturer', function () {
+        return view('admin.lecturers.index');
+    })->name('lecturer');
 
 
 });

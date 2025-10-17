@@ -10,7 +10,7 @@ class Faculties extends Model
     use HasFactory;
 
     protected $table = 'faculties';
-    protected $primaryKey = 'code';
+    protected $primaryKey = 'falculty_code';
     public $incrementing = false; // vì khóa chính không phải auto increment
     protected $keyType = 'string';
 
@@ -26,12 +26,12 @@ class Faculties extends Model
     // Một khoa có nhiều lớp
     public function classes()
     {
-        return $this->hasMany(ClassModel::class, 'faculty_code', 'code');
+        return $this->hasMany(ClassModel::class, 'faculty_code', 'faculty_code');
     }
 
     // Một khoa có nhiều giảng viên
     public function lecturers()
     {
-        return $this->hasMany(Lecturer::class, 'faculty_code', 'code');
+        return $this->hasMany(Lecturer::class, 'faculty_code', 'faculty_code');
     }
 }

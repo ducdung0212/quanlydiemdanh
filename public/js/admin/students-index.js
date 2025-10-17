@@ -18,7 +18,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedCountSpan = document.getElementById('selectedCount');
     const selectAllCheckbox = document.getElementById('selectAll');
     const importExcelBtn = document.getElementById('importExcelBtn');
-    const modalContainer = document.getElementById('modal-container');
     const addStudentTrigger = document.querySelector('[data-bs-target="#addStudentModal"]');
 
     // --- State ---
@@ -26,7 +25,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentQuery = '';
     let paginationData = null;
     let isLoading = false;
-    let selectedStudents = new Set();
+    const selectedStudents = new Set();
     let addStudentModal;
     let editStudentModal;
     let viewStudentModal;
