@@ -6338,6 +6338,8 @@ select.h40 {
 
 #class.form-select,
 #editClass.form-select,
+#faculty_code.form-select,
+#editFacultyCode.form-select,
 #importExcelForm .column-mapping {
   font-size: 16px !important;
   min-height: 48px !important;
@@ -6480,7 +6482,11 @@ select.h40 {
 #editAccountModal .form-label,
 #addUserModal .form-label,
 #editUserModal .form-label,
-#importExcelModal .form-label {
+#importExcelModal .form-label,
+#addLecturerModal .form-label,
+#editLecturerModal .form-label,
+#viewLecturerModal .form-label,
+#importLecturerModal .form-label {
     font-size: 15px !important;
     margin-bottom: 10px !important;
     font-weight: 600 !important;
@@ -6501,6 +6507,10 @@ select.h40 {
 #addUserModal .form-control,
 #editUserModal .form-control,
 #importExcelModal .form-control,
+#addLecturerModal .form-control,
+#editLecturerModal .form-control,
+#viewLecturerModal .form-control,
+#importLecturerModal .form-control,
 #addAssignmentModal select,
 #editAssignmentModal select,
 #viewAssignmentModal select {
@@ -6527,6 +6537,10 @@ select.h40 {
 #addUserModal .form-control:focus,
 #editUserModal .form-control:focus,
 #importExcelModal .form-control:focus,
+#addLecturerModal .form-control:focus,
+#editLecturerModal .form-control:focus,
+#viewLecturerModal .form-control:focus,
+#importLecturerModal .form-control:focus,
 #addAssignmentModal select:focus,
 #editAssignmentModal select:focus,
 #viewAssignmentModal select:focus {
@@ -6548,7 +6562,11 @@ select.h40 {
 #editAccountModal .btn,
 #addUserModal .btn,
 #editUserModal .btn,
-#importExcelModal .btn {
+#importExcelModal .btn,
+#addLecturerModal .btn,
+#editLecturerModal .btn,
+#viewLecturerModal .btn,
+#importLecturerModal .btn {
     font-size: 14px !important;
     padding: 12px 24px !important;
     border-radius: 8px !important;
@@ -6569,7 +6587,11 @@ select.h40 {
 #editAccountModal .btn:hover,
 #addUserModal .btn:hover,
 #editUserModal .btn:hover,
-#importExcelModal .btn:hover {
+#importExcelModal .btn:hover,
+#addLecturerModal .btn:hover,
+#editLecturerModal .btn:hover,
+#viewLecturerModal .btn:hover,
+#importLecturerModal .btn:hover {
     transform: translateY(-1px) !important;
 }
 
@@ -6586,7 +6608,11 @@ select.h40 {
 #editAccountModal .btn-primary,
 #addUserModal .btn-primary,
 #editUserModal .btn-primary,
-#importExcelModal .btn-primary {
+#importExcelModal .btn-primary,
+#addLecturerModal .btn-primary,
+#editLecturerModal .btn-primary,
+#viewLecturerModal .btn-primary,
+#importLecturerModal .btn-primary {
     background-color: #2377FC !important;
     border: none !important;
 }
@@ -6604,7 +6630,11 @@ select.h40 {
 #editAccountModal .btn-primary:hover,
 #addUserModal .btn-primary:hover,
 #editUserModal .btn-primary:hover,
-#importExcelModal .btn-primary:hover {
+#importExcelModal .btn-primary:hover,
+#addLecturerModal .btn-primary:hover,
+#editLecturerModal .btn-primary:hover,
+#viewLecturerModal .btn-primary:hover,
+#importLecturerModal .btn-primary:hover {
     background-color: #1c68e0 !important;
 }
 
@@ -6621,7 +6651,11 @@ select.h40 {
 #editAccountModal .btn-secondary,
 #addUserModal .btn-secondary,
 #editUserModal .btn-secondary,
-#importExcelModal .btn-secondary {
+#importExcelModal .btn-secondary,
+#addLecturerModal .btn-secondary,
+#editLecturerModal .btn-secondary,
+#viewLecturerModal .btn-secondary,
+#importLecturerModal .btn-secondary {
     background-color: #6c757d !important;
     border: none !important;
 }
@@ -6639,7 +6673,11 @@ select.h40 {
 #editAccountModal .btn-secondary:hover,
 #addUserModal .btn-secondary:hover,
 #editUserModal .btn-secondary:hover,
-#importExcelModal .btn-secondary:hover {
+#importExcelModal .btn-secondary:hover,
+#addLecturerModal .btn-secondary:hover,
+#editLecturerModal .btn-secondary:hover,
+#viewLecturerModal .btn-secondary:hover,
+#importLecturerModal .btn-secondary:hover {
     background-color: #5a6268 !important;
 }
 
@@ -6657,7 +6695,11 @@ select.h40 {
 #editAccountModal .modal-content,
 #addUserModal .modal-content,
 #editUserModal .modal-content,
-#importExcelModal .modal-content {
+#importExcelModal .modal-content,
+#addLecturerModal .modal-content,
+#editLecturerModal .modal-content,
+#viewLecturerModal .modal-content,
+#importLecturerModal .modal-content {
     box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15) !important;
     border-radius: 12px !important;
     border: none !important;
