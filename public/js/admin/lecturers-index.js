@@ -299,9 +299,274 @@ document.addEventListener('DOMContentLoaded', function () {
             }
 
             modal.show();
+
+            if (type === 'add') {
+                initializeAddLecturerForm(modal);
+            } else if (type === 'edit') {
+                initializeEditLecturerForm(modal, lecturerCode);
+            }
         } catch (error) {
             showToast('Lỗi', error.message || 'Không thể mở modal.', 'danger');
         }
+    }
+
+    function initializeAddLecturerForm(modalInstance) {
+        const form = document.getElementById('addLecturerForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = form.querySelector('#btnAddLecturer') || form.querySelector('button[type="submit"]');
+            toggleButtonLoading(submitButton, true);
+            clearValidationErrors(form);
+
+            try {
+                const formData = new FormData(form);
+                const result = await apiFetch(API_BASE_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!result.success) {
+                    showToast('Lỗi', result.message || 'Không thể thêm giảng viên.', 'danger');
+                    return;
+                }
+
+                modalInstance.hide();
+                showToast('Thành công', result.message || 'Đã thêm giảng viên.', 'success');
+                document.dispatchEvent(new CustomEvent('lecturersUpdated'));
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(form, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể thêm giảng viên.', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+    }
+
+    function initializeEditLecturerForm(modalInstance, lecturerCode) {
+        const form = document.getElementById('editLecturerForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = form.querySelector('#btnEditLecturer') || form.querySelector('button[type="submit"]');
+            toggleButtonLoading(submitButton, true);
+            clearValidationErrors(form);
+
+            try {
+                const formData = new FormData(form);
+                formData.append('_method', 'PUT');
+
+                const result = await apiFetch(`${API_BASE_URL}/${encodeURIComponent(lecturerCode)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!result.success) {
+                    showToast('Lỗi', result.message || 'Không thể cập nhật giảng viên.', 'danger');
+                    return;
+                }
+
+                modalInstance.hide();
+                showToast('Thành công', result.message || 'Đã cập nhật giảng viên.', 'success');
+                document.dispatchEvent(new CustomEvent('lecturersUpdated', { detail: { isEdit: true } }));
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(form, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể cập nhật giảng viên.', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+    }
+
+    function initializeImportLecturerModal(modalInstance) {
+        const form = document.getElementById('importLecturerForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        const fileInput = form.querySelector('#excel_file');
+        const tokenInput = form.querySelector('#import_token');
+        const headingRowInput = form.querySelector('#import_heading_row');
+        const mappingSection = form.querySelector('#mappingSection');
+        const headingsPreview = form.querySelector('#headingsPreview');
+        const headingsList = form.querySelector('#headingsList');
+        const submitButton = form.querySelector('#btnImportLecturer');
+        const buttonText = submitButton ? submitButton.querySelector('.btn-text') : null;
+        const mappingSelects = Array.from(form.querySelectorAll('.column-mapping'));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        mappingSelects.forEach((select) => {
+            select.dataset.defaultOptions = select.innerHTML;
+            select.disabled = true;
+            select.required = false;
+        });
+
+        const resetMappingUI = () => {
+            form.dataset.step = 'preview';
+            tokenInput.value = '';
+            headingRowInput.value = '';
+            headingsList.innerHTML = '';
+            headingsPreview.classList.add('d-none');
+            mappingSection.classList.add('d-none');
+            mappingSelects.forEach((select) => {
+                select.innerHTML = select.dataset.defaultOptions;
+                select.value = '';
+                select.disabled = true;
+                select.required = false;
+            });
+            if (buttonText) {
+                buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
+            }
+        };
+
+        const populateHeadings = (headings) => {
+            const sanitize = window.escapeHtml ? window.escapeHtml.bind(window) : (value) => value;
+            headingsList.innerHTML = headings.map((heading) => `
+                <span class="badge bg-light text-dark border">${sanitize(heading)}</span>
+            `).join('');
+
+            mappingSelects.forEach((select) => {
+                const defaultHtml = select.dataset.defaultOptions;
+                const tempContainer = document.createElement('div');
+                tempContainer.innerHTML = defaultHtml;
+                select.innerHTML = '';
+                Array.from(tempContainer.children).forEach((child) => select.appendChild(child));
+
+                headings.forEach((heading) => {
+                    const option = document.createElement('option');
+                    option.value = heading;
+                    option.textContent = heading;
+                    select.appendChild(option);
+                });
+
+                select.disabled = false;
+                if (select.dataset.required === 'true') {
+                    select.required = true;
+                }
+            });
+
+            headingsPreview.classList.remove('d-none');
+            mappingSection.classList.remove('d-none');
+        };
+
+        const handlePreview = async () => {
+            if (!fileInput.files.length) {
+                throw new Error('Vui lòng chọn file Excel trước khi tiếp tục.');
+            }
+
+            const previewData = new FormData();
+            previewData.append('excel_file', fileInput.files[0]);
+
+            const response = await fetch('/api/lecturers/import/preview', {
+                method: 'POST',
+                body: previewData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Không thể đọc tiêu đề cột');
+            }
+
+            tokenInput.value = result.token;
+            headingRowInput.value = result.heading_row || '';
+            populateHeadings(result.headings || []);
+            form.dataset.step = 'mapping';
+
+            if (buttonText) {
+                buttonText.textContent = buttonText.dataset.textImport || 'Import';
+            }
+
+            showToast('Thông báo', 'Vui lòng map các cột trước khi import.', 'info');
+        };
+
+        const handleImport = async () => {
+            if (!tokenInput.value) {
+                throw new Error('Vui lòng tải lại file trước khi import.');
+            }
+
+            const mapping = {};
+            mappingSelects.forEach((select) => {
+                mapping[select.dataset.field] = select.value;
+            });
+
+            if (!mapping.lecturer_code) {
+                throw new Error('Vui lòng chọn cột cho Mã giảng viên.');
+            }
+
+            const response = await fetch('/api/lecturers/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: tokenInput.value,
+                    heading_row: headingRowInput.value ? Number(headingRowInput.value) : undefined,
+                    mapping,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Import thất bại');
+            }
+
+            modalInstance.hide();
+            showToast('Thành công', result.message || 'Đã import danh sách giảng viên.', 'success');
+            await fetchLecturers(1, '');
+            resetMappingUI();
+        };
+
+        form.addEventListener('change', (event) => {
+            if (event.target === fileInput) {
+                resetMappingUI();
+            }
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            toggleButtonLoading(submitButton, true);
+
+            try {
+                if (form.dataset.step === 'mapping') {
+                    await handleImport();
+                } else {
+                    await handlePreview();
+                }
+            } catch (error) {
+                showToast('Lỗi', error.message || 'Có lỗi xảy ra khi import', 'danger');
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+        resetMappingUI();
     }
 
     function setupEventListeners() {
@@ -335,6 +600,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     importExcelModal = await loadModal('/lecturers/modals/import', 'importLecturerModal');
                     if (importExcelModal) {
                         importExcelModal.show();
+                        initializeImportLecturerModal(importExcelModal);
                     }
                 } catch (error) {
                     showToast('Lỗi', error.message || 'Không thể tải modal import.', 'danger');
@@ -348,6 +614,12 @@ document.addEventListener('DOMContentLoaded', function () {
                 openLecturerModal('add');
             });
         }
+
+        document.addEventListener('lecturersUpdated', (event) => {
+            const isEdit = event.detail?.isEdit || false;
+            const targetPage = isEdit ? currentPage : 1;
+            fetchLecturers(targetPage, currentQuery);
+        });
 
         paginationContainer.addEventListener('click', (event) => {
             const pageLink = event.target.closest('[data-page]');

@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
+use Illuminate\Support\Facades\Schema;
 
 Route::get('/', function () {
     return view('auth/login');
@@ -82,6 +84,55 @@ Route::middleware('auth')->group(function () {
     });
     Route::get('/students/modals/import', function () {
         return view('admin.students.import');
+    });
+
+    Route::get('/lecturers/modals/create', function () {
+        $query = DB::table('faculties');
+        if (Schema::hasColumn('faculties', 'faculty_code')) {
+            $query->orderBy('faculty_code');
+        } elseif (Schema::hasColumn('faculties', 'code')) {
+            $query->orderBy('code');
+        } else {
+            $query->orderBy('name');
+        }
+
+        return view('admin.lecturers.create', [
+            'faculties' => $query->get(),
+        ]);
+    });
+
+    Route::get('/lecturers/{lecturer_code}/modals/edit', function ($lecturer_code) {
+        $lecturer = \App\Models\Lecturer::find($lecturer_code);
+        if (!$lecturer) {
+            return response('Lecturer not found', 404);
+        }
+
+        $query = DB::table('faculties');
+        if (Schema::hasColumn('faculties', 'faculty_code')) {
+            $query->orderBy('faculty_code');
+        } elseif (Schema::hasColumn('faculties', 'code')) {
+            $query->orderBy('code');
+        } else {
+            $query->orderBy('name');
+        }
+
+        return view('admin.lecturers.edit', [
+            'lecturer' => $lecturer,
+            'faculties' => $query->get(),
+        ]);
+    });
+
+    Route::get('/lecturers/{lecturer_code}/modals/view', function ($lecturer_code) {
+        $lecturer = \App\Models\Lecturer::find($lecturer_code);
+        if (!$lecturer) {
+            return response('Lecturer not found', 404);
+        }
+
+        return view('admin.lecturers.show', ['lecturer' => $lecturer]);
+    });
+
+    Route::get('/lecturers/modals/import', function () {
+        return view('admin.lecturers.import');
     });
 });
 
