@@ -4,6 +4,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
+use App\Http\Controllers\LecturerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -17,7 +18,10 @@ use App\Http\Controllers\StudentController;
 */
 
 Route::apiResource('users', UserController::class);
+
 Route::apiResource('students', StudentController::class);
 Route::post('students/bulk-delete', [StudentController::class, 'bulkDelete']);
 Route::post('students/import/preview', [StudentController::class, 'previewImport']);
 Route::post('students/import', [StudentController::class, 'import']);
+
+Route::apiResource('lecturers', LecturerController::class);

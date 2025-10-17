@@ -65,7 +65,7 @@ class Classes extends Model
      */
     public function faculty(): BelongsTo
     {
-        return $this->belongsTo(Faculty::class, 'faculty_code', 'code');
+        return $this->belongsTo(Faculty::class, 'faculty_code', 'faculty_code');
     }
 
     /**

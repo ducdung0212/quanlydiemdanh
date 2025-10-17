@@ -2,7 +2,7 @@
 
 @section('content')
     <div class="flex items-center flex-wrap justify-between gap20 mb-27">
-        <h3>Quản lý Sinh Viên</h3>
+        <h3>Quản lý Giảng Viên</h3>
         <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
             <li>
                 <a href="{{ route('dashboard') }}">
@@ -13,7 +13,7 @@
                 <i class="icon-chevron-right"></i>
             </li>
             <li>
-                <div class="text-tiny">Quản lý Sinh Viên</div>
+                <div class="text-tiny">Quản lý Giảng Viên</div>
             </li>
         </ul>
     </div>
@@ -23,7 +23,7 @@
             <div class="wg-filter flex-grow">
                 <form class="form-search" id="searchForm">
                     <fieldset class="name">
-                        <input type="text" placeholder="Tìm kiếm sinh viên..." class="" name="q"
+                        <input type="text" placeholder="Tìm kiếm giảng viên..." class="" name="q"
                             tabindex="2" value="" aria-required="true" id="searchInput">
                     </fieldset>
                     <div class="button-submit">
@@ -38,26 +38,26 @@
                 <a class="tf-button style-2 w208" href="#" id="importExcelBtn">
                     <i class="icon-upload"></i>Import Excel
                 </a>
-                <a class="tf-button style-1 w208" href="#" data-bs-toggle="modal" data-bs-target="#addStudentModal">
+                <a class="tf-button style-1 w208" href="#" data-bs-toggle="modal" data-bs-target="#addLecturerModal">
                     <i class="icon-plus"></i>Thêm mới
                 </a>
             </div>
         </div>
         <div class="table-responsive">
-            <table id="students-table" class="table table-striped table-bordered">
+            <table id="lecturers-table" class="table table-striped table-bordered">
                 <thead>
                     <tr>
                         <th style="width: 50px">
                             <input type="checkbox" id="selectAll" style="cursor: pointer;">
                         </th>
                         <th style="width: 60px">STT</th>
-                        <th>Mã SV</th>
+                        <th>Mã GV</th>
                         <th>Tên</th>
-                        <th>Lớp</th>
+                        <th>Khoa</th>
                         <th style="width: 150px">Action</th>
                     </tr>
                 </thead>
-                <tbody id="students-table-body">
+                <tbody id="lecturers-table-body">
                 </tbody>
             </table>
         </div>
@@ -65,7 +65,7 @@
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> sinh viên
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> giảng viên
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">
@@ -81,5 +81,6 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/admin/students-index.js') }}"></script>
+    <script src="{{ asset('js/admin/lecturers-index.js') }}"></script>
 @endpush
+                                    </div>
