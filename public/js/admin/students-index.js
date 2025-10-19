@@ -207,6 +207,265 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    function initializeAddStudentForm(modalInstance) {
+        const form = document.getElementById('addStudentForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            toggleButtonLoading(submitButton, true);
+            clearValidationErrors(form);
+
+            try {
+                const formData = new FormData(form);
+                const result = await apiFetch(API_BASE_URL, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!result.success) {
+                    showToast('Lỗi', result.message || 'Không thể thêm sinh viên', 'danger');
+                    return;
+                }
+
+                modalInstance.hide();
+                showToast('Thành công', result.message || 'Đã thêm sinh viên', 'success');
+                document.dispatchEvent(new CustomEvent('studentsUpdated'));
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(form, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể thêm sinh viên', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+    }
+
+    function initializeEditStudentForm(modalInstance, studentCode) {
+        const form = document.getElementById('editStudentForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+
+            const submitButton = form.querySelector('button[type="submit"]');
+            toggleButtonLoading(submitButton, true);
+            clearValidationErrors(form);
+
+            try {
+                const formData = new FormData(form);
+                formData.append('_method', 'PUT');
+
+                const result = await apiFetch(`${API_BASE_URL}/${encodeURIComponent(studentCode)}`, {
+                    method: 'POST',
+                    body: formData
+                });
+
+                if (!result.success) {
+                    showToast('Lỗi', result.message || 'Không thể cập nhật sinh viên', 'danger');
+                    return;
+                }
+
+                modalInstance.hide();
+                showToast('Thành công', result.message || 'Đã cập nhật sinh viên', 'success');
+                document.dispatchEvent(new CustomEvent('studentsUpdated', { detail: { isEdit: true } }));
+            } catch (error) {
+                if (error.statusCode === 422 && error.errors) {
+                    displayValidationErrors(form, error.errors);
+                } else {
+                    showToast('Lỗi', error.message || 'Không thể cập nhật sinh viên', 'danger');
+                }
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+    }
+
+    function initializeImportStudentModal(modalInstance) {
+        const form = document.getElementById('importExcelForm');
+        if (!form || form.dataset.initialized === 'true') {
+            return;
+        }
+
+        const fileInput = form.querySelector('#excel_file');
+        const tokenInput = form.querySelector('#import_token');
+        const headingRowInput = form.querySelector('#import_heading_row');
+        const mappingSection = form.querySelector('#mappingSection');
+        const headingsPreview = form.querySelector('#headingsPreview');
+        const headingsList = form.querySelector('#headingsList');
+        const submitButton = form.querySelector('#btnImportExcel');
+        const buttonText = submitButton ? submitButton.querySelector('.btn-text') : null;
+        const mappingSelects = Array.from(form.querySelectorAll('.column-mapping'));
+        const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+
+        mappingSelects.forEach((select) => {
+            select.dataset.defaultOptions = select.innerHTML;
+            select.disabled = true;
+            select.required = false;
+        });
+
+        const resetMappingUI = () => {
+            form.dataset.step = 'preview';
+            tokenInput.value = '';
+            headingRowInput.value = '';
+            headingsList.innerHTML = '';
+            headingsPreview.classList.add('d-none');
+            mappingSection.classList.add('d-none');
+            mappingSelects.forEach((select) => {
+                select.innerHTML = select.dataset.defaultOptions;
+                select.value = '';
+                select.disabled = true;
+                select.required = false;
+            });
+            if (buttonText) {
+                buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
+            }
+        };
+
+        const populateHeadings = (headings) => {
+            const sanitize = window.escapeHtml ? window.escapeHtml.bind(window) : (value) => value;
+            headingsList.innerHTML = headings.map((heading) => `
+                <span class="badge bg-light text-dark border">${sanitize(heading)}</span>
+            `).join('');
+
+            mappingSelects.forEach((select) => {
+                const defaultHtml = select.dataset.defaultOptions;
+                const tempContainer = document.createElement('div');
+                tempContainer.innerHTML = defaultHtml;
+                select.innerHTML = '';
+                Array.from(tempContainer.children).forEach((child) => select.appendChild(child));
+
+                headings.forEach((heading) => {
+                    const option = document.createElement('option');
+                    option.value = heading;
+                    option.textContent = heading;
+                    select.appendChild(option);
+                });
+
+                select.disabled = false;
+                if (select.dataset.required === 'true') {
+                    select.required = true;
+                }
+            });
+
+            headingsPreview.classList.remove('d-none');
+            mappingSection.classList.remove('d-none');
+        };
+
+        const handlePreview = async () => {
+            if (!fileInput.files.length) {
+                throw new Error('Vui lòng chọn file Excel trước khi tiếp tục.');
+            }
+
+            const previewData = new FormData();
+            previewData.append('excel_file', fileInput.files[0]);
+
+            const response = await fetch('/api/students/import/preview', {
+                method: 'POST',
+                body: previewData,
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Không thể đọc tiêu đề cột');
+            }
+
+            tokenInput.value = result.token;
+            headingRowInput.value = result.heading_row || '';
+            populateHeadings(result.headings || []);
+            form.dataset.step = 'mapping';
+
+            if (buttonText) {
+                buttonText.textContent = buttonText.dataset.textImport || 'Import';
+            }
+
+            showToast('Thông báo', 'Vui lòng map các cột trước khi import.', 'info');
+        };
+
+        const handleImport = async () => {
+            if (!tokenInput.value) {
+                throw new Error('Vui lòng tải lại file trước khi import.');
+            }
+
+            const mapping = {};
+            mappingSelects.forEach((select) => {
+                mapping[select.dataset.field] = select.value;
+            });
+
+            if (!mapping.student_code) {
+                throw new Error('Vui lòng chọn cột cho Mã sinh viên.');
+            }
+
+            const response = await fetch('/api/students/import', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': csrfToken,
+                    'Accept': 'application/json',
+                },
+                body: JSON.stringify({
+                    token: tokenInput.value,
+                    heading_row: headingRowInput.value ? Number(headingRowInput.value) : undefined,
+                    mapping,
+                }),
+            });
+
+            const result = await response.json();
+
+            if (!response.ok || !result.success) {
+                throw new Error(result.message || 'Import thất bại');
+            }
+
+            modalInstance.hide();
+            showToast('Thành công', result.message || 'Đã import danh sách sinh viên.', 'success');
+            await fetchStudents(1, '');
+            resetMappingUI();
+        };
+
+        form.addEventListener('change', (event) => {
+            if (event.target === fileInput) {
+                resetMappingUI();
+            }
+        });
+
+        form.addEventListener('submit', async (event) => {
+            event.preventDefault();
+            toggleButtonLoading(submitButton, true);
+
+            try {
+                if (form.dataset.step === 'mapping') {
+                    await handleImport();
+                } else {
+                    await handlePreview();
+                }
+            } catch (error) {
+                showToast('Lỗi', error.message || 'Có lỗi xảy ra khi import', 'danger');
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+        resetMappingUI();
+    }
+
     async function setupEventListeners() {
         searchInput.addEventListener('keyup', debounce(() => {
             fetchStudents(1, searchInput.value.trim());
@@ -222,178 +481,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 importExcelModal = await loadModal('/students/modals/import', 'importExcelModal');
                 if (!importExcelModal) return;
                 importExcelModal.show();
-
-                const importExcelForm = document.getElementById('importExcelForm');
-                if (!importExcelForm || importExcelForm.dataset.initialized === 'true') {
-                    return;
-                }
-
-                const fileInput = importExcelForm.querySelector('#excel_file');
-                const tokenInput = importExcelForm.querySelector('#import_token');
-                const headingRowInput = importExcelForm.querySelector('#import_heading_row');
-                const mappingSection = importExcelForm.querySelector('#mappingSection');
-                const headingsPreview = importExcelForm.querySelector('#headingsPreview');
-                const headingsList = importExcelForm.querySelector('#headingsList');
-                const submitButton = importExcelForm.querySelector('#btnImportExcel');
-                const buttonText = submitButton ? submitButton.querySelector('.btn-text') : null;
-                const mappingSelects = Array.from(importExcelForm.querySelectorAll('.column-mapping'));
-                const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
-
-                mappingSelects.forEach((select) => {
-                    select.dataset.defaultOptions = select.innerHTML;
-                    select.disabled = true;
-                    select.required = false;
-                });
-
-                const resetMappingUI = () => {
-                    importExcelForm.dataset.step = 'preview';
-                    tokenInput.value = '';
-                    headingRowInput.value = '';
-                    headingsList.innerHTML = '';
-                    headingsPreview.classList.add('d-none');
-                    mappingSection.classList.add('d-none');
-                    mappingSelects.forEach((select) => {
-                        select.innerHTML = select.dataset.defaultOptions;
-                        select.value = '';
-                        select.disabled = true;
-                        select.required = false;
-                    });
-                    if (buttonText) {
-                        buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
-                    }
-                };
-
-                const populateHeadings = (headings) => {
-                    const sanitize = window.escapeHtml ? window.escapeHtml.bind(window) : (value) => value;
-                    headingsList.innerHTML = headings.map((heading) => `
-                        <span class="badge bg-light text-dark border">${sanitize(heading)}</span>
-                    `).join('');
-
-                    mappingSelects.forEach((select) => {
-                        const defaultHtml = select.dataset.defaultOptions;
-                        const tempContainer = document.createElement('div');
-                        tempContainer.innerHTML = defaultHtml;
-                        select.innerHTML = '';
-                        Array.from(tempContainer.children).forEach((child) => select.appendChild(child));
-
-                        headings.forEach((heading) => {
-                            const option = document.createElement('option');
-                            option.value = heading;
-                            option.textContent = heading;
-                            select.appendChild(option);
-                        });
-
-                        select.disabled = false;
-                        if (select.dataset.required === 'true') {
-                            select.required = true;
-                        }
-                    });
-
-                    headingsPreview.classList.remove('d-none');
-                    mappingSection.classList.remove('d-none');
-                };
-
-                const handlePreview = async () => {
-                    if (!fileInput.files.length) {
-                        throw new Error('Vui lòng chọn file Excel trước khi tiếp tục.');
-                    }
-
-                    const previewData = new FormData();
-                    previewData.append('excel_file', fileInput.files[0]);
-
-                    const response = await fetch('/api/students/import/preview', {
-                        method: 'POST',
-                        body: previewData,
-                        headers: {
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                        }
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                        throw new Error(result.message || 'Không thể đọc tiêu đề cột');
-                    }
-
-                    tokenInput.value = result.token;
-                    headingRowInput.value = result.heading_row || '';
-                    populateHeadings(result.headings || []);
-                    importExcelForm.dataset.step = 'mapping';
-
-                    if (buttonText) {
-                        buttonText.textContent = buttonText.dataset.textImport || 'Import';
-                    }
-
-                    showToast('Thông báo', 'Vui lòng map các cột trước khi import.', 'info');
-                };
-
-                const handleImport = async () => {
-                    if (!tokenInput.value) {
-                        throw new Error('Vui lòng tải lại file trước khi import.');
-                    }
-
-                    const mapping = {};
-                    mappingSelects.forEach((select) => {
-                        mapping[select.dataset.field] = select.value;
-                    });
-
-                    if (!mapping.student_code) {
-                        throw new Error('Vui lòng chọn cột cho Mã sinh viên.');
-                    }
-
-                    const response = await fetch('/api/students/import', {
-                        method: 'POST',
-                        headers: {
-                            'Content-Type': 'application/json',
-                            'X-CSRF-TOKEN': csrfToken,
-                            'Accept': 'application/json',
-                        },
-                        body: JSON.stringify({
-                            token: tokenInput.value,
-                            heading_row: headingRowInput.value ? Number(headingRowInput.value) : undefined,
-                            mapping,
-                        }),
-                    });
-
-                    const result = await response.json();
-
-                    if (!response.ok || !result.success) {
-                        throw new Error(result.message || 'Import thất bại');
-                    }
-
-                    importExcelModal.hide();
-                    showToast('Thành công', result.message, 'success');
-                    await fetchStudents(1, '');
-                    resetMappingUI();
-                };
-
-                importExcelForm.addEventListener('change', (event) => {
-                    if (event.target === fileInput) {
-                        resetMappingUI();
-                    }
-                });
-
-                importExcelForm.addEventListener('submit', async function (e) {
-                    e.preventDefault();
-                    const button = submitButton;
-                    toggleButtonLoading(button, true);
-
-                    try {
-                        if (importExcelForm.dataset.step === 'mapping') {
-                            await handleImport();
-                        } else {
-                            await handlePreview();
-                        }
-                    } catch (error) {
-                        showToast('Lỗi', error.message || 'Có lỗi xảy ra khi import', 'danger');
-                    } finally {
-                        toggleButtonLoading(button, false);
-                    }
-                });
-
-                importExcelForm.dataset.initialized = 'true';
-                resetMappingUI();
+                initializeImportStudentModal(importExcelModal);
             });
         }
 
@@ -410,42 +498,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (viewStudentModal) viewStudentModal.show();
                     break;
                 case 'edit-student':
-                    editStudentModal = await loadModal(`/students/modals/edit/${studentCode}`, 'editStudentModal');
+                    editStudentModal = await loadModal(`/students/modals/edit/${encodeURIComponent(studentCode)}`, 'editStudentModal');
                     if (editStudentModal) {
                         editStudentModal.show();
-                        const editStudentForm = document.getElementById('editStudentForm');
-                        if (editStudentForm) {
-                            editStudentForm.addEventListener('submit', async function (event) {
-                                event.preventDefault();
-                                const button = editStudentForm.querySelector('button[type="submit"]');
-                                toggleButtonLoading(button, true);
-                                clearValidationErrors(editStudentForm);
-
-                                const formData = new FormData(editStudentForm);
-                                formData.append('_method', 'PUT');
-
-                                try {
-                                    const result = await apiFetch(`${API_BASE_URL}/${studentCode}`, {
-                                        method: 'POST',
-                                        body: formData
-                                    });
-
-                                    if (result.success) {
-                                        editStudentModal.hide();
-                                        showToast('Thành công', result.message, 'success');
-                                        document.dispatchEvent(new CustomEvent('studentsUpdated', { detail: { isEdit: true } }));
-                                    }
-                                } catch (error) {
-                                    if (error.statusCode === 422 && error.errors) {
-                                        displayValidationErrors(editStudentForm, error.errors);
-                                    } else {
-                                        showToast('Lỗi', error.message || 'Không thể cập nhật sinh viên', 'danger');
-                                    }
-                                } finally {
-                                    toggleButtonLoading(button, false);
-                                }
-                            });
-                        }
+                        initializeEditStudentForm(editStudentModal, studentCode);
                     }
                     break;
                 case 'delete-student':
@@ -464,38 +520,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 addStudentModal = await loadModal('/students/modals/create', 'addStudentModal');
                 if (addStudentModal) {
                     addStudentModal.show();
-                    const addStudentForm = document.getElementById('addStudentForm');
-                    if (addStudentForm) {
-                        addStudentForm.addEventListener('submit', async function (event) {
-                            event.preventDefault();
-                            const button = addStudentForm.querySelector('button[type="submit"]');
-                            toggleButtonLoading(button, true);
-                            clearValidationErrors(addStudentForm);
-
-                            const formData = new FormData(addStudentForm);
-
-                            try {
-                                const result = await apiFetch(API_BASE_URL, {
-                                    method: 'POST',
-                                    body: formData
-                                });
-
-                                if (result.success) {
-                                    addStudentModal.hide();
-                                    showToast('Thành công', result.message, 'success');
-                                    document.dispatchEvent(new CustomEvent('studentsUpdated'));
-                                }
-                            } catch (error) {
-                                if (error.statusCode === 422 && error.errors) {
-                                    displayValidationErrors(addStudentForm, error.errors);
-                                } else {
-                                    showToast('Lỗi', error.message || 'Không thể thêm sinh viên', 'danger');
-                                }
-                            } finally {
-                                toggleButtonLoading(button, false);
-                            }
-                        });
-                    }
+                    initializeAddStudentForm(addStudentModal);
                 }
             });
         }

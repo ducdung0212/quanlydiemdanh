@@ -6705,6 +6705,11 @@ select.h40 {
     border: none !important;
 }
 
+#headingsList .badge {
+  font-size: 15px !important;
+  padding: 8px 12px !important;
+}
+
 /* 8. Tìm kiếm */
 .wg-filter .form-control {
     font-size: 14px !important;

@@ -78,7 +78,7 @@
 @endsection
 
 @push('scripts')
-    <script src="{{ asset('js/users-index.js') }}"></script>
+    <script src="{{ asset('js/admin/users-index.js') }}"></script>
 @endpush
 
 
