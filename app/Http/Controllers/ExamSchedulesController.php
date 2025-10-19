@@ -1,0 +1,382 @@
+<?php
+
+namespace App\Http\Controllers;
+
+use App\Imports\ExamSchedulesImport;
+use App\Models\AttendanceRecord;
+use App\Models\ExamRoster;
+use App\Models\ExamSchedule;
+use Carbon\Carbon;
+use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
+use InvalidArgumentException;
+use Maatwebsite\Excel\Facades\Excel;
+use PhpOffice\PhpSpreadsheet\IOFactory;
+use Throwable;
+
+class ExamSchedulesController extends Controller
+{
+    /**
+     * Display a listing of the resource.
+     */
+    public function index()
+    {
+        $q = request()->query('q');
+        $limit = (int) request()->query('limit', 10);
+
+        $examSchedules = ExamSchedule::query()
+            ->with('subject')
+            ->latest();
+
+        if ($q) {
+            $examSchedules->where(function ($query) use ($q) {
+                $query->where('id', 'like', "%{$q}%")
+                    ->orWhere('subject_code', 'like', "%{$q}%")
+                    ->orWhere('exam_date', 'like', "%{$q}%")
+                    ->orWhere('exam_time', 'like', "%{$q}%")
+                    ->orWhere('room', 'like', "%{$q}%")
+                    ->orWhereHas('subject', function ($subjectQuery) use ($q) {
+                        $subjectQuery->where('name', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $examSchedules->paginate($limit),
+            'message' => 'List Exam Schedules',
+        ]);
+    }
+
+    /**
+     * Show the form for creating a new resource.
+     */
+    public function create()
+    {
+        //
+    }
+
+    /**
+     * Store a newly created resource in storage.
+     */
+    public function store(Request $request)
+    {
+        //
+    }
+
+    /**
+     * Display the specified resource.
+     */
+    public function show(string $id)
+    {
+        $examSchedule = ExamSchedule::with('subject')->find($id);
+
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Exam Schedule not found',
+            ], 404);
+        }
+
+        $rosters = ExamRoster::with('student')
+            ->where('exam_schedule_id', $examSchedule->id)
+            ->get();
+
+        $attendanceRecords = AttendanceRecord::where('exam_schedule_id', $examSchedule->id)
+            ->get()
+            ->keyBy('student_code');
+
+        $examStart = null;
+
+        if (!empty($examSchedule->exam_date) && !empty($examSchedule->exam_time)) {
+            $examStart = Carbon::parse($examSchedule->exam_date . ' ' . $examSchedule->exam_time);
+        }
+
+        $students = [];
+        $present = 0;
+        $late = 0;
+
+        foreach ($rosters as $entry) {
+            $student = $entry->student;
+            $attendance = $attendanceRecords->get($entry->student_code);
+
+            $status = 'absent';
+            $attendanceTime = null;
+
+            if ($attendance) {
+                $attendanceTime = optional($attendance->attendance_time)?->toDateTimeString();
+                $attendanceMoment = $attendance->attendance_time ? Carbon::parse($attendance->attendance_time) : null;
+
+                if ($attendanceMoment && $examStart && $attendanceMoment->gt($examStart)) {
+                    $status = 'late';
+                    $late++;
+                } elseif ($attendance->rekognition_result === 'match') {
+                    $status = 'present';
+                    $present++;
+                } elseif ($attendance->rekognition_result === 'unknown') {
+                    $status = 'late';
+                    $late++;
+                } else {
+                    $status = 'absent';
+                }
+            }
+
+            $students[] = [
+                'id' => $entry->id,
+                'student_code' => $entry->student_code,
+                'full_name' => $student->full_name ?? null,
+                'class_code' => $student->class_code ?? null,
+                'attendance_time' => $attendanceTime,
+                'status' => $status,
+            ];
+        }
+
+        $total = count($students);
+        $absent = max($total - $present - $late, 0);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'exam' => [
+                    'id' => $examSchedule->id,
+                    'subject_code' => $examSchedule->subject_code,
+                    'subject_name' => optional($examSchedule->subject)->name,
+                    'exam_date' => optional($examSchedule->exam_date)?->toDateString() ?? (string) $examSchedule->exam_date,
+                    'exam_time' => optional($examSchedule->exam_time)?->format('H:i:s') ?? (string) $examSchedule->exam_time,
+                    'room' => $examSchedule->room,
+                    'note' => $examSchedule->note,
+                    'registered_count' => $examSchedule->registered_count,
+                    'attended_count' => $examSchedule->attended_count,
+                    'attendance_rate' => $examSchedule->attendance_rate,
+                ],
+                'stats' => [
+                    'total_students' => $total,
+                    'present' => $present,
+                    'late' => $late,
+                    'absent' => $absent,
+                ],
+                'students' => $students,
+            ],
+        ]);
+    }
+
+    /**
+     * Show the form for editing the specified resource.
+     */
+    public function edit(string $id)
+    {
+        //
+    }
+
+    /**
+     * Update the specified resource in storage.
+     */
+    public function update(Request $request, string $id)
+    {
+        //
+    }
+
+    /**
+     * Remove the specified resource from storage.
+     */
+    public function destroy(string $id)
+    {
+        $examSchedule = ExamSchedule::find($id);
+
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Exam Schedule not found',
+            ], 404);
+        }
+
+        $examSchedule->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Exam Schedule deleted successfully',
+        ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $ids = $request->input('ids', []);
+
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có lịch thi nào được chọn',
+            ], 400);
+        }
+
+        ExamSchedule::whereIn('id', $ids)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa ' . count($ids) . ' lịch thi thành công.',
+        ]);
+    }
+
+    public function previewImport(Request $request)
+    {
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        try {
+            $file = $request->file('excel_file');
+            $storedPath = $file->store('imports/tmp');
+            $fullPath = Storage::path($storedPath);
+
+            $reader = IOFactory::createReaderForFile($fullPath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($fullPath);
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $highestColumn = $sheet->getHighestDataColumn();
+            $highestRow = min($sheet->getHighestDataRow(), 50);
+
+            $rows = [];
+            for ($rowIndex = 1; $rowIndex <= $highestRow; $rowIndex++) {
+                $range = sprintf('A%d:%s%d', $rowIndex, $highestColumn, $rowIndex);
+                $rowValues = $sheet->rangeToArray($range, null, true, true, false);
+                if (!empty($rowValues)) {
+                    $rows[$rowIndex] = $rowValues[0];
+                }
+            }
+
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+
+            $expectedKeys = [
+                'subject',
+                'subject-code',
+                'subject_code',
+                'ma-mon',
+                'ma-hoc-phan',
+                'exam-date',
+                'exam-time',
+                'exam_date',
+                'exam_time',
+                'room',
+                'phong',
+                'ghi-chu',
+                'note',
+            ];
+
+            $visibleHeadings = [];
+            $visibleHeadingRow = null;
+            $fallbackHeadings = [];
+            $fallbackHeadingRow = null;
+
+            foreach ($rows as $rowNumber => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+
+                if (empty($nonEmpty)) {
+                    continue;
+                }
+
+                $normalized = array_map(static function ($value) {
+                    $ascii = Str::lower(Str::ascii($value));
+                    $slug = preg_replace('/[^a-z0-9]+/i', '-', $ascii);
+                    return trim((string) $slug, '-');
+                }, $nonEmpty);
+
+                if (array_intersect($normalized, $expectedKeys)) {
+                    $visibleHeadings = $nonEmpty;
+                    $visibleHeadingRow = $rowNumber;
+                    break;
+                }
+
+                if (empty($fallbackHeadings)) {
+                    $fallbackHeadings = $nonEmpty;
+                    $fallbackHeadingRow = $rowNumber;
+                }
+            }
+
+            if (empty($visibleHeadings)) {
+                $visibleHeadings = $fallbackHeadings;
+                $visibleHeadingRow = $fallbackHeadingRow;
+            }
+
+            if (empty($visibleHeadings)) {
+                Storage::delete($storedPath);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể tìm thấy hàng tiêu đề trong file. Vui lòng kiểm tra lại định dạng.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'token' => $storedPath,
+                'headings' => $visibleHeadings,
+                'heading_row' => $visibleHeadingRow,
+            ]);
+        } catch (Throwable $e) {
+            if (isset($storedPath)) {
+                Storage::delete($storedPath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể đọc file: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    public function import(Request $request)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'heading_row' => 'nullable|integer|min:1',
+            'mapping' => 'required|array',
+            'mapping.subject_code' => 'required|string',
+            'mapping.exam_date' => 'required|string',
+            'mapping.exam_time' => 'required|string',
+            'mapping.room' => 'nullable|string',
+            'mapping.note' => 'nullable|string',
+        ]);
+
+        $filePath = $validated['token'];
+        $headingRow = (int) ($validated['heading_row'] ?? 1);
+
+        if (!Storage::exists($filePath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tạm không tồn tại hoặc đã hết hạn.',
+            ], 410);
+        }
+
+        try {
+            Excel::import(
+                new ExamSchedulesImport($validated['mapping'], $headingRow),
+                Storage::path($filePath)
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Import lịch thi thành công.',
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã có lỗi xảy ra trong quá trình import: ' . $e->getMessage(),
+            ], 500);
+        } finally {
+            Storage::delete($filePath);
+        }
+    }
+}

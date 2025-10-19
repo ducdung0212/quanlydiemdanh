@@ -1,4 +1,4 @@
-@extends('layouts_main.app')
+@extends('layouts.app')
 
 @section('content')
     <div class="flex items-center flex-wrap justify-between gap20 mb-27">

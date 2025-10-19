@@ -1,7 +1,6 @@
 document.addEventListener('DOMContentLoaded', function () {
     // --- Configuration ---
     const API_BASE_URL = '/api/students';
-    const ITEMS_PER_PAGE = 10;
     const DEBOUNCE_DELAY = 300;
 
     // --- DOM Elements ---
@@ -39,7 +38,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải...</td></tr>';
 
         try {
-            const url = `${API_BASE_URL}?page=${page}&limit=${ITEMS_PER_PAGE}&q=${encodeURIComponent(query)}`;
+            const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}`;
             const result = await apiFetch(url);
 
             if (result.success && result.data) {

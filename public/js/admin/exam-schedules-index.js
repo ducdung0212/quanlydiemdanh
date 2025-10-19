@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', function () {
-    const API_BASE_URL = '/api/exam_schedules';
-    const ITEMS_PER_PAGE = 10;
+    const API_BASE_URL = '/api/exam-schedules';
     const DEBOUNCE_DELAY = 300;
 
     const searchInput = document.getElementById('searchInput');
@@ -51,7 +50,7 @@ document.addEventListener('DOMContentLoaded', function () {
         tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
 
         try {
-            const url = `${API_BASE_URL}?page=${page}&limit=${ITEMS_PER_PAGE}&q=${encodeURIComponent(query)}`;
+            const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}`;
             const result = await apiFetchFn(url);
             if (!result.success || !result.data) {
                 throw new Error(result.message || 'Invalid response');

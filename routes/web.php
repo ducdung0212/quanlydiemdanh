@@ -38,6 +38,9 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/lecturer', function () {
         return view('admin.lecturers.index');
     })->name('lecturer');
+    Route::get('/exam-schedules', function () {
+        return view('admin.exam_schedules.index');
+    })->name('exam-schedules.index');
 
 
 });

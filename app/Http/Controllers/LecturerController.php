@@ -162,8 +162,26 @@ class LecturerController extends Controller
         $lecturer->delete();
         return response()->json([
             'success'=>true,
-            'data'=>null,
             'message'=>'Lecturer deleted successfully'
+        ]);
+    }
+
+    public function bulkDelete(Request $request)
+    {
+        $lecturerCodes = $request->input('lecturer_codes', []);
+
+        if (empty($lecturerCodes)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có giảng viên nào được chọn',
+            ], 400);
+        }
+
+        Lecturer::whereIn('lecturer_code', $lecturerCodes)->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa ' . count($lecturerCodes) . ' giảng viên thành công.',
         ]);
     }
 

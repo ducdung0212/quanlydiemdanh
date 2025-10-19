@@ -163,12 +163,18 @@ class StudentController extends Controller
     {
         $studentCodes = $request->input('student_codes', []);
         if (empty($studentCodes)) {
-            return response()->json(['success' => false, 'message' => 'Không có sinh viên nào được chọn'], 400);
+            return response()->json([
+                'success' => false, 
+                'message' => 'Không có sinh viên nào được chọn'
+            ], 400);
         }
 
         Student::whereIn('student_code', $studentCodes)->delete();
 
-        return response()->json(['success' => true, 'message' => 'Đã xóa ' . count($studentCodes) . ' sinh viên thành công.']);
+        return response()->json([
+            'success' => true,
+             'message' => 'Đã xóa ' . count($studentCodes) . ' sinh viên thành công.'
+            ]);
     }
 
     public function previewImport(Request $request)
