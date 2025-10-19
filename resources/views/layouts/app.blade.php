@@ -1,7 +1,7 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-    @include('layouts_main.header')
+    @include('layouts.header')
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/animate.min.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/animation.css') }}">
@@ -19,16 +19,16 @@
     <div id="wrapper">
         <div id="page" class="">
             <div class="layout-wrap">
-                @include('layouts_main.sidebar')
+                @include('layouts.sidebar')
                 <div class="section-content-right">
-                    @include('layouts_main.header')
+                    @include('layouts.header')
                     <div class="main-content">
                         <div class="main-content-inner">
                             <div class="main-content-wrap">
                                 @yield('content')
                             </div>
                         </div>
-                        @include('layouts_main.footer')
+                        @include('layouts.footer')
                     </div>
                 </div>
             </div>

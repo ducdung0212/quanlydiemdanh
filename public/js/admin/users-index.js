@@ -1,6 +1,5 @@
 document.addEventListener('DOMContentLoaded', () => {
     const API_BASE_URL = '/api/users';
-    const ITEMS_PER_PAGE = 10;
     const DEBOUNCE_DELAY = 200;
 
     const searchInput = document.getElementById('searchInput');
@@ -33,7 +32,7 @@ document.addEventListener('DOMContentLoaded', () => {
         tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải...</td></tr>';
 
         try {
-            const url = `${API_BASE_URL}?page=${page}&limit=${ITEMS_PER_PAGE}&q=${encodeURIComponent(query)}`;
+            const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}`;
             const result = await apiFetch(url);
 
             if (!result.success || !result.data) {

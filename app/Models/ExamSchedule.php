@@ -5,10 +5,10 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 
-class Exam_Schedules extends Model
+class ExamSchedule extends Model
 {
     use HasFactory;
 
@@ -30,6 +30,17 @@ class Exam_Schedules extends Model
         'exam_time',
         'room',
         'note',
+    ];
+
+    /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'registered_count',
+        'attended_count',
+        'attendance_rate',
     ];
 
     /**
@@ -173,7 +184,7 @@ class Exam_Schedules extends Model
         if ($registered === 0) {
             return 0;
         }
-        
+
         return round(($this->attended_count / $registered) * 100, 2);
     }
 
@@ -206,10 +217,15 @@ class Exam_Schedules extends Model
      */
     public function getFullInfoAttribute(): string
     {
-        return ($this->subject ? $this->subject->name : 'N/A') . 
-               " - {$this->exam_date->format('d/m/Y')} " .
-               " - {$this->exam_time->format('H:i')} " .
-               " - Phòng {$this->room}";
+        $subjectName = $this->subject ? $this->subject->name : 'N/A';
+
+        return sprintf(
+            '%s - %s - %s - Phòng %s',
+            $subjectName,
+            $this->exam_date->format('d/m/Y'),
+            $this->exam_time->format('H:i'),
+            $this->room
+        );
     }
 
     /**

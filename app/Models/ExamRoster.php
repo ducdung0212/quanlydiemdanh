@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Exam_Rosters extends Model
+class ExamRoster extends Model
 {
     use HasFactory;
 
@@ -95,12 +95,12 @@ class Exam_Rosters extends Model
     public function getAttendanceStatusAttribute(): string
     {
         $attendance = $this->getAttendanceRecord();
-        
+
         if (!$attendance) {
             return 'Chưa điểm danh';
         }
-        
-        return match($attendance->rekognition_result) {
+
+        return match ($attendance->rekognition_result) {
             'match' => 'Đã điểm danh',
             'not_match' => 'Không khớp',
             'unknown' => 'Không xác định',

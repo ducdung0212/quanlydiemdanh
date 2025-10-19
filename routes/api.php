@@ -5,7 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\LecturerController;
-use App\Http\Controllers\Exam_SchedulesController;
+use App\Http\Controllers\ExamSchedulesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -26,9 +26,11 @@ Route::post('students/import/preview', [StudentController::class, 'previewImport
 Route::post('students/import', [StudentController::class, 'import']);
 
 Route::apiResource('lecturers', LecturerController::class);
+Route::post('lecturers/bulk-delete', [LecturerController::class, 'bulkDelete']);
 Route::post('lecturers/import/preview', [LecturerController::class, 'previewImport']);
 Route::post('lecturers/import', [LecturerController::class, 'import']);
 
-Route::apiResource('exam_schedules', Exam_SchedulesController::class);
-Route::post('exam_schedules/import/preview', [Exam_SchedulesController::class, 'previewImport']);
-Route::post('exam_schedules/import', [Exam_SchedulesController::class, 'import']);
+Route::apiResource('exam-schedules', ExamSchedulesController::class);
+Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulkDelete']);
+Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
+Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);

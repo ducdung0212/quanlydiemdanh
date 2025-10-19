@@ -6,7 +6,7 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Attendance_Records extends Model
+class AttendanceRecord extends Model
 {
     use HasFactory;
 
@@ -136,7 +136,7 @@ class Attendance_Records extends Model
      */
     public function getStatusLabelAttribute(): string
     {
-        return match($this->rekognition_result) {
+        return match ($this->rekognition_result) {
             'match' => 'Khớp',
             'not_match' => 'Không khớp',
             'unknown' => 'Không xác định',
@@ -149,7 +149,7 @@ class Attendance_Records extends Model
      */
     public function getStatusColorAttribute(): string
     {
-        return match($this->rekognition_result) {
+        return match ($this->rekognition_result) {
             'match' => 'success',
             'not_match' => 'danger',
             'unknown' => 'warning',
@@ -165,7 +165,7 @@ class Attendance_Records extends Model
         if (str_starts_with($this->captured_image_url, 'http')) {
             return $this->captured_image_url;
         }
-        
+
         return url($this->captured_image_url);
     }
 }
