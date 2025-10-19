@@ -5,6 +5,7 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\Exam_SchedulesController;
 
 /*
 |--------------------------------------------------------------------------
@@ -25,3 +26,9 @@ Route::post('students/import/preview', [StudentController::class, 'previewImport
 Route::post('students/import', [StudentController::class, 'import']);
 
 Route::apiResource('lecturers', LecturerController::class);
+Route::post('lecturers/import/preview', [LecturerController::class, 'previewImport']);
+Route::post('lecturers/import', [LecturerController::class, 'import']);
+
+Route::apiResource('exam_schedules', Exam_SchedulesController::class);
+Route::post('exam_schedules/import/preview', [Exam_SchedulesController::class, 'previewImport']);
+Route::post('exam_schedules/import', [Exam_SchedulesController::class, 'import']);
