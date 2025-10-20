@@ -1,0 +1,123 @@
+@extends('layouts.app')
+
+@section('content')
+    <div class="flex items-center flex-wrap justify-between gap20 mb-27">
+        <h3>Quản lý Lịch Thi</h3>
+        <ul class="breadcrumbs flex items-center flex-wrap justify-start gap10">
+            <li>
+                <a href="{{ route('dashboard') }}">
+                    <div class="text-tiny">Dashboard</div>
+                </a>
+            </li>
+            <li>
+                <i class="icon-chevron-right"></i>
+            </li>
+            <li>
+                <div class="text-tiny">Quản lý Lịch Thi</div>
+            </li>
+        </ul>
+    </div>
+
+    <div class="wg-box">
+        <div class="flex items-center justify-between gap10 flex-wrap">
+            <div class="wg-filter flex-grow">
+                <form class="form-search" id="searchForm">
+                    <fieldset class="name">
+                        <input type="text" placeholder="Tìm kiếm theo môn học..." class="" name="q"
+                            tabindex="2" value="" aria-required="true" id="searchInput">
+                    </fieldset>
+                    <div class="button-submit">
+                        <button class="" type="submit"><i class="icon-search"></i></button>
+                    </div>
+                </form>
+            </div>
+            <div class="d-flex gap10 align-items-center">
+                <select class="form-select" id="dateFilter" style="width: 220px; font-size: 14px; padding: 10px 12px;">
+                    <option value="">Tất cả ngày thi</option>
+                    @php
+                        // Giả sử bạn có danh sách ngày thi từ controller
+                        $examDates = \App\Models\ExamSchedule::select('exam_date')
+                            ->distinct()
+                            ->orderBy('exam_date', 'desc')
+                            ->get();
+                    @endphp
+                    @foreach($examDates as $date)
+                        @php
+                            try {
+                                $dt = \Carbon\Carbon::parse($date->exam_date);
+                                $formattedDate = $dt ? $dt->format('d-m-Y') : (string) $date->exam_date;
+                                $valueDate = $dt ? $dt->toDateString() : (string) $date->exam_date;
+                            } catch (\Exception $e) {
+                                $formattedDate = (string) $date->exam_date;
+                                // try to extract Y-m-d portion if present
+                                $valueDate = preg_match('/^(\d{4}-\d{2}-\d{2})/', $formattedDate, $m) ? $m[1] : $formattedDate;
+                            }
+                        @endphp
+                        <option value="{{ $valueDate }}">{{ $formattedDate }}</option>
+                    @endforeach
+                </select>
+                
+                <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
+                    <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
+                </button>
+                <a class="tf-button style-2 w208" href="#" id="importExcelBtn">
+                    <i class="icon-upload"></i>Import Excel
+                </a>
+            </div>
+        </div>
+
+        <!-- Chú thích với kích thước lớn hơn và dễ nhìn -->
+        <div class="alert alert-info mt-3 mb-4" role="alert" style="font-size: 15px; padding: 16px 20px; border-radius: 10px; background-color: #e8f4ff; border: 1px solid #b3d9ff;">
+            <div class="d-flex align-items-center">
+                <i class="icon-info" style="font-size: 20px; margin-right: 12px; color: #2377FC;"></i>
+                <div>
+                    <strong style="font-size: 15px; color: #2377FC;">HƯỚNG DẪN:</strong> 
+                    <span style="color: #333; font-weight: 500;">
+                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để chuyển đến trang điểm danh cho ca thi tương ứng.
+                    </span>
+                </div>
+            </div>
+        </div>
+
+        <div class="table-responsive mt-3">
+            <table id="exam-schedules-table" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 50px">
+                            <input type="checkbox" id="selectAll" style="cursor: pointer;">
+                        </th>
+                        <th style="width: 60px">STT</th>
+                        <th>Mã Môn Học</th>
+                        <th>Tên Môn Học</th>
+                        <th>Ngày Thi</th>
+                        <th>Giờ Thi</th>
+                        <th>Phòng</th>
+                        <th style="width: 100px">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="exam-schedules-table-body">
+                </tbody>
+            </table>
+        </div>
+
+        <div class="divider"></div>
+        <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
+            <div class="text-tiny text-secondary">
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> lịch thi
+            </div>
+            <div class="pagination-controls">
+                <nav aria-label="Page navigation">
+                    <ul class="pagination justify-content-end mb-0" id="pagination-container">
+                    </ul>
+                </nav>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modals will be loaded here -->
+    <div id="modal-container"></div>
+@endsection
+
+@push('scripts')
+    <script src="{{ asset('js/admin/exam-schedules-index.js') }}"></script>
+@endpush
