@@ -7392,5 +7392,93 @@ input[type="date"].form-control::-webkit-calendar-picker-indicator {
 .is-invalid ~ .invalid-feedback {
     display: block;
 }
+/* ==============================
+   CUSTOM STYLES FOR EXAM SCHEDULES
+   ============================== */
+
+/* Tùy chỉnh select ngày thi */
+#dateFilter {
+    border: 1px solid #ddd !important;
+    border-radius: 8px !important;
+    font-size: 14px !important;
+    padding: 10px 12px !important;
+    height: 44px !important;
+    background-color: white !important;
+    transition: all 0.2s ease !important;
+}
+
+#dateFilter:focus {
+    border-color: #2377FC !important;
+    box-shadow: 0 0 0 0.2rem rgba(35, 119, 252, 0.25) !important;
+}
+
+/* Tùy chỉnh alert chú thích */
+.alert-info-custom {
+    font-size: 15px !important;
+    padding: 16px 20px !important;
+    border-radius: 10px !important;
+    background-color: #e8f4ff !important;
+    border: 1px solid #b3d9ff !important;
+    margin-bottom: 20px !important;
+}
+
+.alert-info-custom .icon-info {
+    font-size: 20px !important;
+    margin-right: 12px !important;
+    color: #2377FC !important;
+}
+
+.alert-info-custom strong {
+    font-size: 15px !important;
+    color: #2377FC !important;
+}
+
+.alert-info-custom span {
+    color: #333 !important;
+    font-weight: 500 !important;
+}
+
+/* Định dạng ngày thi trong bảng */
+.exam-date {
+    font-weight: 600 !important;
+    color: #2377FC !important;
+    font-size: 14px !important;
+}
+
+/* Icon clipboard nổi bật */
+.icon-clipboard {
+    color: #2377FC !important;
+    font-size: 18px !important;
+    transition: all 0.2s ease !important;
+}
+
+.icon-clipboard:hover {
+    color: #1c68e0 !important;
+    transform: scale(1.1) !important;
+}
+
+/* Responsive cho select và chú thích */
+@media (max-width: 768px) {
+    #dateFilter {
+        width: 100% !important;
+        margin-bottom: 10px !important;
+    }
+    
+    .alert-info-custom {
+        font-size: 14px !important;
+        padding: 14px 16px !important;
+    }
+    
+    .alert-info-custom .icon-info {
+        font-size: 18px !important;
+        margin-right: 10px !important;
+    }
+}
+
+/* Đảm bảo định dạng ngày nhất quán */
+.date-formatted {
+    font-family: 'Inter', sans-serif !important;
+    font-weight: 500 !important;
+}
 
 /*# sourceMappingURL=style.css.map */

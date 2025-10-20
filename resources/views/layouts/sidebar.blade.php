@@ -62,7 +62,7 @@
                 </li>
                 <!-- Exam_schedule -->
                  <li class="menu-item ">
-                    <a href="{{ route('exam-schedules.index') }}" class="menu-item-button">
+                    <a href="{{ route('exam-schedules') }}" class="menu-item-button">
                         <div class="icon">
                             <img src="{{ asset('images/icon/exam_schedule.svg') }}" alt="Lịch thi" class="svg-icon">
                         </div>
