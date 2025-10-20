@@ -39,8 +39,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         return view('admin.lecturers.index');
     })->name('lecturer');
     Route::get('/exam-schedules', function () {
-        return view('admin.exam_schedules.index');
-    })->name('exam-schedules.index');
+        return view('admin.exam-schedules.index');
+    })->name('exam-schedules');
+    Route::get('/exam-schedules/modals/import', function () {
+        return view('admin.exam-schedules.import');
+    });
 
 
 });
