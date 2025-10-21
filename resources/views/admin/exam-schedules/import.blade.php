@@ -34,36 +34,30 @@
                     </div>
                     <div class="d-none" id="mappingSection">
                         <div class="alert alert-secondary" role="alert">
-                            Chọn cột tương ứng cho từng trường. <strong>Tên môn học</strong> là bắt buộc.
+                            Chọn cột tương ứng cho từng trường. <strong>*</strong> là bắt buộc.
                         </div>
                         <div class="row g-3">
                             <div class="col-12">
-                                <label class="form-label">Mã môn học</label>
-                                <select class="form-select column-mapping" data-field="subject_code">
-                                    <option value="">-- Chọn cột --</option>
-                                </select>
-                            </div>
-                            <div class="col-12">
-                                <label class="form-label">Tên môn học <span class="text-danger">*</span></label>
-                                <select class="form-select column-mapping" data-field="subject_name" data-required="true">
+                                <label class="form-label">Mã môn học <span class="text-danger">*</span></label>
+                                <select class="form-select column-mapping" data-field="subject_code" data-required="true">
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Ngày thi</label>
-                                <select class="form-select column-mapping" data-field="exam_date">
+                                <label class="form-label">Ngày thi <span class="text-danger">*</span></label>
+                                <select class="form-select column-mapping" data-field="exam_date" data-required="true">
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>
                             <div class="col-12 col-md-6">
-                                <label class="form-label">Giờ thi</label>
-                                <select class="form-select column-mapping" data-field="exam_time">
+                                <label class="form-label">Giờ thi <span class="text-danger">*</span></label>
+                                <select class="form-select column-mapping" data-field="exam_time" data-required="true">
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>
                             <div class="col-12">
-                                <label class="form-label">Phòng</label>
-                                <select class="form-select column-mapping" data-field="room">
+                                <label class="form-label">Phòng <span class="text-danger">*</span></label>
+                                <select class="form-select column-mapping" data-field="room" data-required="true">
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>

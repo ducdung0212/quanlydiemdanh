@@ -80,8 +80,10 @@ class ExamSchedulesImport implements
                 continue;
             }
 
+            $room = $this->getValueFromRow($row, 'room');
+
             $payload = array_filter([
-                'room' => $this->getValueFromRow($row, 'room'),
+                'room' => $room,
                 'note' => $this->getValueFromRow($row, 'note'),
             ], fn ($value) => !is_null($value));
 
@@ -90,6 +92,7 @@ class ExamSchedulesImport implements
                     'subject_code' => $subjectCode,
                     'exam_date' => $examDate,
                     'exam_time' => $examTime,
+                    'room' => $room,
                 ],
                 $payload
             );
