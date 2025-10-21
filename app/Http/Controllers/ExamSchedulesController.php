@@ -23,6 +23,7 @@ class ExamSchedulesController extends Controller
     public function index()
     {
         $q = request()->query('q');
+        $date = request()->query('date');
         $limit = (int) request()->query('limit', 10);
 
         $examSchedules = ExamSchedule::query()
@@ -40,6 +41,15 @@ class ExamSchedulesController extends Controller
                         $subjectQuery->where('name', 'like', "%{$q}%");
                     });
             });
+        }
+
+        if ($date) {
+            try {
+                $normalizedDate = Carbon::parse($date)->toDateString();
+                $examSchedules->whereDate('exam_date', $normalizedDate);
+            } catch (Throwable $e) {
+                // If the provided date cannot be parsed, ignore the filter.
+            }
         }
 
         return response()->json([

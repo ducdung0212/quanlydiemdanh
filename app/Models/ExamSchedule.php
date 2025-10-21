@@ -41,6 +41,7 @@ class ExamSchedule extends Model
         'registered_count',
         'attended_count',
         'attendance_rate',
+        'subject_name',
     ];
 
     /**
@@ -186,6 +187,14 @@ class ExamSchedule extends Model
         }
 
         return round(($this->attended_count / $registered) * 100, 2);
+    }
+
+    /**
+     * Get the subject name via the related subject.
+     */
+    public function getSubjectNameAttribute(): ?string
+    {
+        return optional($this->subject)->name;
     }
 
     /**

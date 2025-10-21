@@ -35,7 +35,6 @@
                 <select class="form-select" id="dateFilter" style="width: 220px; font-size: 14px; padding: 10px 12px;">
                     <option value="">Tất cả ngày thi</option>
                     @php
-                        // Giả sử bạn có danh sách ngày thi từ controller
                         $examDates = \App\Models\ExamSchedule::select('exam_date')
                             ->distinct()
                             ->orderBy('exam_date', 'desc')

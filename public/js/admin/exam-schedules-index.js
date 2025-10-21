@@ -358,10 +358,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 mapping[select.dataset.field] = select.value;
             });
 
-            if (!mapping.subject_name) {
-                throw new Error('Vui lòng chọn cột cho Tên môn học.');
-            }
-
             const response = await fetch('/api/exam-schedules/import', {
                 method: 'POST',
                 headers: {
