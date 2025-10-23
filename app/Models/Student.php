@@ -79,13 +79,6 @@ class Student extends Model
         return $this->hasMany(AttendanceRecord::class, 'student_code', 'student_code');
     }
 
-    /**
-     * Get all exam rosters for the student.
-     */
-    public function examRosters(): HasMany
-    {
-        return $this->hasMany(ExamRoster::class, 'student_code', 'student_code');
-    }
 
     /**
      * Get all exam schedules that the student is registered for.
@@ -94,10 +87,12 @@ class Student extends Model
     {
         return $this->belongsToMany(
             ExamSchedule::class,
-            'exam_rosters',
+            'attendance_records',
             'student_code',
-            'exam_schedule_id'
-        )->withTimestamps();
+            'exam_schedule_id',
+            'student_code',
+            'id'
+        );
     }
 
     /**
@@ -160,16 +155,6 @@ class Student extends Model
     public function hasPhotos(): bool
     {
         return $this->photos()->exists();
-    }
-
-    /**
-     * Check if student is registered for a specific exam.
-     */
-    public function isRegisteredForExam(int $examScheduleId): bool
-    {
-        return $this->examRosters()
-            ->where('exam_schedule_id', $examScheduleId)
-            ->exists();
     }
 
     /**

@@ -4,7 +4,6 @@ namespace App\Http\Controllers;
 
 use App\Imports\ExamSchedulesImport;
 use App\Models\AttendanceRecord;
-use App\Models\ExamRoster;
 use App\Models\ExamSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
@@ -89,13 +88,9 @@ class ExamSchedulesController extends Controller
             ], 404);
         }
 
-        $rosters = ExamRoster::with('student')
+        $attendanceRecords = AttendanceRecord::with('student')
             ->where('exam_schedule_id', $examSchedule->id)
             ->get();
-
-        $attendanceRecords = AttendanceRecord::where('exam_schedule_id', $examSchedule->id)
-            ->get()
-            ->keyBy('student_code');
 
         $examStart = null;
 
@@ -107,34 +102,41 @@ class ExamSchedulesController extends Controller
         $present = 0;
         $late = 0;
 
-        foreach ($rosters as $entry) {
-            $student = $entry->student;
-            $attendance = $attendanceRecords->get($entry->student_code);
+        foreach ($attendanceRecords as $record) {
+            $student = $record->student;
 
             $status = 'absent';
             $attendanceTime = null;
 
-            if ($attendance) {
-                $attendanceTime = optional($attendance->attendance_time)?->toDateTimeString();
-                $attendanceMoment = $attendance->attendance_time ? Carbon::parse($attendance->attendance_time) : null;
+            if ($record->attendance_time) {
+                $attendanceTime = optional($record->attendance_time)?->toDateTimeString();
+                $attendanceMoment = $record->attendance_time instanceof Carbon
+                    ? $record->attendance_time
+                    : Carbon::parse($record->attendance_time);
 
                 if ($attendanceMoment && $examStart && $attendanceMoment->gt($examStart)) {
                     $status = 'late';
                     $late++;
-                } elseif ($attendance->rekognition_result === 'match') {
+                } elseif ($record->rekognition_result === 'match') {
                     $status = 'present';
                     $present++;
-                } elseif ($attendance->rekognition_result === 'unknown') {
+                } elseif ($record->rekognition_result === 'unknown') {
                     $status = 'late';
                     $late++;
                 } else {
                     $status = 'absent';
                 }
+            } elseif ($record->rekognition_result === 'match') {
+                $status = 'present';
+                $present++;
+            } elseif ($record->rekognition_result === 'unknown') {
+                $status = 'late';
+                $late++;
             }
 
             $students[] = [
-                'id' => $entry->id,
-                'student_code' => $entry->student_code,
+                'id' => $record->id,
+                'student_code' => $record->student_code,
                 'full_name' => $student->full_name ?? null,
                 'class_code' => $student->class_code ?? null,
                 'attendance_time' => $attendanceTime,
@@ -142,7 +144,7 @@ class ExamSchedulesController extends Controller
             ];
         }
 
-        $total = count($students);
+        $total = count($attendanceRecords);
         $absent = max($total - $present - $late, 0);
 
         return response()->json([
