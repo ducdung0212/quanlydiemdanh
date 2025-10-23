@@ -72,7 +72,7 @@
                 <div>
                     <strong style="font-size: 15px; color: #2377FC;">HƯỚNG DẪN:</strong> 
                     <span style="color: #333; font-weight: 500;">
-                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để chuyển đến trang điểm danh cho ca thi tương ứng.
+                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để xem chi tiết ca thi tương ứng.
                     </span>
                 </div>
             </div>

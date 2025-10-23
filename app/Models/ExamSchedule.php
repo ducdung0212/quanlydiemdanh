@@ -7,6 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use App\Models\AttendanceRecord;
+use App\Models\ExamSupervisor;
+use App\Models\Lecturer;
+use App\Models\Student;
+use App\Models\Subject;
 
 class ExamSchedule extends Model
 {
@@ -65,14 +70,6 @@ class ExamSchedule extends Model
     }
 
     /**
-     * Get all exam rosters for this schedule.
-     */
-    public function examRosters(): HasMany
-    {
-        return $this->hasMany(ExamRoster::class, 'exam_schedule_id');
-    }
-
-    /**
      * Get all attendance records for this schedule.
      */
     public function attendanceRecords(): HasMany
@@ -95,10 +92,12 @@ class ExamSchedule extends Model
     {
         return $this->belongsToMany(
             Student::class,
-            'exam_rosters',
+            'attendance_records',
             'exam_schedule_id',
+            'student_code',
+            'id',
             'student_code'
-        )->withTimestamps();
+        );
     }
 
     /**
@@ -163,9 +162,8 @@ class ExamSchedule extends Model
      */
     public function getRegisteredCountAttribute(): int
     {
-        return $this->examRosters()->count();
+        return $this->attendanceRecords()->count();
     }
-
     /**
      * Get the total number of attended students.
      */

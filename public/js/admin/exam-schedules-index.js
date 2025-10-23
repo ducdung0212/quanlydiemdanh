@@ -126,7 +126,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${escapeHtml(schedule.room || '')}</td>
                     <td>
                         <div class="list-icon-function">
-                            <a href="/attendance/${schedule.id}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Điểm danh">
+                            <a href="/attendance/${escapeHtml(schedule.id)}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Chi tiết">
                                 <div class="item view"><i class="icon-clipboard"></i></div>
                             </a>
                             <a href="#" data-action="delete-schedule" data-schedule_id="${escapeHtml(schedule.id)}" title="Xóa">
@@ -443,7 +443,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
             switch (action) {
                 case 'view-attendance':
-                    // Chuyển hướng đến trang điểm danh
                     window.location.href = `/attendance/${scheduleId}`;
                     break;
                 case 'delete-schedule':
