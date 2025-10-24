@@ -69,6 +69,23 @@
                         <div class="text">Lịch thi</div>
                     </a>
                 </li>
+                <!-- Exam_supervisors -->
+                <li class="menu-item ">
+                    <a href="{{ route('exam-supervisors') }}" class="menu-item-button">
+                        <div class="icon">
+                            <img src="{{ asset('images/icon/lecturer.svg') }}" alt="Giám thị" class="svg-icon">
+                        </div>
+                        <div class="text">Danh sách giám thị</div>
+                    </a>
+                </li>
+                <!-- Attendance_records -->
+                <li class="menu-item ">
+                    <a href="{{ route('attendance-records') }}" class="menu-item-button">
+                        <div class="icon">
+                            <img src="{{ asset('images/icon/student.svg') }}" alt="Thí sinh" class="svg-icon">
+                        </div>
+                        <div class="text">Danh sách thí sinh</div>
+                    </a>
                 </li>
                 <!-- Settings -->
                 <li class="menu-item">
