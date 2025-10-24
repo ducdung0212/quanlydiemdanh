@@ -73,6 +73,25 @@ class ExamSchedulesController extends Controller
     {
         //
     }
+    //
+    // Thêm method này vào controller
+public function exportAttendance($id)
+{
+    $examSchedule = ExamSchedule::with('subject')->find($id);
+    
+    if (!$examSchedule) {
+        return response()->json([
+            'success' => false,
+            'message' => 'Exam Schedule not found',
+        ], 404);
+    }
+
+    // Tạm thời trả về thông báo
+    return response()->json([
+        'success' => true,
+        'message' => 'Tính năng xuất Excel đang được phát triển',
+    ]);
+}
 
     /**
      * Display the specified resource.
