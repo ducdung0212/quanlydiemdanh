@@ -86,6 +86,7 @@
                             <input type="checkbox" id="selectAll" style="cursor: pointer;">
                         </th>
                         <th style="width: 60px">STT</th>
+                        <th>Mã Ca Thi</th>
                         <th>Mã Môn Học</th>
                         <th>Tên Môn Học</th>
                         <th>Ngày Thi</th>
