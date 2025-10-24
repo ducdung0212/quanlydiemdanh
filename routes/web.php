@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\ExamSchedulesController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -41,11 +42,17 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/exam-schedules', function () {
         return view('admin.exam-schedules.index');
     })->name('exam-schedules');
+    
+    // SỬA ROUTE NÀY - trỏ đến đúng đường dẫn
+    Route::get('/show/{id}', function ($id) {
+        return view('admin.exam-schedules.show', ['id' => $id]);
+    })->name('exam-schedules.show');
+
+    Route::get('/exam-schedules/{id}/export', [ExamSchedulesController::class, 'exportAttendance'])->name('exam-schedules.export');
     Route::get('/exam-schedules/modals/import', function () {
         return view('admin.exam-schedules.import');
     });
-
-
+    
 });
 
 Route::middleware('auth')->group(function () {
@@ -60,6 +67,23 @@ Route::middleware('auth')->group(function () {
     Route::get('/students', function () {
         return view('admin.students.index');
     })->name('students.index');
+
+    Route::get('/exam-supervisors', function () {
+    return view('admin.exam-supervisors.index');
+})->name('exam-supervisors');
+
+Route::get('/exam-supervisors/modals/import', function () {
+    return view('admin.exam-supervisors.import');
+
+});
+Route::get('/attendance-records', function () {
+    return view('admin.attendance-records.index');
+})->name('attendance-records');
+
+Route::get('/attendance-records/modals/import', function () {
+    return view('admin.attendance-records.import');
+
+});
 
     // Routes for loading modals
     Route::get('/students/modals/create', function () {

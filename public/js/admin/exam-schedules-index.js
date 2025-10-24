@@ -71,7 +71,7 @@ document.addEventListener('DOMContentLoaded', function () {
     async function fetchExamSchedules(page = 1, query = '', date = '') {
         if (isLoading) return;
         isLoading = true;
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Đang tải...</td></tr>';
 
         try {
             const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`;
@@ -89,7 +89,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } catch (error) {
             console.error('Failed to fetch exam schedules:', error);
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
             paginationData = null;
             render();
         } finally {
@@ -106,7 +106,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderTable() {
         if (!paginationData || !paginationData.data || paginationData.data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">${currentQuery || currentDate ? 'Không tìm thấy lịch thi nào' : 'Không có dữ liệu'}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="8" class="text-center">${currentQuery || currentDate ? 'Không tìm thấy lịch thi nào' : 'Không có dữ liệu'}</td></tr>`;
             return;
         }
 
@@ -119,6 +119,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         <input type="checkbox" class="schedule-checkbox" value="${escapeHtml(schedule.id)}" ${isChecked} style="cursor: pointer;" data-action="toggle-select">
                     </td>
                     <td class="text-center">${from + index}</td>
+                    <td>${escapeHtml(schedule.session_code || schedule.id || '')}</td>
                     <td>${escapeHtml(schedule.subject_code || '')}</td>
                     <td>${escapeHtml(schedule.subject_name || '')}</td>
                     <td>${escapeHtml(formatDate(schedule.exam_date || ''))}</td>
@@ -126,7 +127,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${escapeHtml(schedule.room || '')}</td>
                     <td>
                         <div class="list-icon-function">
-                            <a href="/attendance/${escapeHtml(schedule.id)}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Chi tiết">
+                            <a href="/show/${escapeHtml(schedule.id)}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Chi tiết">
                                 <div class="item view"><i class="icon-clipboard"></i></div>
                             </a>
                             <a href="#" data-action="delete-schedule" data-schedule_id="${escapeHtml(schedule.id)}" title="Xóa">
@@ -512,4 +513,196 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     init();
+
+    // --- Attendance record integration ---
+    // If current page is an attendance detail page (path like /attendance/{id}),
+    // initialize the attendance record loader that was previously in
+    // attendance-record.js. Functions and variables are namespaced with
+    // `attendance_` prefix to avoid collisions with existing code above.
+    if (window.location.pathname.startsWith('/attendance/')) {
+        (function attendanceModule() {
+            const examScheduleId = window.location.pathname.split('/').pop();
+            const API_URL = `/api/exam-schedules/${examScheduleId}`;
+
+            // DOM Elements
+            const examSessionCode = document.getElementById('exam-session-code');
+            const examSubjectCode = document.getElementById('exam-subject-code');
+            const examSubjectName = document.getElementById('exam-subject-name');
+            const examDate = document.getElementById('exam-date');
+            const examTime = document.getElementById('exam-time');
+            const examRoom = document.getElementById('exam-room');
+            const totalStudents = document.getElementById('total-students');
+            const presentCount = document.getElementById('present-count');
+            const lateCount = document.getElementById('late-count');
+            const absentCount = document.getElementById('absent-count');
+            const attendanceTableBody = document.getElementById('attendance-table-body');
+            const btnRefresh = document.getElementById('btnRefresh');
+            const btnExportExcel = document.getElementById('btnExportExcel');
+
+            function attendance_formatDate(dateStr) {
+                if (!dateStr) return '';
+                const parts = dateStr.split('-');
+                if (parts.length === 3) {
+                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
+                }
+                return dateStr;
+            }
+
+            function attendance_formatTime(timeStr) {
+                if (!timeStr) return '';
+                return timeStr.substring(0, 5);
+            }
+
+            function attendance_getStatusBadge(status) {
+                const statusMap = {
+                    'present': { class: 'badge bg-success', text: 'Có mặt' },
+                    'late': { class: 'badge bg-warning', text: 'Đi muộn' },
+                    'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
+                };
+                const statusInfo = statusMap[status] || statusMap['absent'];
+                return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
+            }
+
+            function attendance_formatAttendanceTime(timeStr) {
+                if (!timeStr) return '-';
+                try {
+                    const date = new Date(timeStr);
+                    return date.toLocaleString('vi-VN');
+                } catch (e) {
+                    return timeStr;
+                }
+            }
+
+            function attendance_escapeHtml(unsafe) {
+                if (!unsafe) return '';
+                return unsafe
+                    .toString()
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/\"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            async function attendance_loadAttendanceData() {
+                try {
+                    if (!attendanceTableBody) return;
+                    attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
+
+                    const response = await fetch(API_URL);
+
+                    if (!response.ok) {
+                        if (response.status === 404) {
+                            throw new Error('Không tìm thấy ca thi với ID: ' + examScheduleId);
+                        }
+                        throw new Error(`Lỗi HTTP: ${response.status}`);
+                    }
+
+                    const result = await response.json();
+
+                    if (!result.success) {
+                        throw new Error(result.message || 'Không thể tải dữ liệu');
+                    }
+
+                    const { exam, stats, students } = result.data;
+
+                    // Update exam info
+                    if (examSessionCode) examSessionCode.textContent = exam.session_code || exam.id || '-';
+                    if (examSubjectCode) examSubjectCode.textContent = exam.subject_code || '-';
+                    if (examSubjectName) examSubjectName.textContent = exam.subject_name || '-';
+                    if (examDate) examDate.textContent = attendance_formatDate(exam.exam_date);
+                    if (examTime) examTime.textContent = attendance_formatTime(exam.exam_time);
+                    if (examRoom) examRoom.textContent = exam.room || '-';
+
+                    // Update stats
+                    if (totalStudents) totalStudents.textContent = stats.total_students || 0;
+                    if (presentCount) presentCount.textContent = stats.present || 0;
+                    if (lateCount) lateCount.textContent = stats.late || 0;
+                    if (absentCount) absentCount.textContent = stats.absent || 0;
+
+                    // Update students table
+                    if (!students || students.length === 0) {
+                        attendanceTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="icon-info" style="font-size: 24px; opacity: 0.5;"></i>
+                                        <div class="mt-2">Không có dữ liệu điểm danh cho ca thi này</div>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                        return;
+                    }
+
+                    const rowsHtml = students.map((student, index) => `
+                        <tr>
+                            <td class="text-center">${index + 1}</td>
+                            <td>${attendance_escapeHtml(student.student_code || '')}</td>
+                            <td>${attendance_escapeHtml(student.full_name || '')}</td>
+                            <td>${attendance_escapeHtml(student.class_code || '')}</td>
+                            <td>${attendance_formatAttendanceTime(student.attendance_time)}</td>
+                            <td class="text-center">${attendance_getStatusBadge(student.status)}</td>
+                        </tr>
+                    `).join('');
+
+                    attendanceTableBody.innerHTML = rowsHtml;
+
+                } catch (error) {
+                    console.error('Error loading attendance data:', error);
+
+                    if (attendanceTableBody) {
+                        if (error.message.includes('Không tìm thấy ca thi')) {
+                            attendanceTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="6" class="text-center py-4">
+                                        <div class="text-warning">
+                                            <i class="icon-alert-triangle" style="font-size: 24px;"></i>
+                                            <div class="mt-2">${error.message}</div>
+                                            <small class="text-muted d-block mt-1">Vui lòng kiểm tra lại ID ca thi</small>
+                                        </div>
+                                    </td>
+                                </tr>
+                            `;
+                        } else {
+                            attendanceTableBody.innerHTML = `
+                                <tr>
+                                    <td colspan="6" class="text-center text-danger">
+                                        <i class="icon-alert-circle"></i> ${error.message}
+                                    </td>
+                                </tr>
+                            `;
+                        }
+                    }
+
+                    // Reset displayed fields
+                    if (examSessionCode) examSessionCode.textContent = '-';
+                    if (examSubjectCode) examSubjectCode.textContent = '-';
+                    if (examSubjectName) examSubjectName.textContent = '-';
+                    if (examDate) examDate.textContent = '-';
+                    if (examTime) examTime.textContent = '-';
+                    if (examRoom) examRoom.textContent = '-';
+                    if (totalStudents) totalStudents.textContent = '0';
+                    if (presentCount) presentCount.textContent = '0';
+                    if (lateCount) lateCount.textContent = '0';
+                    if (absentCount) absentCount.textContent = '0';
+                }
+            }
+
+            async function attendance_exportToExcel() {
+                try {
+                    alert('Tính năng xuất Excel đang được phát triển');
+                } catch (error) {
+                    console.error('Error exporting Excel:', error);
+                    alert('Lỗi khi xuất file Excel');
+                }
+            }
+
+            if (btnRefresh) btnRefresh.addEventListener('click', attendance_loadAttendanceData);
+            if (btnExportExcel) btnExportExcel.addEventListener('click', attendance_exportToExcel);
+
+            // Initial load
+            attendance_loadAttendanceData();
+        })();
+    }
 });
