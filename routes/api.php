@@ -4,8 +4,10 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
-use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\ExamSchedulesController;
+use App\Http\Controllers\ExamSupervisorController;
+use App\Http\Controllers\LecturerController;
 
 /*
 |--------------------------------------------------------------------------
@@ -34,3 +36,11 @@ Route::apiResource('exam-schedules', ExamSchedulesController::class);
 Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulkDelete']);
 Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
 Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);
+
+Route::delete('exam-supervisors/{examSupervisor}', [ExamSupervisorController::class, 'destroy']);
+Route::delete('exam-supervisors', [ExamSupervisorController::class, 'destroyAll']);
+Route::post('exam-supervisors/import', [ExamSupervisorController::class, 'import']);
+
+Route::delete('attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'destroy']);
+Route::delete('attendance-records', [AttendanceRecordController::class, 'destroyAll']);
+Route::post('attendance-records/import', [AttendanceRecordController::class, 'import']);

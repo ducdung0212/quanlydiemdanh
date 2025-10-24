@@ -59,6 +59,11 @@ class AttendanceRecord extends Model
         return $this->belongsTo(ExamSchedule::class, 'exam_schedule_id');
     }
 
+    public function getStudentName(): ?string
+    {
+        return $this->student?->full_name;
+    }
+
     /**
      * Scope a query to only include records for a specific student.
      */
