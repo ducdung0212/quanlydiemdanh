@@ -49,14 +49,14 @@
             <table id="attendance-records-table" class="table table-striped table-bordered">
                 <thead>
                     <tr>
-                        <th>
+                        <th style="width: 50px; text-align: center;">
                             <input type="checkbox" id="selectAll" style="cursor: pointer;">
                         </th>
-                        <th>STT</th>
-                        <th>Mã Ca Thi</th>
-                        <th>Mã Sinh Viên</th>
-                        <th>Tên Sinh Viên</th>
-                        <th>Action</th>
+                        <th style="width: 60px; text-align: center;">STT</th>
+                        <th style="text-align: left;">Mã Ca Thi</th>
+                        <th style="text-align: left;">Mã Sinh Viên</th>
+                        <th style="text-align: left;">Tên Sinh Viên</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
                     </tr>
                 </thead>
                 <tbody id="attendance-records-table-body">

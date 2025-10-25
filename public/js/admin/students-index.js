@@ -488,6 +488,9 @@ document.addEventListener('DOMContentLoaded', function () {
             const target = event.target.closest('[data-action]');
             if (!target) return;
 
+            // Prevent default anchor behavior to avoid # in URL
+            event.preventDefault();
+
             const action = target.dataset.action;
             const studentCode = target.dataset.student_code;
 

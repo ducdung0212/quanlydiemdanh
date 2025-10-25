@@ -6,7 +6,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- DOM Elements ---
     const searchInput = document.getElementById('searchInput');
     const searchForm = document.getElementById('searchForm');
-    const sessionFilter = document.getElementById('sessionFilter');
     const tableBody = document.getElementById('exam-supervisors-table-body');
     const paginationContainer = document.getElementById('pagination-container');
     const paginationInfo = {
@@ -22,7 +21,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // --- State ---
     let currentPage = 1;
     let currentQuery = '';
-    let currentSession = '';
     let paginationData = null;
     let isLoading = false;
     const selectedSupervisors = new Set();
@@ -30,28 +28,27 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // --- Core Application Logic ---
 
-    async function fetchExamSupervisors(page = 1, query = '', session = '') {
+    async function fetchExamSupervisors(page = 1, query = '') {
         if (isLoading) return;
         isLoading = true;
-        tableBody.innerHTML = '<tr><td colspan="7" class="text-center">Đang tải...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải...</td></tr>';
 
         try {
-            const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}&session=${encodeURIComponent(session)}`;
+            const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}`;
             const result = await apiFetch(url);
 
             if (result.success && result.data) {
                 paginationData = result.data;
                 currentPage = paginationData.current_page;
                 currentQuery = query;
-                currentSession = session;
-                updateURL(currentPage, currentQuery, session);
+                updateURL(currentPage, currentQuery);
                 render();
             } else {
                 throw new Error('Invalid API response format');
             }
         } catch (error) {
             console.error('Failed to fetch exam supervisors:', error);
-            tableBody.innerHTML = '<tr><td colspan="7" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="6" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
             paginationData = null;
             render();
         } finally {
@@ -68,7 +65,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderTable() {
         if (!paginationData || !paginationData.data || paginationData.data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="7" class="text-center">${currentQuery || currentSession ? 'Không tìm thấy giám thị nào' : 'Không có dữ liệu'}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="6" class="text-center">${currentQuery ? 'Không tìm thấy giám thị nào' : 'Không có dữ liệu'}</td></tr>`;
             return;
         }
 
@@ -77,15 +74,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const isChecked = selectedSupervisors.has(supervisor.id) ? 'checked' : '';
             return `
                 <tr>
-                    <td class="text-center">
+                    <td>
                         <input type="checkbox" class="supervisor-checkbox" value="${escapeHtml(supervisor.id)}" ${isChecked} style="cursor: pointer;" data-action="toggle-select">
                     </td>
-                    <td class="text-center">${from + index}</td>
-                    <td>${escapeHtml(supervisor.session_code || '')}</td>
-                    <td>${escapeHtml(supervisor.lecturer_code || '')}</td>
-                    <td>${escapeHtml(supervisor.lecturer_name || '')}</td>
-                    <td>${escapeHtml(supervisor.role || 'Giám thị')}</td>
-                    <td>
+                    <td >${from + index}</td>
+                    <td >${escapeHtml(supervisor.exam_schedule_id || '')}</td>
+                    <td >${escapeHtml(supervisor.lecturer_code || '')}</td>
+                    <td >${escapeHtml(supervisor.lecturer_name || '')}</td>
+                    <td >
                         <div class="list-icon-function">
                             <a href="#" data-action="delete-supervisor" data-supervisor_id="${escapeHtml(supervisor.id)}" title="Xóa">
                                 <div class="item text-danger delete"><i class="icon-trash-2"></i></div>
@@ -162,9 +158,9 @@ document.addEventListener('DOMContentLoaded', function () {
                 showToast('Thành công', result.message, 'success');
                 selectedSupervisors.delete(supervisorId);
                 if (tableBody.querySelectorAll('tr').length === 1 && currentPage > 1) {
-                    await fetchExamSupervisors(currentPage - 1, currentQuery, currentSession);
+                    await fetchExamSupervisors(currentPage - 1, currentQuery);
                 } else {
-                    await fetchExamSupervisors(currentPage, currentQuery, currentSession);
+                    await fetchExamSupervisors(currentPage, currentQuery);
                 }
             } else {
                 showToast('Lỗi', result.message, 'danger');
@@ -338,7 +334,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             modalInstance.hide();
             showToast('Thành công', result.message || 'Đã import danh sách giám thị.', 'success');
-            await fetchExamSupervisors(1, '', '');
+            await fetchExamSupervisors(1, '');
             resetMappingUI();
         };
 
@@ -371,17 +367,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function setupEventListeners() {
         searchInput.addEventListener('keyup', debounce(() => {
-            fetchExamSupervisors(1, searchInput.value.trim(), sessionFilter.value);
+            fetchExamSupervisors(1, searchInput.value.trim());
         }, DEBOUNCE_DELAY));
 
         searchForm.addEventListener('submit', (e) => {
             e.preventDefault();
-            fetchExamSupervisors(1, searchInput.value.trim(), sessionFilter.value);
+            fetchExamSupervisors(1, searchInput.value.trim());
         });
 
-        sessionFilter.addEventListener('change', () => {
-            fetchExamSupervisors(1, searchInput.value.trim(), sessionFilter.value);
-        });
+        // session filter removed
 
         if (importExcelBtn) {
             importExcelBtn.addEventListener('click', async () => {
@@ -395,6 +389,9 @@ document.addEventListener('DOMContentLoaded', function () {
         tableBody.addEventListener('click', async function (event) {
             const target = event.target.closest('[data-action]');
             if (!target) return;
+
+            // Prevent default anchor behavior to avoid # in URL
+            event.preventDefault();
 
             const action = target.dataset.action;
             const supervisorId = target.dataset.supervisor_id;
@@ -416,7 +413,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (target) {
                 const page = parseInt(target.dataset.page, 10);
                 if (!Number.isNaN(page) && page !== currentPage) {
-                    fetchExamSupervisors(page, currentQuery, currentSession);
+                    fetchExamSupervisors(page, currentQuery);
                 }
             }
         });
@@ -425,22 +422,17 @@ document.addEventListener('DOMContentLoaded', function () {
         selectAllCheckbox.addEventListener('change', toggleSelectAll);
 
         document.addEventListener('examSupervisorsUpdated', () => {
-            fetchExamSupervisors(currentPage, currentQuery, currentSession);
+            fetchExamSupervisors(currentPage, currentQuery);
         });
     }
 
-    function updateURL(page, query, session) {
+    function updateURL(page, query) {
         const url = new URL(window.location);
         url.searchParams.set('page', page);
         if (query) {
             url.searchParams.set('q', query);
         } else {
             url.searchParams.delete('q');
-        }
-        if (session) {
-            url.searchParams.set('session', session);
-        } else {
-            url.searchParams.delete('session');
         }
         window.history.replaceState({}, '', url);
     }
@@ -449,21 +441,17 @@ document.addEventListener('DOMContentLoaded', function () {
         const urlParams = new URLSearchParams(window.location.search);
         return {
             page: parseInt(urlParams.get('page')) || 1,
-            query: urlParams.get('q') || '',
-            session: urlParams.get('session') || ''
+            query: urlParams.get('q') || ''
         };
     }
 
     function init() {
         setupEventListeners();
-        const { page, query, session } = getURLParams();
+        const { page, query } = getURLParams();
         if (searchInput) {
             searchInput.value = query;
         }
-        if (sessionFilter) {
-            sessionFilter.value = session;
-        }
-        fetchExamSupervisors(page, query, session);
+        fetchExamSupervisors(page, query);
     }
 
     init();

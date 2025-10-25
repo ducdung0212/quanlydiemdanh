@@ -3,70 +3,232 @@
 namespace App\Imports;
 
 use App\Models\ExamSchedule;
+use App\Models\ExamSupervisor;
 use Carbon\Carbon;
+use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Str;
 use InvalidArgumentException;
+use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
+use Maatwebsite\Excel\Concerns\WithBatchInserts;
+use Maatwebsite\Excel\Concerns\WithChunkReading;
 use Maatwebsite\Excel\Concerns\WithHeadingRow;
+use PhpOffice\PhpSpreadsheet\Shared\Date as ExcelDate;
 
-class ExamSupervisorImport implements ToCollection, WithHeadingRow
+class ExamSupervisorImport implements
+    ToCollection,
+    WithHeadingRow,
+    WithChunkReading,
+    WithBatchInserts,
+    SkipsEmptyRows
 {
-    private array $mapping;
-    private int $headingRow;
+    /**
+     * Map of model attributes to heading keys chosen by the user.
+     *
+     * @var array<string, string>
+     */
+    protected array $columnMap;
 
-    public function __construct(array $mapping, int $headingRow = 1)
+    /**
+     * The heading row in the worksheet.
+     */
+    protected int $headingRow;
+
+    /**
+     * @param  array<string, string|null>  $columnMap
+     */
+    public function __construct(array $columnMap, int $headingRow = 1)
     {
-        $this->mapping = $mapping;
-        $this->headingRow = $headingRow;
+        $normalized = collect($columnMap)
+            ->filter(fn ($column) => filled($column))
+            ->map(fn ($column) => $this->normalizeColumnKey($column))
+            ->toArray();
+
+        // Required mappings for natural key lookup + supervisor
+        foreach (['subject_code', 'exam_date', 'exam_time', 'room', 'lecturer_code'] as $required) {
+            if (empty($normalized[$required])) {
+                throw new InvalidArgumentException("Mapping for \"{$required}\" is required.");
+            }
+        }
+
+        $this->columnMap = $normalized;
+        $this->headingRow = max(1, $headingRow);
     }
 
-    public function collection(Collection $rows)
+    /**
+     * @inheritDoc
+     */
+    public function collection(Collection $rows): void
     {
         foreach ($rows as $row) {
-            $rowArray = $row->toArray();
+            if ($row instanceof Collection) {
+                $row = $row->toArray();
+            }
 
-            // Map cột từ Excel
-            $subjectCode = $rowArray[$this->mapping['subject_code']] ?? null;
-            $examDate = $rowArray[$this->mapping['exam_date']] ?? null;
-            $examTime = $rowArray[$this->mapping['exam_time']] ?? null;
-            $room = $rowArray[$this->mapping['room']] ?? null;
-            $lecturerCode = $rowArray[$this->mapping['lecturer_code']] ?? null;
+            if (!is_array($row)) {
+                continue;
+            }
 
-            // Validate dữ liệu
+            // Normalize incoming row keys to snake_case for safe lookups
+            $row = collect($row)
+                ->mapWithKeys(fn ($value, $key) => [$this->normalizeColumnKey((string) $key) => $value])
+                ->toArray();
+
+            $subjectCode = $this->getValueFromRow($row, 'subject_code');
+            $examDate = $this->normalizeDate($this->getValueFromRow($row, 'exam_date'));
+            $examTime = $this->normalizeTime($this->getValueFromRow($row, 'exam_time'));
+            $room = $this->getValueFromRow($row, 'room');
+            $lecturerCode = $this->getValueFromRow($row, 'lecturer_code');
+
+            // Skip rows missing required data after normalization
             if (!$subjectCode || !$examDate || !$examTime || !$room || !$lecturerCode) {
-                throw new InvalidArgumentException(
-                    'Dữ liệu không đầy đủ: subject_code, exam_date, exam_time, room, lecturer_code bắt buộc.'
-                );
+                continue;
             }
 
-            // Parse ngày
-            try {
-                $parsedDate = Carbon::createFromFormat('d/m/Y', $examDate)->format('Y-m-d');
-            } catch (\Exception $e) {
-                throw new InvalidArgumentException(
-                    "Ngày thi không hợp lệ: {$examDate}. Dùng định dạng dd/mm/yyyy"
-                );
-            }
-
-            // Tra cứu exam_schedule_id dựa trên Khóa Tự Nhiên
+            // Lookup ExamSchedule by natural key
             $examSchedule = ExamSchedule::where([
-                ['subject_code', '=', trim($subjectCode)],
-                ['exam_date', '=', $parsedDate],
-                ['exam_time', '=', trim($examTime)],
-                ['room', '=', trim($room)],
+                ['subject_code', '=', $subjectCode],
+                ['exam_date', '=', $examDate],
+                ['exam_time', '=', $examTime],
+                ['room', '=', $room],
             ])->first();
 
             if (!$examSchedule) {
-                throw new InvalidArgumentException(
-                    "Không tìm thấy ca thi: {$subjectCode} - {$examDate} - {$examTime} - {$room}"
-                );
+                // Skip if exam session not found
+                continue;
             }
 
-            // Thêm hoặc cập nhật giám sát thi
-            $examSchedule->supervisors()->updateOrCreate(
-                ['lecturer_code' => trim($lecturerCode)],
-                ['lecturer_code' => trim($lecturerCode)]
+            // Optional payload fields if mapped
+            $payload = array_filter([
+                'role' => $this->getValueFromRow($row, 'role'),
+                'note' => $this->getValueFromRow($row, 'note'),
+            ], fn ($value) => !is_null($value));
+
+            // Upsert supervisor assignment using natural key-derived exam_schedule_id + lecturer_code
+            ExamSupervisor::updateOrCreate(
+                [
+                    'exam_schedule_id' => $examSchedule->id,
+                    'lecturer_code' => $lecturerCode,
+                ],
+                $payload
             );
         }
+    }
+
+    public function headingRow(): int
+    {
+        return $this->headingRow;
+    }
+
+    public function chunkSize(): int
+    {
+        return 200;
+    }
+
+    public function batchSize(): int
+    {
+        return 200;
+    }
+
+    /**
+     * Safely get a value from a normalized row using the configured column map.
+     */
+    protected function getValueFromRow(array $row, string $attribute): mixed
+    {
+        $columnKey = $this->columnMap[$attribute] ?? null;
+
+        if (!$columnKey) {
+            return null;
+        }
+
+        if (!Arr::exists($row, $columnKey)) {
+            return null;
+        }
+
+        $value = $row[$columnKey];
+
+        if (is_string($value)) {
+            $value = trim($value);
+        }
+
+        if ($value === '') {
+            return null;
+        }
+
+        return $value;
+    }
+
+    /**
+     * Normalize user-provided heading/column keys to snake_case.
+     */
+    protected function normalizeColumnKey(string $column): string
+    {
+        return Str::slug($column, '_');
+    }
+
+    /**
+     * Normalize various date representations to Y-m-d.
+     */
+    protected function normalizeDate(mixed $value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value)->toDateString();
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->toDateString();
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        if (is_string($value) && $value !== '') {
+            try {
+                return Carbon::parse($value)->toDateString();
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        return null;
+    }
+
+    /**
+     * Normalize various time representations to H:i:s.
+     */
+    protected function normalizeTime(mixed $value): ?string
+    {
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value)->format('H:i:s');
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->format('H:i:s');
+            } catch (\Throwable) {
+                return null;
+            }
+        }
+
+        if (is_string($value) && $value !== '') {
+            try {
+                return Carbon::parse($value)->format('H:i:s');
+            } catch (\Throwable) {
+                $clean = preg_replace('/[^0-9:]/', '', $value);
+                if ($clean && preg_match('/^\d{1,2}:\d{2}(?::\d{2})?$/', $clean)) {
+                    try {
+                        $format = strlen($clean) === 5 ? 'H:i' : 'H:i:s';
+                        return Carbon::createFromFormat($format, $clean)->format('H:i:s');
+                    } catch (\Throwable) {
+                        return null;
+                    }
+                }
+                return null;
+            }
+        }
+
+        return null;
     }
 }

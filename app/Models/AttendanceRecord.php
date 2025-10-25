@@ -44,6 +44,15 @@ class AttendanceRecord extends Model
     ];
 
     /**
+     * The accessors to append to the model's array form.
+     *
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'student_name',
+    ];
+
+    /**
      * Get the student that the attendance record belongs to.
      */
     public function student(): BelongsTo
@@ -62,6 +71,16 @@ class AttendanceRecord extends Model
     public function getStudentName(): ?string
     {
         return $this->student?->full_name;
+    }
+
+    /**
+     * Accessor for student_name attribute.
+     *
+     * @return string
+     */
+    public function getStudentNameAttribute(): string
+    {
+        return $this->getStudentName() ?? '';
     }
 
     /**

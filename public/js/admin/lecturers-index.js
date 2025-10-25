@@ -237,6 +237,9 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
 
+        // Prevent default anchor behavior to avoid # in URL
+        event.preventDefault();
+
         const action = actionElement.dataset.action;
         const lecturerCode = actionElement.dataset.lecturer_code;
 

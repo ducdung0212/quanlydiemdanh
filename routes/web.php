@@ -44,7 +44,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     })->name('exam-schedules');
     
     // SỬA ROUTE NÀY - trỏ đến đúng đường dẫn
-    Route::get('/show/{id}', function ($id) {
+    Route::get('exam-schedules/show/{id}', function ($id) {
         return view('admin.exam-schedules.show', ['id' => $id]);
     })->name('exam-schedules.show');
 

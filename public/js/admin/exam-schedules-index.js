@@ -439,12 +439,15 @@ document.addEventListener('DOMContentLoaded', function () {
             const target = event.target.closest('[data-action]');
             if (!target) return;
 
+            // Prevent default anchor behavior to avoid # in URL
+            event.preventDefault();
+
             const action = target.dataset.action;
             const scheduleId = target.dataset.schedule_id;
 
             switch (action) {
                 case 'view-attendance':
-                    window.location.href = `/attendance/${scheduleId}`;
+                    window.location.href = `/exam-schedules/show/${scheduleId}`;
                     break;
                 case 'delete-schedule':
                     if (scheduleId) deleteSchedule(scheduleId);
@@ -515,13 +518,14 @@ document.addEventListener('DOMContentLoaded', function () {
     init();
 
     // --- Attendance record integration ---
-    // If current page is an attendance detail page (path like /attendance/{id}),
+    // If current page is an attendance detail page (path like /exam-schedules/show/{id}),
     // initialize the attendance record loader that was previously in
     // attendance-record.js. Functions and variables are namespaced with
     // `attendance_` prefix to avoid collisions with existing code above.
-    if (window.location.pathname.startsWith('/attendance/')) {
+    if (window.location.pathname.startsWith('/exam-schedules/show/')) {
         (function attendanceModule() {
-            const examScheduleId = window.location.pathname.split('/').pop();
+            const pathParts = window.location.pathname.split('/');
+            const examScheduleId = pathParts[pathParts.length - 1];
             const API_URL = `/api/exam-schedules/${examScheduleId}`;
 
             // DOM Elements

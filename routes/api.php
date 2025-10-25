@@ -37,10 +37,12 @@ Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulk
 Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
 Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);
 
-Route::delete('exam-supervisors/{examSupervisor}', [ExamSupervisorController::class, 'destroy']);
-Route::delete('exam-supervisors', [ExamSupervisorController::class, 'destroyAll']);
+Route::apiResource('exam-supervisors', ExamSupervisorController::class);
+Route::post('exam-supervisors/bulk-delete', [ExamSupervisorController::class, 'bulkDelete']);
+Route::post('exam-supervisors/import/preview', [ExamSupervisorController::class, 'previewImport']);
 Route::post('exam-supervisors/import', [ExamSupervisorController::class, 'import']);
 
-Route::delete('attendance-records/{attendanceRecord}', [AttendanceRecordController::class, 'destroy']);
-Route::delete('attendance-records', [AttendanceRecordController::class, 'destroyAll']);
+Route::apiResource('attendance-records', AttendanceRecordController::class);
+Route::post('attendance-records/bulk-delete', [AttendanceRecordController::class, 'bulkDelete']);
+Route::post('attendance-records/import/preview', [AttendanceRecordController::class, 'previewImport']);
 Route::post('attendance-records/import', [AttendanceRecordController::class, 'import']);
