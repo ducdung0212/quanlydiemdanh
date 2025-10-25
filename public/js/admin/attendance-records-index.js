@@ -77,14 +77,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const isChecked = selectedRecords.has(record.id) ? 'checked' : '';
             return `
                 <tr>
-                    <td class="text-center">
+                    <td style="text-align: center;">
                         <input type="checkbox" class="record-checkbox" value="${escapeHtml(record.id)}" ${isChecked} style="cursor: pointer;" data-action="toggle-select">
                     </td>
-                    <td class="text-center">${from + index}</td>
-                    <td>${escapeHtml(record.session_code || '')}</td>
-                    <td>${escapeHtml(record.student_code || '')}</td>
-                    <td>${escapeHtml(record.student_name || '')}</td>
-                    <td>
+                    <td style="text-align: center;">${from + index}</td>
+                    <td style="text-align: left;">${escapeHtml(record.exam_schedule_id || '')}</td>
+                    <td style="text-align: left;">${escapeHtml(record.student_code || '')}</td>
+                    <td style="text-align: left;">${escapeHtml(record.student_name || '')}</td>
+                    <td style="text-align: center;">
                         <div class="list-icon-function">
                             <a href="#" data-action="delete-record" data-record_id="${escapeHtml(record.id)}" title="Xóa">
                                 <div class="item text-danger delete"><i class="icon-trash-2"></i></div>
@@ -394,6 +394,9 @@ document.addEventListener('DOMContentLoaded', function () {
         tableBody.addEventListener('click', async function (event) {
             const target = event.target.closest('[data-action]');
             if (!target) return;
+
+            // Prevent default anchor behavior to avoid # in URL
+            event.preventDefault();
 
             const action = target.dataset.action;
             const recordId = target.dataset.record_id;

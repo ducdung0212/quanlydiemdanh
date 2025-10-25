@@ -32,6 +32,13 @@ class ExamSupervisor extends Model
     ];
 
     /**
+     * @var array<int, string>
+     */
+    protected $appends = [
+        'lecturer_name',
+    ];
+
+    /**
      * Get the exam schedule this supervisor is assigned to.
      */
     public function examSchedule(): BelongsTo
@@ -61,5 +68,25 @@ class ExamSupervisor extends Model
     public function scopeOfLecturer($query, string $lecturerCode)
     {
         return $query->where('lecturer_code', $lecturerCode);
+    }
+
+    /**
+     * Get the lecturer's name.
+     *
+     * @return string
+     */
+    public function getLecturerName(): string
+    {
+        return $this->lecturer?->full_name ?? '';
+    }
+
+    /**
+     * Accessor for lecturer_name attribute.
+     *
+     * @return string
+     */
+    public function getLecturerNameAttribute(): string
+    {
+        return $this->getLecturerName();
     }
 }

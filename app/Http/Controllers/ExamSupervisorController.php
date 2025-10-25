@@ -14,54 +14,164 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Throwable;
 
 class ExamSupervisorController extends Controller
-{
+{   
+    public function index()
+    {
+        $q = request()->query('q');
+        $date = request()->query('date');
+        $limit = (int) request()->query('limit', 10);
+
+        $examSupervisors = ExamSupervisor::with('lecturer')->latest();
+
+        if ($q) {
+            $examSupervisors->where(function ($query) use ($q) {
+                $query->where('lecturer_code', 'like', "%{$q}%")
+                    ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
+                        $examScheduleQuery->where('room', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
+                        $examScheduleQuery->where('subject_code', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
+                        $examScheduleQuery->where('exam_time', 'like', "%{$q}%");
+                    })
+                    ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
+                        $examScheduleQuery->whereDate('exam_date', 'like', "%{$q}%");
+                    })
+                    ->orWhere('subject_code', 'like', "%{$q}%")
+                    ->orWhereHas('lecturer', function ($lecturerQuery) use ($q) {
+                        $lecturerQuery->where('name', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        if ($date) {
+            try {
+                $normalizedDate = Carbon::parse($date)->toDateString();
+                $examSchedules->whereDate('exam_date', $normalizedDate);
+            } catch (Throwable $e) {
+                // If the provided date cannot be parsed, ignore the filter.
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $examSupervisors->paginate($limit),
+            'message' => 'List Exam Supervisor',
+        ]);
+    }
+    /**
+     * Preview import: upload file and detect headings + heading row.
+     */
     public function previewImport(Request $request): JsonResponse
     {
-        $validated = $request->validate([
-            'excel_file' => 'required|file|mimes:xlsx,xls,csv',
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls',
         ]);
 
-        $file = $validated['excel_file'];
-        $fileName = 'imports/tmp/' . uniqid('exam_supervisor_') . '.' . $file->getClientOriginalExtension();
-
-        Storage::putFileAs('', $file, $fileName);
-
         try {
-            $spreadsheet = IOFactory::load(Storage::path($fileName));
-            $worksheet = $spreadsheet->getActiveSheet();
-            $headings = [];
-            $headingRow = 1;
+            $file = $request->file('excel_file');
+            $storedPath = $file->store('imports/tmp');
+            $fullPath = Storage::path($storedPath);
 
-            foreach ($worksheet->getRowIterator() as $rowIdx => $row) {
-                $rowData = [];
-                foreach ($row->getCellIterator() as $cell) {
-                    $rowData[] = $cell->getValue();
-                }
+            $reader = IOFactory::createReaderForFile($fullPath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($fullPath);
+            $sheet = $spreadsheet->getActiveSheet();
 
-                if (!empty(array_filter($rowData))) {
-                    $headings = $rowData;
-                    $headingRow = $rowIdx;
-                    break;
+            $highestColumn = $sheet->getHighestDataColumn();
+            $highestRow = min($sheet->getHighestDataRow(), 50);
+
+            $rows = [];
+            for ($rowIndex = 1; $rowIndex <= $highestRow; $rowIndex++) {
+                $range = sprintf('A%d:%s%d', $rowIndex, $highestColumn, $rowIndex);
+                $rowValues = $sheet->rangeToArray($range, null, true, true, false);
+                if (!empty($rowValues)) {
+                    $rows[$rowIndex] = $rowValues[0];
                 }
             }
 
-            $columnHeadings = array_map(fn ($h) => Str::slug((string) $h, '_'), $headings);
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+
+            $expectedKeys = [
+                'subject', 'subject-code', 'subject_code', 'ma-mon', 'ma-hoc-phan',
+                'exam-date', 'exam-time', 'exam_date', 'exam_time',
+                'room', 'phong',
+                'lecturer', 'lecturer-code', 'lecturer_code', 'ma-giang-vien',
+                'role', 'note', 'ghi-chu',
+            ];
+
+            $visibleHeadings = [];
+            $visibleHeadingRow = null;
+            $fallbackHeadings = [];
+            $fallbackHeadingRow = null;
+
+            foreach ($rows as $rowNumber => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+
+                if (empty($nonEmpty)) {
+                    continue;
+                }
+
+                $normalized = array_map(static function ($value) {
+                    $ascii = Str::lower(Str::ascii($value));
+                    $slug = preg_replace('/[^a-z0-9]+/i', '-', $ascii);
+                    return trim((string) $slug, '-');
+                }, $nonEmpty);
+
+                if (array_intersect($normalized, $expectedKeys)) {
+                    $visibleHeadings = $nonEmpty;
+                    $visibleHeadingRow = $rowNumber;
+                    break;
+                }
+
+                if (empty($fallbackHeadings)) {
+                    $fallbackHeadings = $nonEmpty;
+                    $fallbackHeadingRow = $rowNumber;
+                }
+            }
+
+            if (empty($visibleHeadings)) {
+                $visibleHeadings = $fallbackHeadings;
+                $visibleHeadingRow = $fallbackHeadingRow;
+            }
+
+            if (empty($visibleHeadings)) {
+                Storage::delete($storedPath);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể tìm thấy hàng tiêu đề trong file. Vui lòng kiểm tra lại định dạng.',
+                ], 422);
+            }
 
             return response()->json([
                 'success' => true,
-                'token' => $fileName,
-                'heading_row' => $headingRow,
-                'headings' => $columnHeadings,
+                'token' => $storedPath,
+                'headings' => $visibleHeadings,
+                'heading_row' => $visibleHeadingRow,
             ]);
         } catch (Throwable $e) {
-            Storage::delete($fileName);
+            if (isset($storedPath)) {
+                Storage::delete($storedPath);
+            }
+
             return response()->json([
                 'success' => false,
-                'message' => 'Lỗi đọc file: ' . $e->getMessage(),
-            ], 422);
+                'message' => 'Không thể đọc file: ' . $e->getMessage(),
+            ], 500);
         }
     }
 
+    /**
+     * Import supervisors using mapping and heading row.
+     */
     public function import(Request $request): JsonResponse
     {
         $validated = $request->validate([
@@ -73,6 +183,8 @@ class ExamSupervisorController extends Controller
             'mapping.exam_time' => 'required|string',
             'mapping.room' => 'required|string',
             'mapping.lecturer_code' => 'required|string',
+            'mapping.role' => 'nullable|string',
+            'mapping.note' => 'nullable|string',
         ]);
 
         $filePath = $validated['token'];
@@ -93,7 +205,7 @@ class ExamSupervisorController extends Controller
 
             return response()->json([
                 'success' => true,
-                'message' => 'Import danh sách phân công giám thị thành công.',
+                'message' => 'Import giám thị thành công.',
             ]);
         } catch (InvalidArgumentException $e) {
             return response()->json([
@@ -110,49 +222,47 @@ class ExamSupervisorController extends Controller
         }
     }
 
-    public function destroy(ExamSupervisor $examSupervisor): JsonResponse
+    /**
+     * Remove a single supervisor assignment.
+     */
+    public function destroy(string $id)
     {
+       $examSupervisor = ExamSupervisor::find($id);
+
+        if (!$examSupervisor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Exam Supervisor not found',
+            ], 404);
+        }
+
         $examSupervisor->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Đã xóa phân công giám thị.',
+            'message' => 'Exam Supervisor deleted successfully',
         ]);
     }
 
-    public function destroyAll(Request $request): JsonResponse
+    /**
+     * Remove all supervisor assignments.
+     */
+    public function bulkDelete(Request $request)
     {
-        $validated = $request->validate([
-            'exam_schedule_id' => 'nullable|integer|exists:exam_schedules,id',
-            'lecturer_code' => 'nullable|string|exists:lecturers,lecturer_code',
-            'delete_all' => 'nullable|boolean',
-        ]);
+        $ids = $request->input('ids', []);
 
-        $query = ExamSupervisor::query();
-
-        if (isset($validated['exam_schedule_id'])) {
-            $query->where('exam_schedule_id', $validated['exam_schedule_id']);
+        if (empty($ids)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có giám thị nào được chọn',
+            ], 400);
         }
 
-        if (isset($validated['lecturer_code'])) {
-            $query->where('lecturer_code', $validated['lecturer_code']);
-        }
-
-        if (!isset($validated['exam_schedule_id']) && !isset($validated['lecturer_code'])) {
-            if (empty($validated['delete_all'])) {
-                return response()->json([
-                    'success' => false,
-                    'message' => 'Vui lòng xác nhận delete_all hoặc cung cấp điều kiện lọc.',
-                ], 422);
-            }
-        }
-
-        $deleted = $query->delete();
+        ExamSupervisor::whereIn('id', $ids)->delete();
 
         return response()->json([
             'success' => true,
-            'message' => 'Đã xóa ' . $deleted . ' bản ghi phân công giám thị.',
-            'deleted' => $deleted,
+            'message' => 'Đã xóa ' . count($ids) . ' giám thị thành công.',
         ]);
     }
 }

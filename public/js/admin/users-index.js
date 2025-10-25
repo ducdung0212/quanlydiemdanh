@@ -338,6 +338,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const actionElement = event.target.closest('[data-action]');
             if (!actionElement) return;
 
+            // Prevent default anchor behavior to avoid # in URL
+            event.preventDefault();
+
             const action = actionElement.dataset.action;
             const userId = actionElement.dataset.id;
 

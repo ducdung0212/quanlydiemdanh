@@ -3,7 +3,7 @@
     <div class="modal-dialog">
         <div class="modal-content" style="border-radius: 12px; border: none; box-shadow: 0 10px 40px rgba(0, 0, 0, 0.15);">
             <div class="modal-header" style="border-bottom: 1px solid #eee; padding: 20px 25px;">
-                <h5 class="modal-title" id="importExcelModalLabel" style="font-size: 1.3rem; font-weight: 600;">Import danh sách sinh viên từ Excel</h5>
+                <h5 class="modal-title" id="importExcelModalLabel" style="font-size: 1.3rem; font-weight: 600;">Import danh sách điểm danh từ Excel</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <form id="importExcelForm" enctype="multipart/form-data">

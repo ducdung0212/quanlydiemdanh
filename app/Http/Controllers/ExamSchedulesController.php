@@ -114,7 +114,14 @@ public function exportAttendance($id)
         $examStart = null;
 
         if (!empty($examSchedule->exam_date) && !empty($examSchedule->exam_time)) {
-            $examStart = Carbon::parse($examSchedule->exam_date . ' ' . $examSchedule->exam_time);
+            // Format date and time properly before parsing
+            $dateStr = $examSchedule->exam_date instanceof Carbon 
+                ? $examSchedule->exam_date->format('Y-m-d') 
+                : $examSchedule->exam_date;
+            $timeStr = $examSchedule->exam_time instanceof Carbon 
+                ? $examSchedule->exam_time->format('H:i:s') 
+                : $examSchedule->exam_time;
+            $examStart = Carbon::parse($dateStr . ' ' . $timeStr);
         }
 
         $students = [];
@@ -171,6 +178,7 @@ public function exportAttendance($id)
             'data' => [
                 'exam' => [
                     'id' => $examSchedule->id,
+                    'session_code' => $examSchedule->session_code ?? $examSchedule->id,
                     'subject_code' => $examSchedule->subject_code,
                     'subject_name' => optional($examSchedule->subject)->name,
                     'exam_date' => optional($examSchedule->exam_date)?->toDateString() ?? (string) $examSchedule->exam_date,

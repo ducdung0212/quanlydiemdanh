@@ -56,7 +56,8 @@ class ExamSchedule extends Model
      */
     protected $casts = [
         'exam_date' => 'date',
-        'exam_time' => 'datetime:H:i:s',
+        // Don't cast exam_time as datetime since it's a TIME column in DB
+        // Let it remain as string to avoid double date specification errors
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
