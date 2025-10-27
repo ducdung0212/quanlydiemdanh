@@ -87,9 +87,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="text-center">${subject.credit || ''}</td>
                     <td>
                         <div class="list-icon-function">
-                            <a href="#" data-action="view-subject" data-subject_code="${escapeHtml(subject.subject_code)}">
-                                <div class="item view"><i class="icon-eye"></i></div>
-                            </a>
                             <a href="#" data-action="edit-subject" data-subject_code="${escapeHtml(subject.subject_code)}">
                                 <div class="item edit"><i class="icon-edit-3"></i></div>
                             </a>
