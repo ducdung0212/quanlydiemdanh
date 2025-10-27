@@ -110,18 +110,5 @@
                 </li>
             </ul>
         </div>
-        
-        <div class="center-item">
-            <div class="center-heading">Cài đặt</div>
-            <ul class="menu-list">
-                <!-- Settings -->
-                <li class="menu-item">
-                    <a href="{{-- {{ route('settings') }} --}}" class="">
-                        <div class="icon"><i class="icon-settings"></i></div>
-                        <div class="text">Cài đặt hệ thống</div>
-                    </a>
-                </li>
-            </ul>
-        </div>
     </div>
 </div>
