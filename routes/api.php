@@ -8,6 +8,7 @@ use App\Http\Controllers\AttendanceRecordController;
 use App\Http\Controllers\ExamSchedulesController;
 use App\Http\Controllers\ExamSupervisorController;
 use App\Http\Controllers\LecturerController;
+use App\Http\Controllers\SubjectController;
 
 /*
 |--------------------------------------------------------------------------
@@ -46,3 +47,8 @@ Route::apiResource('attendance-records', AttendanceRecordController::class);
 Route::post('attendance-records/bulk-delete', [AttendanceRecordController::class, 'bulkDelete']);
 Route::post('attendance-records/import/preview', [AttendanceRecordController::class, 'previewImport']);
 Route::post('attendance-records/import', [AttendanceRecordController::class, 'import']);
+
+Route::apiResource('subjects', SubjectController::class);
+Route::post('subjects/bulk-delete', [SubjectController::class, 'bulkDelete']);
+Route::post('subjects/import/preview', [SubjectController::class, 'previewImport']);
+Route::post('subjects/import', [SubjectController::class, 'import']);
