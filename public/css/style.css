@@ -7812,5 +7812,148 @@ input[type="date"].form-control::-webkit-calendar-picker-indicator {
         border: 1px solid #dee2e6 !important;
     }
 }
+/*attendance*/
+.camera-preview {
+    border: 2px solid #ddd;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.captured-image {
+    border: 2px solid #28a745;
+    border-radius: 8px;
+    overflow: hidden;
+}
+
+.camera-controls {
+    margin: 20px 0;
+}
+
+#attendanceResult {
+    min-height: 50px;
+}
+
+.loading-spinner {
+    border: 3px solid #f3f3f3;
+    border-top: 3px solid #3498db;
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+.result-success {
+    color: #28a745;
+    font-weight: bold;
+    background: #d4edda;
+    border: 1px solid #c3e6cb;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.result-error {
+    color: #dc3545;
+    font-weight: bold;
+    background: #f8d7da;
+    border: 1px solid #f5c6cb;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.text-info {
+    color: #17a2b8;
+    font-weight: bold;
+    background: #d1ecf1;
+    border: 1px solid #bee5eb;
+    border-radius: 4px;
+    padding: 10px;
+}
+
+.exam-info-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+    gap: 15px;
+    margin-top: 15px;
+}
+
+.exam-info-item {
+    display: flex;
+    flex-direction: column;
+    padding: 10px;
+    background: #f8f9fa;
+    border-radius: 8px;
+}
+
+.exam-info-item strong {
+    color: #6c757d;
+    font-size: 12px;
+    margin-bottom: 5px;
+}
+
+.exam-info-item span {
+    font-weight: 600;
+    color: #495057;
+}
+
+/* Chỉnh sửa dropdown và button cho đều nhau */
+.form-control-lg {
+    height: 45px;
+    font-size: 14px;
+}
+
+.h-45 {
+    height: 45px !important;
+}
+
+/* Căn chỉnh form controls */
+.align-items-end {
+    align-items: end;
+}
+
+/* Stats grid */
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.stat-card {
+    background: #fff;
+    border: 1px solid #e9ecef;
+    border-radius: 8px;
+    padding: 20px;
+    text-align: center;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+}
+
+.stat-number {
+    font-size: 2rem;
+    font-weight: bold;
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    color: #6c757d;
+    font-size: 14px;
+}
+
+.stat-present .stat-number {
+    color: #28a745;
+}
+
+.stat-late .stat-number {
+    color: #ffc107;
+}
+
+.stat-absent .stat-number {
+    color: #dc3545;
+}
 
 /*# sourceMappingURL=style.css.map */
