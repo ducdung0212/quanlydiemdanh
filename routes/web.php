@@ -199,6 +199,13 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance-records/modals/import', function () {
         return view('admin.attendance-records.import');
     });
+    //attendance
+    Route::get('/attendance', function () {
+        return view('admin.attendance.index');
+    })->name('attendance');
+    
 });
+
+
 
 require __DIR__.'/auth.php';
