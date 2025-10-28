@@ -23,8 +23,16 @@ class AttendanceRecordController extends Controller
         $q = request()->query('q');
         $session = request()->query('session');
         $limit = (int) request()->query('limit', 10);
+        $user = auth()->user();
 
         $attendanceRecords = AttendanceRecord::with('student')->latest();
+
+        // Nếu là lecturer, chỉ xem điểm danh của ca thi được phân công
+        if ($user && $user->role === 'lecturer') {
+            $attendanceRecords->whereHas('examSchedule.supervisors', function ($query) use ($user) {
+                $query->where('lecturer_code', $user->lecturer_code);
+            });
+        }
 
         if ($q) {
             $attendanceRecords->where(function ($query) use ($q) {
@@ -246,7 +254,44 @@ class AttendanceRecordController extends Controller
      */
     public function update(Request $request, string $id)
     {
-        //
+        $user = auth()->user();
+        $attendanceRecord = AttendanceRecord::with('examSchedule')->find($id);
+
+        if (!$attendanceRecord) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Attendance Record not found',
+            ], 404);
+        }
+
+        // Nếu là lecturer, kiểm tra quyền sửa
+        if ($user && $user->role === 'lecturer') {
+            $hasAccess = $attendanceRecord->examSchedule->supervisors()
+                ->where('lecturer_code', $user->lecturer_code)
+                ->exists();
+            
+            if (!$hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền sửa điểm danh ca thi này',
+                ], 403);
+            }
+        }
+
+        $validated = $request->validate([
+            'attendance_time' => 'nullable|date',
+            'captured_image_url' => 'nullable|string',
+            'rekognition_result' => 'nullable|string',
+            'confidence' => 'nullable|numeric',
+        ]);
+
+        $attendanceRecord->update($validated);
+
+        return response()->json([
+            'success' => true,
+            'data' => $attendanceRecord->fresh(),
+            'message' => 'Attendance Record updated successfully',
+        ]);
     }
 
     /**

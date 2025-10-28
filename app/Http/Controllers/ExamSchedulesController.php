@@ -24,10 +24,18 @@ class ExamSchedulesController extends Controller
         $q = request()->query('q');
         $date = request()->query('date');
         $limit = (int) request()->query('limit', 10);
+        $user = auth()->user();
 
         $examSchedules = ExamSchedule::query()
             ->with('subject')
             ->latest();
+
+        // Nếu là lecturer, chỉ xem ca thi được phân công
+        if ($user && $user->role === 'lecturer') {
+            $examSchedules->whereHas('supervisors', function ($query) use ($user) {
+                $query->where('lecturer_code', $user->lecturer_code);
+            });
+        }
 
         if ($q) {
             $examSchedules->where(function ($query) use ($q) {
@@ -98,6 +106,7 @@ public function exportAttendance($id)
      */
     public function show(string $id)
     {
+        $user = auth()->user();
         $examSchedule = ExamSchedule::with('subject')->find($id);
 
         if (!$examSchedule) {
@@ -105,6 +114,20 @@ public function exportAttendance($id)
                 'success' => false,
                 'message' => 'Exam Schedule not found',
             ], 404);
+        }
+
+        // Nếu là lecturer, kiểm tra quyền truy cập
+        if ($user && $user->role === 'lecturer') {
+            $hasAccess = $examSchedule->supervisors()
+                ->where('lecturer_code', $user->lecturer_code)
+                ->exists();
+            
+            if (!$hasAccess) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Bạn không có quyền xem ca thi này',
+                ], 403);
+            }
         }
 
         $attendanceRecords = AttendanceRecord::with('student')
@@ -417,5 +440,58 @@ public function exportAttendance($id)
         } finally {
             Storage::delete($filePath);
         }
+    }
+
+    /**
+     * Get exam schedule for current lecturer (my schedule).
+     */
+    public function mySchedule()
+    {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ giảng viên mới có thể xem lịch coi thi',
+            ], 403);
+        }
+
+        $q = request()->query('q');
+        $date = request()->query('date');
+        $limit = (int) request()->query('limit', 10);
+
+        $examSchedules = ExamSchedule::query()
+            ->with(['subject', 'supervisors.lecturer'])
+            ->whereHas('supervisors', function ($query) use ($user) {
+                $query->where('lecturer_code', $user->lecturer_code);
+            })
+            ->orderBy('exam_date')
+            ->orderBy('exam_time');
+
+        if ($q) {
+            $examSchedules->where(function ($query) use ($q) {
+                $query->where('id', 'like', "%{$q}%")
+                    ->orWhere('subject_code', 'like', "%{$q}%")
+                    ->orWhere('room', 'like', "%{$q}%")
+                    ->orWhereHas('subject', function ($subjectQuery) use ($q) {
+                        $subjectQuery->where('name', 'like', "%{$q}%");
+                    });
+            });
+        }
+
+        if ($date) {
+            try {
+                $normalizedDate = Carbon::parse($date)->toDateString();
+                $examSchedules->whereDate('exam_date', $normalizedDate);
+            } catch (Throwable $e) {
+                // If the provided date cannot be parsed, ignore the filter.
+            }
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $examSchedules->paginate($limit),
+            'message' => 'Lịch coi thi của bạn',
+        ]);
     }
 }

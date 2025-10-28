@@ -21,8 +21,11 @@
 </head>
 
 <div class="header-dashboard">
-    <div class="wrap" style="justify-content: flex-end;">
-        <div class="header-grid" style="display: flex; align-items: center; gap: 5px;">
+    <div class="wrap">
+        <div class="button-show-hide" style="cursor: pointer; padding: 10px; display: flex; align-items: center;">
+            <i class="icon-menu-left" style="font-size: 24px;"></i>
+        </div>
+        <div class="header-grid" style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
             <div class="popup-wrap user type-header">
                 <div class="dropdown">
                     <a class="dropdown-toggle" href="{{ route('profile.edit') }}" role="button" id="dropdownMenuLink" aria-expanded="false">

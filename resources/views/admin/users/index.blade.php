@@ -47,7 +47,7 @@
                         <th style="width: 50px">
                             <input type="checkbox" id="selectAll" style="cursor: pointer;">
                         </th>
-                        <th style="width: 60px">STT</th>
+                        <th style="width: 80px">ID</th>
                         <th>Tên</th>
                         <th>Email</th>
                         <th>Role</th>

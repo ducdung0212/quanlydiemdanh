@@ -67,10 +67,26 @@ document.addEventListener('DOMContentLoaded', function () {
     // Format date
     function formatDate(dateStr) {
         if (!dateStr) return '';
-        const parts = dateStr.split('-');
-        if (parts.length === 3) {
-            return `${parts[2]}-${parts[1]}-${parts[0]}`;
+        
+        // Xử lý định dạng ngày từ database
+        try {
+            const date = new Date(dateStr);
+            if (!isNaN(date.getTime())) {
+                const day = String(date.getDate()).padStart(2, '0');
+                const month = String(date.getMonth() + 1).padStart(2, '0');
+                const year = date.getFullYear();
+                return `${day}/${month}/${year}`;
+            }
+        } catch (e) {
+            console.error('Error parsing date:', e);
         }
+        
+        // Fallback: nếu là định dạng yyyy-mm-dd
+        const parts = dateStr.split('-');
+        if (parts.length === 3 && parts[0].length === 4) {
+            return `${parts[2]}/${parts[1]}/${parts[0]}`;
+        }
+        
         return dateStr;
     }
 

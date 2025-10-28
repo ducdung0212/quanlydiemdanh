@@ -76,7 +76,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     <td class="text-center">
                         <input type="checkbox" class="user-checkbox" value="${user.id}" ${isChecked} style="cursor: pointer;" data-action="toggle-select">
                     </td>
-                    <td class="text-center">${from + index}</td>
+                    <td class="text-center">${user.id}</td>
                     <td>${escape(user.name || '')}</td>
                     <td>${escape(user.email || '')}</td>
                     <td>${escape(roleLabel)}</td>

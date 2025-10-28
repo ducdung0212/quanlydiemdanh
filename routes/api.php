@@ -34,6 +34,7 @@ Route::post('lecturers/import/preview', [LecturerController::class, 'previewImpo
 Route::post('lecturers/import', [LecturerController::class, 'import']);
 
 Route::apiResource('exam-schedules', ExamSchedulesController::class);
+Route::get('exam-schedules/my/schedule', [ExamSchedulesController::class, 'mySchedule']);
 Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulkDelete']);
 Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
 Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);
