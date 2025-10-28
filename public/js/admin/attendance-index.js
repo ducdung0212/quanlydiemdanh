@@ -3,6 +3,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentExamScheduleId = null;
     let stream = null;
     let capturedPhoto = null;
+    // Đã loại bỏ các biến không cần thiết (availableVideoDevices, currentVideoDeviceIndex, attemptedAutoRear)
 
     // DOM Elements
     const examScheduleSelect = document.getElementById('examScheduleSelect');
@@ -67,7 +68,6 @@ document.addEventListener('DOMContentLoaded', function () {
     function formatDate(dateStr) {
         if (!dateStr) return '';
         
-        // Xử lý định dạng ngày từ database
         try {
             const date = new Date(dateStr);
             if (!isNaN(date.getTime())) {
@@ -80,7 +80,6 @@ document.addEventListener('DOMContentLoaded', function () {
             console.error('Error parsing date:', e);
         }
         
-        // Fallback: nếu là định dạng yyyy-mm-dd
         const parts = dateStr.split('-');
         if (parts.length === 3 && parts[0].length === 4) {
             return `${parts[2]}/${parts[1]}/${parts[0]}`;
@@ -97,24 +96,18 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Get status badge
     function getStatusBadge(status) {
-    const statusMap = {
-        'present': { class: 'badge bg-success', text: 'Có mặt' },
-        'late': { class: 'badge bg-success', text: 'Có mặt' }, // 'Đi muộn' vẫn được tính là 'Có mặt'
-        'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
-    };
+        const statusMap = {
+            'present': { class: 'badge bg-success', text: 'Có mặt' },
+            'late': { class: 'badge bg-success', text: 'Có mặt' }, 
+            'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
+        };
 
-    // 1. Tìm trạng thái trong map
-    const statusInfo = statusMap[status];
-
-    // 2. Nếu tìm thấy (present, late, absent) thì trả về badge
-    if (statusInfo) {
-        return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
+        const statusInfo = statusMap[status];
+        if (statusInfo) {
+            return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
+        }
+        return '-';
     }
-
-    // 3. Nếu không tìm thấy (trạng thái là null, undefined, rỗng...),
-    //    trả về dấu gạch ngang
-    return '-';
-}
 
     // Format attendance time
     function formatAttendanceTime(timeStr) {
@@ -145,20 +138,14 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!attendanceTableBody) return;
             
             const API_URL = `/api/exam-schedules/${examScheduleId}`;
-
             attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
-
             const response = await fetch(API_URL);
 
             if (!response.ok) {
-                if (response.status === 404) {
-                    throw new Error('Không tìm thấy ca thi');
-                }
-                throw new Error(`Lỗi HTTP: ${response.status}`);
+                throw new Error(response.status === 404 ? 'Không tìm thấy ca thi' : `Lỗi HTTP: ${response.status}`);
             }
 
             const result = await response.json();
-
             if (!result.success) {
                 throw new Error(result.message || 'Không thể tải dữ liệu');
             }
@@ -214,7 +201,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
         } catch (error) {
             console.error('Error loading attendance data:', error);
-
             if (attendanceTableBody) {
                 attendanceTableBody.innerHTML = `
                     <tr>
@@ -224,7 +210,6 @@ document.addEventListener('DOMContentLoaded', function () {
                     </tr>
                 `;
             }
-
             // Hide sections on error
             examInfoSection.style.display = 'none';
             statsSection.style.display = 'none';
@@ -234,26 +219,65 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Camera functions
+    
+    // *** ĐÃ LOẠI BỎ ***
+    // Hàm enumerateVideoDevices() không còn cần thiết
+
+    // *** ĐÃ CẬP NHẬT ***
     async function startCamera() {
         try {
-            stream = await navigator.mediaDevices.getUserMedia({ 
-                video: { 
+            // Luôn yêu cầu camera sau (môi trường)
+            const constraints = {
+                audio: false,
+                video: {
+                    facingMode: { ideal: 'environment' }, // Ưu tiên camera sau
                     width: { ideal: 1280 },
-                    height: { ideal: 720 },
-                    facingMode: 'user'
-                } 
-            });
+                    height: { ideal: 720 }
+                }
+            };
+
+            // Dừng stream cũ nếu có
+            if (stream) stopCamera();
+
+            stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
+
         } catch (err) {
-            console.error('Error accessing camera:', err);
-            showResult('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
+            console.error('Error accessing rear camera:', err);
+            
+            // Thử lại với camera mặc định nếu không tìm thấy camera sau
+            // (Lỗi 'OverconstrainedError' hoặc 'NotFoundError' thường xảy ra khi không có camera sau)
+            if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
+                console.warn('Rear camera not found or failed, trying default camera...');
+                try {
+                    const fallbackConstraints = {
+                        audio: false,
+                        video: { // Không yêu cầu cụ thể, để trình duyệt tự chọn
+                            width: { ideal: 1280 },
+                            height: { ideal: 720 }
+                        }
+                    };
+                    if (stream) stopCamera(); // Đảm bảo dừng stream cũ
+                    stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                    video.srcObject = stream;
+                } catch (fallbackErr) {
+                    console.error('Error accessing any camera:', fallbackErr);
+                    showResult('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
+                }
+            } else {
+                // Các lỗi khác (ví dụ: lỗi quyền truy cập - PermissionDeniedError)
+                console.error('Error accessing camera:', err);
+                showResult('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
+            }
         }
     }
 
+    // *** ĐÃ CẬP NHẬT ***
     function stopCamera() {
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
             stream = null;
+            // đã bỏ 'attemptedAutoRear'
         }
     }
 
@@ -266,11 +290,9 @@ document.addEventListener('DOMContentLoaded', function () {
         capturedPhoto = canvas.toDataURL('image/jpeg');
         photo.src = capturedPhoto;
         
-        // Hiển thị ảnh đã chụp, ẩn camera preview
         cameraPreview.classList.add('d-none');
         capturedImage.classList.remove('d-none');
         
-        // Hiển thị nút chụp lại và gửi
         btnCapture.classList.add('d-none');
         btnRetake.classList.remove('d-none');
         btnSubmit.classList.remove('d-none');
@@ -279,11 +301,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function retakePhoto() {
-        // Ẩn ảnh đã chụp, hiển thị camera preview
         capturedImage.classList.add('d-none');
         cameraPreview.classList.remove('d-none');
         
-        // Hiển thị nút chụp, ẩn nút chụp lại và gửi
         btnCapture.classList.remove('d-none');
         btnRetake.classList.add('d-none');
         btnSubmit.classList.add('d-none');
@@ -291,8 +311,6 @@ document.addEventListener('DOMContentLoaded', function () {
         capturedPhoto = null;
         attendanceResult.innerHTML = '';
     }
-
-   // attendance-index.js
 
    async function submitAttendance() {
         if (!capturedPhoto || !currentExamScheduleId) {
@@ -304,7 +322,6 @@ document.addEventListener('DOMContentLoaded', function () {
             showResult('Đang xử lý nhận diện khuôn mặt...', 'info');
             btnSubmit.disabled = true;
             
-            // Gửi ảnh base64 trực tiếp đến API
             const response = await fetch('/api/attendance/face-recognition', {
                 method: 'POST',
                 headers: {
@@ -312,7 +329,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
                 body: JSON.stringify({
-                    image: capturedPhoto, // Base64 string
+                    image: capturedPhoto, 
                     exam_schedule_id: currentExamScheduleId
                 })
             });
@@ -331,10 +348,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     'success'
                 );
                 
-                // Cập nhật lại dữ liệu sau 2 giây
                 setTimeout(() => {
                     loadExamAttendanceData(currentExamScheduleId);
-                    // Tự động đóng modal sau 3 giây
                     setTimeout(() => {
                         attendanceModal.hide();
                     }, 3000);
@@ -373,12 +388,21 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         attendanceModal.show();
-        startCamera();
+        (async () => {
+            try {
+                await startCamera(); // Hàm startCamera đã được đơn giản hóa
+            } catch (err) {
+                console.error('Error during camera init:', err);
+            }
+        })();
     });
 
     btnCapture.addEventListener('click', capturePhoto);
     btnRetake.addEventListener('click', retakePhoto);
     btnSubmit.addEventListener('click', submitAttendance);
+
+    // *** ĐÃ LOẠI BỎ ***
+    // Trình xử lý sự kiện cho 'btnSwitchCamera' đã bị xóa.
 
     // Xử lý sự kiện khi modal đóng
     document.getElementById('attendanceModal').addEventListener('hidden.bs.modal', function() {
