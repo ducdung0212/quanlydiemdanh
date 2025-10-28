@@ -98,7 +98,6 @@
                         <div class="text">Giám thị</div>
                     </a>
                 </li>
-                
                 <!-- Attendance_records -->
                 <li class="menu-item">
                     <a href="{{ route('attendance-records') }}" class="menu-item-button">
@@ -108,6 +107,16 @@
                         <div class="text">Thí sinh dự thi</div>
                     </a>
                 </li>
+                <!-- attendance -->
+                <li class="menu-item">
+                    <a href="{{ route('attendance')}}" class="menu-item-button">
+                        <div class="icon">
+                            <img src="{{ asset('images\icon\attendance.svg') }}" alt="Điểm danh" class="svg-icon">
+                        </div>
+                        <div class="text">Điểm danh</div>
+                    </a>
+                </li>
+
             </ul>
         </div>
     </div>
