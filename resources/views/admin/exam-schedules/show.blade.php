@@ -70,10 +70,6 @@
             <div class="stat-number" id="present-count">0</div>
             <div class="stat-label">Có mặt</div>
         </div>
-        <div class="stat-card stat-late">
-            <div class="stat-number" id="late-count">0</div>
-            <div class="stat-label">Đi muộn</div>
-        </div>
         <div class="stat-card stat-absent">
             <div class="stat-number" id="absent-count">0</div>
             <div class="stat-label">Vắng mặt</div>

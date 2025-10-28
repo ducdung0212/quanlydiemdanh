@@ -134,53 +134,27 @@ public function exportAttendance($id)
             ->where('exam_schedule_id', $examSchedule->id)
             ->get();
 
-        $examStart = null;
-
-        if (!empty($examSchedule->exam_date) && !empty($examSchedule->exam_time)) {
-            // Format date and time properly before parsing
-            $dateStr = $examSchedule->exam_date instanceof Carbon 
-                ? $examSchedule->exam_date->format('Y-m-d') 
-                : $examSchedule->exam_date;
-            $timeStr = $examSchedule->exam_time instanceof Carbon 
-                ? $examSchedule->exam_time->format('H:i:s') 
-                : $examSchedule->exam_time;
-            $examStart = Carbon::parse($dateStr . ' ' . $timeStr);
-        }
-
+       // BẮT ĐẦU KHỐI CODE THAY THẾ
+        
         $students = [];
         $present = 0;
-        $late = 0;
+        $absent = 0;
 
+        // Lặp qua TẤT CẢ các bản ghi điểm danh 
         foreach ($attendanceRecords as $record) {
             $student = $record->student;
-
-            $status = 'absent';
+            $status = 'absent'; // 1. Mặc định là 'Vắng mặt'
             $attendanceTime = null;
 
-            if ($record->attendance_time) {
+            // 2. Chỉ kiểm tra rekognition_result
+            if ($record->rekognition_result === 'match') {
+                $status = 'present'; // Nếu match -> 'Có mặt'
                 $attendanceTime = optional($record->attendance_time)?->toDateTimeString();
-                $attendanceMoment = $record->attendance_time instanceof Carbon
-                    ? $record->attendance_time
-                    : Carbon::parse($record->attendance_time);
-
-                if ($attendanceMoment && $examStart && $attendanceMoment->gt($examStart)) {
-                    $status = 'late';
-                    $late++;
-                } elseif ($record->rekognition_result === 'match') {
-                    $status = 'present';
-                    $present++;
-                } elseif ($record->rekognition_result === 'unknown') {
-                    $status = 'late';
-                    $late++;
-                } else {
-                    $status = 'absent';
-                }
-            } elseif ($record->rekognition_result === 'match') {
-                $status = 'present';
                 $present++;
-            } elseif ($record->rekognition_result === 'unknown') {
-                $status = 'late';
-                $late++;
+            } else {
+                // Bất cứ trường hợp nào khác (null, no_match, ...) -> 'Vắng mặt'
+                $status = 'absent';
+                $absent++;
             }
 
             $students[] = [
@@ -188,13 +162,14 @@ public function exportAttendance($id)
                 'student_code' => $record->student_code,
                 'full_name' => $student->full_name ?? null,
                 'class_code' => $student->class_code ?? null,
-                'attendance_time' => $attendanceTime,
+                'attendance_time' => $attendanceTime, // Chỉ hiện thời gian khi 'Có mặt'
                 'status' => $status,
             ];
         }
 
         $total = count($attendanceRecords);
-        $absent = max($total - $present - $late, 0);
+
+        // KẾT THÚC KHỐI CODE THAY THẾ
 
         return response()->json([
             'success' => true,
@@ -212,11 +187,11 @@ public function exportAttendance($id)
                     'attended_count' => $examSchedule->attended_count,
                     'attendance_rate' => $examSchedule->attendance_rate,
                 ],
-                'stats' => [
+              'stats' => [
                     'total_students' => $total,
                     'present' => $present,
-                    'late' => $late,
-                    'absent' => $absent,
+                    'late' => 0, // Bỏ 'late'
+                    'absent' => $absent, // Dùng biến $absent đã đếm
                 ],
                 'students' => $students,
             ],

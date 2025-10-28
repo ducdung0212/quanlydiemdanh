@@ -2,6 +2,12 @@ body {
     zoom: 90% !important;
 }
 
+/* Restore normal zoom and ensure larger fonts on the face registration page */
+.face-registration {
+    zoom: 100% !important; /* override global zoom for this page */
+    font-size: 1.30rem !important; /* ensure the larger base font is applied */
+}
+
 #logo_header_mobile {
     max-width: 190px;
 }

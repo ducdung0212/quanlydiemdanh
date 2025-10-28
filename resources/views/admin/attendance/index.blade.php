@@ -54,7 +54,7 @@
             </div>
             <div class="exam-info-item">
                 <strong>Mã môn học</strong>
-                <span id="exam-subject-code">-</span>
+                    <span id="exam-subject-code">-</span>
             </div>
             <div class="exam-info-item">
                 <strong>Tên môn học</strong>
@@ -84,10 +84,6 @@
         <div class="stat-card stat-present">
             <div class="stat-number" id="present-count">0</div>
             <div class="stat-label">Có mặt</div>
-        </div>
-        <div class="stat-card stat-late">
-            <div class="stat-number" id="late-count">0</div>
-            <div class="stat-label">Đi muộn</div>
         </div>
         <div class="stat-card stat-absent">
             <div class="stat-number" id="absent-count">0</div>

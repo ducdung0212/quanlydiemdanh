@@ -25,7 +25,6 @@ class AttendanceRecord extends Model
     protected $fillable = [
         'exam_schedule_id',
         'student_code',
-        'captured_image_url',
         'rekognition_result',
         'confidence',
         'attendance_time',

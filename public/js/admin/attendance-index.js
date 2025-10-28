@@ -24,7 +24,6 @@ document.addEventListener('DOMContentLoaded', function () {
     // Stats elements
     const totalStudents = document.getElementById('total-students');
     const presentCount = document.getElementById('present-count');
-    const lateCount = document.getElementById('late-count');
     const absentCount = document.getElementById('absent-count');
 
     // Table elements
@@ -98,14 +97,24 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Get status badge
     function getStatusBadge(status) {
-        const statusMap = {
-            'present': { class: 'badge bg-success', text: 'Có mặt' },
-            'late': { class: 'badge bg-warning', text: 'Đi muộn' },
-            'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
-        };
-        const statusInfo = statusMap[status] || statusMap['absent'];
+    const statusMap = {
+        'present': { class: 'badge bg-success', text: 'Có mặt' },
+        'late': { class: 'badge bg-success', text: 'Có mặt' }, // 'Đi muộn' vẫn được tính là 'Có mặt'
+        'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
+    };
+
+    // 1. Tìm trạng thái trong map
+    const statusInfo = statusMap[status];
+
+    // 2. Nếu tìm thấy (present, late, absent) thì trả về badge
+    if (statusInfo) {
         return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
     }
+
+    // 3. Nếu không tìm thấy (trạng thái là null, undefined, rỗng...),
+    //    trả về dấu gạch ngang
+    return '-';
+}
 
     // Format attendance time
     function formatAttendanceTime(timeStr) {
@@ -167,7 +176,6 @@ document.addEventListener('DOMContentLoaded', function () {
             // Update stats
             totalStudents.textContent = stats.total_students || 0;
             presentCount.textContent = stats.present || 0;
-            lateCount.textContent = stats.late || 0;
             absentCount.textContent = stats.absent || 0;
 
             // Show sections
@@ -284,36 +292,44 @@ document.addEventListener('DOMContentLoaded', function () {
         attendanceResult.innerHTML = '';
     }
 
-    async function submitAttendance() {
+   // attendance-index.js
+
+   async function submitAttendance() {
         if (!capturedPhoto || !currentExamScheduleId) {
             showResult('Vui lòng chụp ảnh trước khi gửi điểm danh.', 'error');
             return;
         }
 
         try {
-            showResult('Đang xử lý ảnh và điểm danh...', 'info');
+            showResult('Đang xử lý nhận diện khuôn mặt...', 'info');
+            btnSubmit.disabled = true;
             
-            // Chuyển base64 thành blob
-            const blob = await fetch(capturedPhoto).then(r => r.blob());
-            
-            // Tạo FormData để gửi ảnh
-            const formData = new FormData();
-            formData.append('photo', blob, 'attendance.jpg');
-            formData.append('exam_schedule_id', currentExamScheduleId);
-
-            // Gửi ảnh đến API backend
-            const response = await fetch('/api/attendance/recognize', {
+            // Gửi ảnh base64 trực tiếp đến API
+            const response = await fetch('/api/attendance/face-recognition', {
                 method: 'POST',
                 headers: {
+                    'Content-Type': 'application/json',
                     'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
                 },
-                body: formData
+                body: JSON.stringify({
+                    image: capturedPhoto, // Base64 string
+                    exam_schedule_id: currentExamScheduleId
+                })
             });
 
             const result = await response.json();
 
             if (result.success) {
-                showResult(`Điểm danh thành công! Sinh viên: ${result.data.student_name} - ${result.data.student_code}`, 'success');
+                const student = result.data.student;
+                const confidence = result.data.confidence;
+                
+                showResult(
+                    `✅ Điểm danh thành công!<br>` +
+                    `<strong>${student.full_name}</strong> (${student.student_code})<br>` +
+                    `Lớp: ${student.class_name || 'N/A'}<br>` +
+                    `Độ tin cậy: ${confidence}%`,
+                    'success'
+                );
                 
                 // Cập nhật lại dữ liệu sau 2 giây
                 setTimeout(() => {
@@ -328,7 +344,9 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } catch (error) {
             console.error('Error submitting attendance:', error);
-            showResult('Lỗi khi gửi điểm danh. Vui lòng thử lại.', 'error');
+            showResult('Lỗi khi gửi điểm danh: ' + error.message, 'error');
+        } finally {
+            btnSubmit.disabled = false;
         }
     }
 

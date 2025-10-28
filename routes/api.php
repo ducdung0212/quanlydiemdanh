@@ -9,6 +9,8 @@ use App\Http\Controllers\ExamSchedulesController;
 use App\Http\Controllers\ExamSupervisorController;
 use App\Http\Controllers\LecturerController;
 use App\Http\Controllers\SubjectController;
+use App\Http\Controllers\FaceAttendanceController;
+use App\Http\Controllers\StudentFaceRegistrationController;
 
 /*
 |--------------------------------------------------------------------------
@@ -53,3 +55,11 @@ Route::apiResource('subjects', SubjectController::class);
 Route::post('subjects/bulk-delete', [SubjectController::class, 'bulkDelete']);
 Route::post('subjects/import/preview', [SubjectController::class, 'previewImport']);
 Route::post('subjects/import', [SubjectController::class, 'import']);
+
+// Face Recognition Attendance
+Route::post('attendance/face-recognition', [FaceAttendanceController::class, 'authenticate']);
+Route::get('attendance/test-lambda', [FaceAttendanceController::class, 'testLambda']);
+
+// Presigned URLs for bulk face registration
+Route::post('students/generate-upload-urls', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
+Route::post('/students/generate-upload-urls', [StudentFaceRegistrationController::class, 'generateUploadUrls']);

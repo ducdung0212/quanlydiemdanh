@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\ExamSchedulesController;
+use App\Http\Controllers\StudentFaceRegistrationController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -199,11 +200,16 @@ Route::middleware(['auth', 'verified'])->group(function () {
     Route::get('/attendance-records/modals/import', function () {
         return view('admin.attendance-records.import');
     });
-    
     //attendance
     Route::get('/attendance', function () {
         return view('admin.attendance.index');
     })->name('attendance');  
+    
+    // Face registration UI
+    Route::get('/face-registration', function () {
+        return view('admin.face-registration.index');
+    })->name('face-registration');
+    Route::post('/students/generate-upload-url', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
 });
 
 

@@ -100,6 +100,15 @@
                             <div class="text">Thí sinh dự thi</div>
                         </a>
                     </li>
+
+                    <li class="menu-item">
+                        <a href="{{ route('face-registration') }}" class="menu-item-button">
+                            <div class="icon">
+                                <img src="{{ asset('images/icon/registration.svg') }}" alt="Đăng ký khuôn mặt" class="svg-icon">
+                            </div>
+                            <div class="text">Đăng ký khuôn mặt</div>
+                        </a>
+                    </li>
                     
                     <li class="menu-item">
                         <a href="{{ route('attendance')}}" class="menu-item-button">
