@@ -33,6 +33,7 @@ class ExamSchedule extends Model
         'subject_code',
         'exam_date',
         'exam_time',
+        'duration',
         'room',
         'note',
     ];
@@ -84,6 +85,14 @@ class ExamSchedule extends Model
     public function examSupervisors(): HasMany
     {
         return $this->hasMany(ExamSupervisor::class, 'exam_schedule_id');
+    }
+
+    /**
+     * Alias for examSupervisors() for easier querying.
+     */
+    public function supervisors(): HasMany
+    {
+        return $this->examSupervisors();
     }
 
     /**

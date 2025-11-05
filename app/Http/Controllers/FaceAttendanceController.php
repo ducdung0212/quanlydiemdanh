@@ -106,25 +106,56 @@ class FaceAttendanceController extends Controller
                 ], 404); // Lỗi 404 Not Found
             }
 
+            // Determine whether this call should persist the attendance or just identify (preview)
+            $commit = $request->has('commit') ? (bool)$request->input('commit') : true;
+
             // 3. Nếu đã điểm danh 'Có mặt' rồi
             if ($attendanceRecord->rekognition_result === 'match') {
-                 return response()->json([
-                    'success' => false,
-                    'message' => "Sinh viên {$student->full_name} đã điểm danh 'Có mặt' rồi",
-                    'data' => [
-                        'student' => $student,
-                        'attendance' => $attendanceRecord
-                    ]
-                ], 422); // Lỗi 422 Unprocessable
+                if ($commit) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => "Sinh viên {$student->full_name} đã điểm danh 'Có mặt' rồi",
+                        'data' => [
+                            'student' => $student,
+                            'attendance' => $attendanceRecord
+                        ]
+                    ], 422); // Lỗi 422 Unprocessable
+                } else {
+                    // Preview mode: return student + attendance info without changing state
+                    return response()->json([
+                        'success' => true,
+                        'message' => 'Sinh viên đã điểm danh trước đó',
+                        'data' => [
+                            'student' => [
+                                'student_code' => $student->student_code,
+                                'full_name' => $student->full_name,
+                                'class_name' => $student->class_name,
+                                'email' => $student->email,
+                            ],
+                            'attendance' => [
+                                'id' => $attendanceRecord->id,
+                                'exam_schedule_id' => $attendanceRecord->exam_schedule_id,
+                                'student_code' => $attendanceRecord->student_code,
+                                'attendance_time' => $attendanceRecord->attendance_time,
+                                'confidence' => $attendanceRecord->confidence,
+                                'rekognition_result' => $attendanceRecord->rekognition_result,
+                            ],
+                            'confidence' => $confidence,
+                            'rekognition_result' => $attendanceRecord->rekognition_result
+                        ]
+                    ], 200);
+                }
             }
 
-            // 4. Cập nhật bản ghi (từ 'null'/'absent' -> 'match')
-            $attendanceRecord->update([
-                'attendance_time' => Carbon::now(),
-                'rekognition_result' => 'match',
-                'confidence' => $confidence,
-                'captured_image_url' => null, // Optional
-            ]);
+            // 4. Nếu đây là commit thì cập nhật bản ghi (từ 'null'/'absent' -> 'match')
+            if ($commit) {
+                $attendanceRecord->update([
+                    'attendance_time' => Carbon::now(),
+                    'rekognition_result' => 'match',
+                    'confidence' => $confidence,
+                    'captured_image_url' => null, // Optional
+                ]);
+            }
             // --- KẾT THÚC KHỐI CODE SỬA ---
 
             Log::info('Attendance saved successfully', [

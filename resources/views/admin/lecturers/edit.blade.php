@@ -24,7 +24,7 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="editFacultyCode" class="form-label">Mã Khoa <span class="text-danger">*</span></label>
+                            <label for="editFacultyCode" class="form-label">Mã Khoa</label>
                             <select class="form-select" id="editFacultyCode" name="faculty_code" required>
                                 <option value="" disabled {{ $lecturer->faculty_code ? '' : 'selected' }}>Chọn khoa</option>
                                 @foreach ($faculties as $faculty)
@@ -41,7 +41,14 @@
                         </div>
                         <div class="col-md-6 mb-4">
                             <label for="editUserId" class="form-label">Người dùng liên kết</label>
-                            <input type="number" min="1" class="form-control" id="editUserId" name="user_id" value="{{ $lecturer->user_id }}" placeholder="ID người dùng (tuỳ chọn)">
+                            <select class="form-select " id="editUserId" name="user_id">
+                                <option value="">Không liên kết</option>
+                                @foreach ($users as $user)
+                                    <option value="{{ $user->id }}" {{ $lecturer->user_id == $user->id ? 'selected' : '' }}>
+                                        {{ $user->id }} - {{ $user->name }}
+                                    </option>
+                                @endforeach
+                            </select>
                             <div class="invalid-feedback"></div>
                         </div>
                     </div>

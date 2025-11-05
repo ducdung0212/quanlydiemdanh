@@ -23,7 +23,7 @@
             <div class="wg-filter flex-grow">
                 <form class="form-search" id="searchForm">
                     <fieldset class="name">
-                        <input type="text" placeholder="Tìm kiếm theo mã giảng viên..." class="" name="q"
+                        <input type="text" placeholder="Tìm kiếm theo tên giảng viên, môn học,..." class="" name="q"
                             tabindex="2" value="" aria-required="true" id="searchInput">
                     </fieldset>
                     <div class="button-submit">
@@ -31,11 +31,7 @@
                     </div>
                 </form>
             </div>
-            <div class="d-flex gap10 align-items-center">
-                <select class="form-select" id="sessionFilter" style="width: 220px; font-size: 14px; padding: 10px 12px;">
-                    <option value="">Tất cả ca thi</option>
-                </select>
-                
+            <div class="d-flex gap10 align-items-center">           
                 <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
                     <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                 </button>
@@ -54,6 +50,10 @@
             </th>
             <th style="width: 60px; text-align: center;">STT</th>
             <th style="text-align: left;">Mã Ca Thi</th>
+            <th style="text-align: left;">Môn học</th>
+            <th style="text-align: left;">Ngày thi</th>
+            <th style="text-align: left;">Giờ thi</th>
+            <th style="text-align: left;">Phòng thi</th>
             <th style="text-align: left;">Mã Giảng Viên</th>
             <th style="text-align: left;">Tên Giảng Viên</th>
             <th style="width: 100px; text-align: center;">Action</th>

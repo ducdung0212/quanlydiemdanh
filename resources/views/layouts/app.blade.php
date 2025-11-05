@@ -15,7 +15,7 @@
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
 </head>
-<body>
+<body data-user-role="{{ auth()->user()->role ?? '' }}">
     <div id="wrapper">
         <div id="page" class="">
             <div class="layout-wrap">

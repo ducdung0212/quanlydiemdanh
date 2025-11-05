@@ -91,6 +91,7 @@
                         <th>Tên Môn Học</th>
                         <th>Ngày Thi</th>
                         <th>Giờ Thi</th>
+                        <th>Thời lượng</th>
                         <th>Phòng</th>
                         <th style="width: 100px">Action</th>
                     </tr>

@@ -3,7 +3,10 @@ document.addEventListener('DOMContentLoaded', function () {
     let currentExamScheduleId = null;
     let stream = null;
     let capturedPhoto = null;
-    // Đã loại bỏ các biến không cần thiết (availableVideoDevices, currentVideoDeviceIndex, attemptedAutoRear)
+    let lastCaptureTime = 0;
+    const captureCooldownMs = 1000;
+    const captureMaxWidth = 640;
+    const captureQuality = 0.7;
 
     // DOM Elements
     const examScheduleSelect = document.getElementById('examScheduleSelect');
@@ -33,19 +36,174 @@ document.addEventListener('DOMContentLoaded', function () {
     // Camera Elements
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
-    const photo = document.getElementById('photo');
+    const overlay = document.getElementById('overlay');
+    // const photo = document.getElementById('photo'); // <-- ĐÃ XÓA DÒNG NÀY
     const btnCapture = document.getElementById('btnCapture');
     const btnRetake = document.getElementById('btnRetake');
     const btnSubmit = document.getElementById('btnSubmit');
     const cameraPreview = document.getElementById('cameraPreview');
-    const capturedImage = document.getElementById('capturedImage');
+    const capturedImage = document.getElementById('capturedImage'); // Đây là div container
     const attendanceResult = document.getElementById('attendanceResult');
     const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+
+    // Face detection model (BlazeFace)
+    let faceModel = null;
+    let detectionLoopActive = false;
+    let currentDetections = [];
+    const DETECTION_WIDTH = 320;
+    const detectionCanvas = document.createElement('canvas');
+    const detectionCtx = detectionCanvas.getContext('2d');
+    let lastDetectionTime = 0;
+    const detectionIntervalMs = 150;
+
+    // Preload BlazeFace model khi trang load (không chờ user mở camera)
+    loadFaceModel();
+
+    async function loadFaceModel() {
+        if (faceModel) return;
+        try {
+            // Sửa hàm ensureBlazeFaceScripts: Bỏ đi vì đã nhúng file local
+            // await ensureBlazeFaceScripts();
+            if (typeof blazeface === 'undefined') {
+                console.warn('Thư viện BlazeFace (blazeface) không tồn tại. Kiểm tra file blade.php.');
+                return;
+            }
+            console.info('Loading BlazeFace model...');
+            faceModel = await blazeface.load();
+            console.info('BlazeFace model loaded successfully');
+        } catch (e) {
+            console.error('Failed to load BlazeFace model', e);
+        }
+    }
+
+    // Xóa hàm ensureBlazeFaceScripts - không cần nữa
+    /*
+    async function ensureBlazeFaceScripts() {
+        // ... (code cũ đã bị xóa) ...
+    }
+    */
+
+    function startDetectionLoop() {
+        if (!faceModel) {
+            console.warn('Face model not loaded yet');
+            return;
+        }
+        detectionLoopActive = true;
+        if (overlay) overlay.style.display = 'block';
+        // Sửa: Giảm tần suất (Throttle)
+        // requestAnimationFrame(detectionFrame);
+        detectionFrame(); // Bắt đầu vòng lặp setTimeout
+    }
+
+    function stopDetectionLoop() {
+        detectionLoopActive = false;
+        currentDetections = [];
+        if (overlay) {
+            const ctx = overlay.getContext('2d');
+            ctx.clearRect(0, 0, overlay.width || 0, overlay.height || 0);
+            overlay.style.display = 'none';
+        }
+    }
+
+    async function detectionFrame() {
+        if (!detectionLoopActive || !faceModel) return;
+        
+        // Sửa: Chuyển sang setTimeout thay vì requestAnimationFrame
+        try {
+            if (video.readyState < 2) {
+                // Video chưa sẵn sàng, thử lại sau
+                if (detectionLoopActive) setTimeout(detectionFrame, 100);
+                return;
+            }
+
+            // Giảm tần suất chạy AI (Đã chuyển ra ngoài)
+            // const now = Date.now();
+            // if (now - lastDetectionTime >= detectionIntervalMs) {
+            //     lastDetectionTime = now;
+            // ... (code cũ) ...
+            // }
+
+            const srcW = video.videoWidth;
+            const srcH = video.videoHeight;
+            if (srcW && srcH) {
+                // Giảm gánh nặng: Dùng kích thước thật thay vì resize liên tục
+                // const scale = DETECTION_WIDTH / srcW;
+                // const detW = Math.max(64, Math.round(srcW * scale));
+                // const detH = Math.max(64, Math.round(srcH * scale));
+                // detectionCanvas.width = detW;
+                // detectionCanvas.height = detH;
+                // detectionCtx.drawImage(video, 0, 0, detW, detH);
+
+                try {
+                    // Chạy AI trực tiếp trên video element
+                    const predictions = await faceModel.estimateFaces(video, false); 
+                    // const scaleX = srcW / detW;
+                    // const scaleY = srcH / detH;
+                    currentDetections = predictions || [];
+                    // currentDetections = (predictions || []).map(pred => ({
+                    //     ...pred,
+                    //     topLeft: pred.topLeft.map((v, i) => v * (i === 0 ? scaleX : scaleY)),
+                    //     bottomRight: pred.bottomRight.map((v, i) => v * (i === 0 ? scaleX : scaleY))
+                    // }));
+                } catch (e) {
+                    console.error('Detection error', e);
+                    currentDetections = [];
+                }
+            }
+
+
+            // Draw overlay
+            if (overlay) {
+                const vW = video.videoWidth;
+                const vH = video.videoHeight;
+                overlay.width = vW;
+                overlay.height = vH;
+                overlay.style.width = video.clientWidth + 'px';
+                overlay.style.height = video.clientHeight + 'px';
+
+                const ctx = overlay.getContext('2d');
+                ctx.clearRect(0, 0, overlay.width, overlay.height);
+
+                if (currentDetections.length > 0) {
+                    ctx.strokeStyle = 'rgba(0,255,0,0.9)';
+                    ctx.lineWidth = Math.max(2, Math.round(overlay.width / 300));
+                    ctx.fillStyle = 'rgba(0,255,0,0.15)';
+
+                    for (const pred of currentDetections) {
+                        const [x, y] = pred.topLeft;
+                        const w = pred.bottomRight[0] - pred.topLeft[0];
+                        const h = pred.bottomRight[1] - pred.topLeft[1];
+                        
+                        ctx.beginPath();
+                        ctx.rect(x, y, w, h);
+                        ctx.fill();
+                        ctx.stroke();
+
+                        if (pred.probability) {
+                            const p = Math.round((Array.isArray(pred.probability) ? pred.probability[0] : pred.probability) * 100);
+                            ctx.font = Math.max(12, Math.round(overlay.width / 40)) + 'px sans-serif';
+                            ctx.fillStyle = 'rgba(0,255,0,0.9)';
+                            ctx.fillText(p + '%', x + 4, y + 18);
+                            ctx.fillStyle = 'rgba(0,255,0,0.15)';
+                        }
+                    }
+                }
+            }
+        } catch (e) {
+            console.error("Lỗi trong detectionFrame:", e);
+        } finally {
+            // Sửa: Dùng setTimeout để giảm tải
+            if (detectionLoopActive) {
+                setTimeout(detectionFrame, detectionIntervalMs); // Chạy lại sau 150ms
+            }
+        }
+    }
 
     // Load danh sách ca thi
     async function loadExamSchedules() {
         try {
-            const response = await fetch('/api/exam-schedules?page=1&per_page=100');
+            // Load danh sách ca thi để chọn (cho cả admin và lecturer)
+            const response = await fetch('/api/exam-schedules?page=1&limit=100');
             const result = await response.json();
 
             if (result.success && result.data) {
@@ -64,95 +222,120 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Format date
+    // Load ca thi hiện tại cho giảng viên (đến giờ thi)
+    async function loadCurrentExamForLecturer() {
+        try {
+            const response = await fetch('/api/exam-schedules/current/exam');
+            const result = await response.json();
+
+            if (result.success && result.data) {
+                const exam = result.data;
+                // Tự động load thông tin ca thi
+                currentExamScheduleId = exam.id;
+                await loadExamAttendanceData(exam.id);
+                
+                // Ẩn phần chọn ca thi, hiện luôn giao diện điểm danh
+                if (examScheduleSelect && examScheduleSelect.closest('.wg-box')) {
+                    examScheduleSelect.closest('.wg-box').style.display = 'none';
+                }
+                
+                showToast('Thông báo', 'Đã tải ca thi hiện tại', 'info');
+            } else {
+                // Không có ca thi hiện tại
+                showToast('Thông báo', result.message || 'Chưa đến giờ thi hoặc không có ca thi', 'warning');
+                
+                // Hiện thông báo thân thiện
+                if (attendanceTableBody) {
+                    attendanceTableBody.innerHTML = `
+                        <tr>
+                            <td colspan="6" class="text-center py-4">
+                                <div class="text-muted">
+                                    <i class="icon-clock" style="font-size: 32px; opacity: 0.5;"></i>
+                                    <div class="mt-2">Chưa đến giờ thi hoặc không có ca thi nào</div>
+                                    <small class="d-block mt-1">Hệ thống sẽ tự động hiển thị ca thi khi đến giờ</small>
+                                </div>
+                            </td>
+                        </tr>
+                    `;
+                }
+                
+                // Ẩn các phần không cần thiết
+                examInfoSection.style.display = 'none';
+                statsSection.style.display = 'none';
+                startAttendanceSection.style.display = 'none';
+                if (examScheduleSelect && examScheduleSelect.closest('.wg-box')) {
+                    examScheduleSelect.closest('.wg-box').style.display = 'none';
+                }
+                attendanceListSection.style.display = 'block';
+            }
+        } catch (error) {
+            console.error('Error loading current exam:', error);
+            showToast('Lỗi', 'Không thể tải ca thi hiện tại', 'danger');
+        }
+    }
+
     function formatDate(dateStr) {
         if (!dateStr) return '';
-        
         try {
             const date = new Date(dateStr);
             if (!isNaN(date.getTime())) {
-                const day = String(date.getDate()).padStart(2, '0');
-                const month = String(date.getMonth() + 1).padStart(2, '0');
-                const year = date.getFullYear();
-                return `${day}/${month}/${year}`;
+                return date.toLocaleDateString('vi-VN');
             }
-        } catch (e) {
-            console.error('Error parsing date:', e);
-        }
-        
-        const parts = dateStr.split('-');
-        if (parts.length === 3 && parts[0].length === 4) {
-            return `${parts[2]}/${parts[1]}/${parts[0]}`;
-        }
-        
+        } catch (e) {}
         return dateStr;
     }
 
-    // Format time
     function formatTime(timeStr) {
-        if (!timeStr) return '';
-        return timeStr.substring(0, 5);
+        return timeStr ? timeStr.substring(0, 5) : '';
     }
 
-    // Get status badge
     function getStatusBadge(status) {
         const statusMap = {
             'present': { class: 'badge bg-success', text: 'Có mặt' },
+            'pending': { class: 'badge bg-secondary', text: '-' },
             'late': { class: 'badge bg-success', text: 'Có mặt' }, 
             'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
         };
-
-        const statusInfo = statusMap[status];
-        if (statusInfo) {
-            return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
-        }
-        return '-';
+        const statusInfo = statusMap[status] || statusMap['pending'];
+        return statusInfo ? `<span class="${statusInfo.class}">${statusInfo.text}</span>` : '-';
     }
 
-    // Format attendance time
     function formatAttendanceTime(timeStr) {
         if (!timeStr) return '-';
         try {
-            const date = new Date(timeStr);
-            return date.toLocaleString('vi-VN');
+            return new Date(timeStr).toLocaleString('vi-VN');
         } catch (e) {
             return timeStr;
         }
     }
 
-    // Escape HTML
     function escapeHtml(unsafe) {
         if (!unsafe) return '';
-        return unsafe
-            .toString()
+        return unsafe.toString()
             .replace(/&/g, "&amp;")
             .replace(/</g, "&lt;")
             .replace(/>/g, "&gt;")
-            .replace(/\"/g, "&quot;")
+            .replace(/"/g, "&quot;")
             .replace(/'/g, "&#039;");
     }
 
-    // Load thông tin ca thi và điểm danh
     async function loadExamAttendanceData(examScheduleId) {
         try {
             if (!attendanceTableBody) return;
             
-            const API_URL = `/api/exam-schedules/${examScheduleId}`;
             attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
-            const response = await fetch(API_URL);
+            const response = await fetch(`/api/exam-schedules/${examScheduleId}`);
+            const result = await response.json();
 
             if (!response.ok) {
-                throw new Error(response.status === 404 ? 'Không tìm thấy ca thi' : `Lỗi HTTP: ${response.status}`);
+                // Hiển thị message từ backend
+                throw new Error(result.message || `Lỗi HTTP: ${response.status}`);
             }
 
-            const result = await response.json();
-            if (!result.success) {
-                throw new Error(result.message || 'Không thể tải dữ liệu');
-            }
+            if (!result.success) throw new Error(result.message || 'Không thể tải dữ liệu');
 
             const { exam, stats, students } = result.data;
 
-            // Update exam info
             examSessionCode.textContent = exam.session_code || exam.id || '-';
             examSubjectCode.textContent = exam.subject_code || '-';
             examSubjectName.textContent = exam.subject_name || '-';
@@ -160,33 +343,23 @@ document.addEventListener('DOMContentLoaded', function () {
             examTime.textContent = formatTime(exam.exam_time);
             examRoom.textContent = exam.room || '-';
 
-            // Update stats
             totalStudents.textContent = stats.total_students || 0;
             presentCount.textContent = stats.present || 0;
+            const pendingCount = document.getElementById('pending-count');
+            if (pendingCount) pendingCount.textContent = stats.pending || 0;
             absentCount.textContent = stats.absent || 0;
 
-            // Show sections
             examInfoSection.style.display = 'block';
             statsSection.style.display = 'grid';
             startAttendanceSection.style.display = 'block';
             attendanceListSection.style.display = 'block';
 
-            // Update students table
             if (!students || students.length === 0) {
-                attendanceTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center py-4">
-                            <div class="text-muted">
-                                <i class="icon-info" style="font-size: 24px; opacity: 0.5;"></i>
-                                <div class="mt-2">Không có dữ liệu điểm danh cho ca thi này</div>
-                            </div>
-                        </td>
-                    </tr>
-                `;
+                attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="text-muted">Không có dữ liệu điểm danh</div></td></tr>';
                 return;
             }
 
-            const rowsHtml = students.map((student, index) => `
+            attendanceTableBody.innerHTML = students.map((student, index) => `
                 <tr>
                     <td class="text-center">${index + 1}</td>
                     <td>${escapeHtml(student.student_code || '')}</td>
@@ -197,173 +370,280 @@ document.addEventListener('DOMContentLoaded', function () {
                 </tr>
             `).join('');
 
-            attendanceTableBody.innerHTML = rowsHtml;
-
         } catch (error) {
             console.error('Error loading attendance data:', error);
+            showToast('Lỗi', error.message, 'danger');
             if (attendanceTableBody) {
-                attendanceTableBody.innerHTML = `
-                    <tr>
-                        <td colspan="6" class="text-center text-danger">
-                            <i class="icon-alert-circle"></i> ${error.message}
-                        </td>
-                    </tr>
-                `;
+                attendanceTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger">${escapeHtml(error.message)}</td></tr>`;
             }
-            // Hide sections on error
             examInfoSection.style.display = 'none';
             statsSection.style.display = 'none';
             startAttendanceSection.style.display = 'none';
-            attendanceListSection.style.display = 'none';
+            attendanceListSection.style.display = 'block';
         }
     }
 
-    // Camera functions
-    
-    // *** ĐÃ LOẠI BỎ ***
-    // Hàm enumerateVideoDevices() không còn cần thiết
-
-    // *** ĐÃ CẬP NHẬT ***
     async function startCamera() {
         try {
-            // Luôn yêu cầu camera sau (môi trường)
+            // Sửa: Giảm độ phân giải video
             const constraints = {
                 audio: false,
                 video: {
-                    facingMode: { ideal: 'environment' }, // Ưu tiên camera sau
-                    width: { ideal: 1280 },
-                    height: { ideal: 720 }
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 640 }, // Giảm
+                    height: { ideal: 480 } // Giảm
                 }
             };
 
-            // Dừng stream cũ nếu có
             if (stream) stopCamera();
-
             stream = await navigator.mediaDevices.getUserMedia(constraints);
             video.srcObject = stream;
 
+            await video.play();
+            // Model đã được load sẵn, chỉ cần start detection loop
+            if (faceModel) {
+                startDetectionLoop();
+            } else {
+                // Nếu model chưa load xong, đợi và retry
+                console.warn('Model not ready, waiting...');
+                await loadFaceModel();
+                if (faceModel) startDetectionLoop();
+            }
+
         } catch (err) {
-            console.error('Error accessing rear camera:', err);
-            
-            // Thử lại với camera mặc định nếu không tìm thấy camera sau
-            // (Lỗi 'OverconstrainedError' hoặc 'NotFoundError' thường xảy ra khi không có camera sau)
+            console.error('Error accessing camera:', err);
             if (err.name === 'OverconstrainedError' || err.name === 'NotFoundError') {
-                console.warn('Rear camera not found or failed, trying default camera...');
                 try {
-                    const fallbackConstraints = {
+                    if (stream) stopCamera();
+                    // Sửa: Giảm độ phân giải video
+                    stream = await navigator.mediaDevices.getUserMedia({
                         audio: false,
-                        video: { // Không yêu cầu cụ thể, để trình duyệt tự chọn
-                            width: { ideal: 1280 },
-                            height: { ideal: 720 }
-                        }
-                    };
-                    if (stream) stopCamera(); // Đảm bảo dừng stream cũ
-                    stream = await navigator.mediaDevices.getUserMedia(fallbackConstraints);
+                        video: { width: { ideal: 640 }, height: { ideal: 480 } } // Giảm
+                    });
                     video.srcObject = stream;
+                    await video.play();
+                    if (faceModel) startDetectionLoop();
                 } catch (fallbackErr) {
-                    console.error('Error accessing any camera:', fallbackErr);
                     showResult('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
                 }
             } else {
-                // Các lỗi khác (ví dụ: lỗi quyền truy cập - PermissionDeniedError)
-                console.error('Error accessing camera:', err);
                 showResult('Không thể truy cập camera. Vui lòng kiểm tra quyền truy cập.', 'error');
             }
         }
     }
 
-    // *** ĐÃ CẬP NHẬT ***
     function stopCamera() {
         if (stream) {
             stream.getTracks().forEach(track => track.stop());
             stream = null;
-            // đã bỏ 'attemptedAutoRear'
         }
+        stopDetectionLoop();
     }
 
     function capturePhoto() {
-        const context = canvas.getContext('2d');
-        canvas.width = video.videoWidth;
-        canvas.height = video.videoHeight;
-        context.drawImage(video, 0, 0, canvas.width, canvas.height);
+        const now = Date.now();
+        if (now - lastCaptureTime < captureCooldownMs) {
+            const wait = Math.ceil((captureCooldownMs - (now - lastCaptureTime)) / 1000);
+            showResult(`Vui lòng đợi ${wait}s trước khi chụp lại.`, 'info');
+            return;
+        }
+
+        lastCaptureTime = now;
+
+        // Yêu cầu phải phát hiện được khuôn mặt
+        if (!currentDetections || currentDetections.length === 0) {
+            showResult('Không phát hiện thấy khuôn mặt nào. Vui lòng căn chỉnh camera và thử lại.', 'error');
+            return; // Dừng lại nếu không có khuôn mặt
+        }
+
+        const crops = [];
+        const ctx = canvas.getContext('2d');
+        const fullW = video.videoWidth;
+        const fullH = video.videoHeight;
         
-        capturedPhoto = canvas.toDataURL('image/jpeg');
-        photo.src = capturedPhoto;
+        if (!fullW || !fullH) {
+            showResult('Camera chưa sẵn sàng, vui lòng thử lại.', 'error');
+            return;
+        }
+
+        canvas.width = fullW;
+        canvas.height = fullH;
+        ctx.drawImage(video, 0, 0, fullW, fullH);
+
+        // Capture all detected faces, but cap to avoid sending too many images
+        const maxCap = 10; // Giới hạn an toàn
+        const maxFaces = Math.min(maxCap, currentDetections.length);
+
+        for (let i = 0; i < maxFaces; i++) {
+            const pred = currentDetections[i];
+            let sx = Math.max(0, Math.floor(pred.topLeft[0]));
+            let sy = Math.max(0, Math.floor(pred.topLeft[1]));
+            let w = Math.max(10, Math.floor(pred.bottomRight[0] - pred.topLeft[0]));
+            let h = Math.max(10, Math.floor(pred.bottomRight[1] - pred.topLeft[1]));
+
+            if (sx + w > fullW) w = fullW - sx;
+            if (sy + h > fullH) h = fullH - sy;
+
+            const tmp = document.createElement('canvas');
+            let outW = w, outH = h;
+            if (w > captureMaxWidth) {
+                outW = captureMaxWidth;
+                outH = Math.round((h * captureMaxWidth) / w);
+            }
+            tmp.width = outW;
+            tmp.height = outH;
+            const tctx = tmp.getContext('2d');
+            tctx.drawImage(canvas, sx, sy, w, h, 0, 0, outW, outH);
+            crops.push(tmp.toDataURL('image/jpeg', captureQuality));
+        }
+
+        if (crops.length === 0) {
+            showResult('Không thể trích xuất khuôn mặt, vui lòng thử lại.', 'error');
+            return;
+        }
+
+        capturedPhoto = crops; // Giờ đây capturedPhoto LUÔN LUÔN là một mảng
         
+        // --- BẮT ĐẦU KHỐI SỬA ---
+        // Lấy VÀ XÓA NỘI DUNG CŨ
+        const previewContainer = document.getElementById('capturedImage');
+        previewContainer.innerHTML = ''; // Xóa ảnh xem trước cũ (nếu có)
+
+        // TẠO VÀ CHÈN CÁC ẢNH MỚI
+        crops.forEach((imgSrc, index) => {
+            const imgElement = document.createElement('img');
+            imgElement.src = imgSrc;
+            imgElement.alt = `Ảnh chụp ${index + 1}`;
+            imgElement.style.height = '120px'; // Kích thước xem trước
+            imgElement.style.width = 'auto';
+            imgElement.style.borderRadius = '4px';
+            imgElement.style.border = '2px solid #007bff'; // Viền xanh
+            previewContainer.appendChild(imgElement);
+        });
+        // --- KẾT THÚC KHỐI SỬA ---
+
         cameraPreview.classList.add('d-none');
-        capturedImage.classList.remove('d-none');
-        
+        capturedImage.classList.remove('d-none'); // 'capturedImage' là cái div
         btnCapture.classList.add('d-none');
         btnRetake.classList.remove('d-none');
         btnSubmit.classList.remove('d-none');
-        
-        showResult('Ảnh đã được chụp. Vui lòng gửi để điểm danh.', 'info');
+        // Cập nhật thông báo
+        showResult(`Đã chụp ${crops.length} khuôn mặt. Vui lòng gửi để điểm danh.`, 'info');
     }
 
     function retakePhoto() {
         capturedImage.classList.add('d-none');
+        // --- BẮT ĐẦU KHỐI SỬA ---
+        document.getElementById('capturedImage').innerHTML = ''; // Dọn dẹp các ảnh đã tạo
+        // --- KẾT THÚC KHỐI SỬA ---
         cameraPreview.classList.remove('d-none');
-        
         btnCapture.classList.remove('d-none');
         btnRetake.classList.add('d-none');
         btnSubmit.classList.add('d-none');
-        
         capturedPhoto = null;
         attendanceResult.innerHTML = '';
     }
 
-   async function submitAttendance() {
+    async function submitAttendance() {
         if (!capturedPhoto || !currentExamScheduleId) {
             showResult('Vui lòng chụp ảnh trước khi gửi điểm danh.', 'error');
             return;
         }
 
+        // Kiểm tra logic mới: capturedPhoto phải là một mảng
+        if (!Array.isArray(capturedPhoto)) {
+            showResult('Lỗi: Dữ liệu ảnh không hợp lệ (không phải mảng). Vui lòng chụp lại.', 'error');
+            return;
+        }
+
         try {
-            showResult('Đang xử lý nhận diện khuôn mặt...', 'info');
+            showResult(`Đang xử lý ${capturedPhoto.length} khuôn mặt...`, 'info');
             btnSubmit.disabled = true;
-            
-            const response = await fetch('/api/attendance/face-recognition', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
-                },
-                body: JSON.stringify({
-                    image: capturedPhoto, 
-                    exam_schedule_id: currentExamScheduleId
-                })
-            });
 
-            const result = await response.json();
+            // Hàm này gửi 1 ảnh và LƯU điểm danh (commit: true)
+            const sendAndCommit = async (img) => {
+                const resp = await fetch('/api/attendance/face-recognition', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                    },
+                    body: JSON.stringify({ image: img, exam_schedule_id: currentExamScheduleId, commit: true })
+                });
+                return await resp.json();
+            };
 
-            if (result.success) {
-                const student = result.data.student;
-                const confidence = result.data.confidence;
-                
-                showResult(
-                    `✅ Điểm danh thành công!<br>` +
-                    `<strong>${student.full_name}</strong> (${student.student_code})<br>` +
-                    `Lớp: ${student.class_name || 'N/A'}<br>` +
-                    `Độ tin cậy: ${confidence}%`,
-                    'success'
-                );
-                
-                setTimeout(() => {
-                    loadExamAttendanceData(currentExamScheduleId);
-                    setTimeout(() => {
-                        attendanceModal.hide();
-                    }, 3000);
-                }, 2000);
-            } else {
-                showResult(result.message || 'Không thể nhận diện sinh viên. Vui lòng thử lại.', 'error');
+            const results = [];
+            // Lặp qua từng ảnh đã cắt và gửi đi
+            for (let i = 0; i < capturedPhoto.length; i++) {
+                const img = capturedPhoto[i];
+                try {
+                    const res = await sendAndCommit(img);
+                    results.push({ index: i, ok: !!(res && res.success), res });
+                } catch (e) {
+                    console.error('Error committing face crop:', e);
+                    results.push({ index: i, ok: false, res: { success: false, message: e.message } });
+                }
             }
+
+            // Tổng hợp kết quả
+            const successMap = {}; // Dùng Map để loại bỏ trùng lặp sinh viên
+            const failures = [];
+            for (const r of results) {
+                if (r.ok && r.res.data && r.res.data.student) {
+                    const s = r.res.data.student;
+                    // Dùng student_code làm key
+                    successMap[s.student_code] = s; 
+                } else {
+                    // Lấy thông báo lỗi từ server (ví dụ: "Đã điểm danh rồi")
+                    const msg = (r.res && r.res.message) ? r.res.message : `Khuôn mặt ${r.index + 1}: Không nhận diện được`;
+                    failures.push(escapeHtml(msg));
+                }
+            }
+
+            // Xây dựng thông báo kết quả
+            const successes = Object.values(successMap);
+            let successMsg = '';
+            let errorMsg = '';
+
+            if (successes.length > 0) {
+                const names = successes.map(s => `${escapeHtml(s.full_name)} (${escapeHtml(s.student_code)})`).join(', ');
+                successMsg = `✅ Điểm danh thành công cho: ${names}`;
+                // Tải lại bảng điểm danh
+                setTimeout(() => loadExamAttendanceData(currentExamScheduleId), 800);
+                // Ẩn modal sau 2.5 giây
+                setTimeout(() => attendanceModal.hide(), 2500); 
+            }
+
+            if (failures.length > 0) {
+                errorMsg = `❌ Lỗi: ${failures.join('; ')}`;
+            }
+
+            // Hiển thị kết quả tổng hợp
+            if (successMsg && errorMsg) {
+                showResult(`${successMsg}<br><hr>${errorMsg}`, 'info'); // Hiển thị cả hai
+            } else if (successMsg) {
+                showResult(successMsg, 'success');
+            } else if (errorMsg) {
+                showResult(errorMsg, 'error');
+            } else {
+                showResult('Không có kết quả xử lý.', 'info');
+            }
+
         } catch (error) {
             console.error('Error submitting attendance:', error);
-            showResult('Lỗi khi gửi điểm danh: ' + error.message, 'error');
+            showResult('Lỗi nghiêm trọng khi gửi điểm danh: ' + error.message, 'error');
         } finally {
             btnSubmit.disabled = false;
         }
     }
+    
+    // Xóa hàm showConfirmation - không cần nữa
+    /*
+    function showConfirmation(student, confidence, imageData) {
+        // ... (code cũ đã bị xóa) ...
+    }
+    */
 
     function showResult(message, type) {
         const className = type === 'success' ? 'result-success' : 
@@ -372,7 +652,7 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     // Event Listeners
-    btnLoadExam.addEventListener('click', function() {
+    btnLoadExam.addEventListener('click', () => {
         const selectedExamId = examScheduleSelect.value;
         if (!selectedExamId) {
             alert('Vui lòng chọn ca thi');
@@ -382,32 +662,22 @@ document.addEventListener('DOMContentLoaded', function () {
         loadExamAttendanceData(selectedExamId);
     });
 
-    btnStartAttendance.addEventListener('click', function() {
+    btnStartAttendance.addEventListener('click', () => {
         if (!currentExamScheduleId) {
             alert('Vui lòng chọn ca thi trước');
             return;
         }
         attendanceModal.show();
-        (async () => {
-            try {
-                await startCamera(); // Hàm startCamera đã được đơn giản hóa
-            } catch (err) {
-                console.error('Error during camera init:', err);
-            }
-        })();
+        startCamera();
     });
 
     btnCapture.addEventListener('click', capturePhoto);
     btnRetake.addEventListener('click', retakePhoto);
     btnSubmit.addEventListener('click', submitAttendance);
 
-    // *** ĐÃ LOẠI BỎ ***
-    // Trình xử lý sự kiện cho 'btnSwitchCamera' đã bị xóa.
-
-    // Xử lý sự kiện khi modal đóng
-    document.getElementById('attendanceModal').addEventListener('hidden.bs.modal', function() {
+    document.getElementById('attendanceModal').addEventListener('hidden.bs.modal', () => {
         stopCamera();
-        retakePhoto(); // Reset trạng thái
+        retakePhoto();
     });
 
     // Khởi tạo

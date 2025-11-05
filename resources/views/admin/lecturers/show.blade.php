@@ -7,43 +7,28 @@
 				<button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
 			</div>
 			<div class="modal-body">
-				<div class="row">
-					<div class="col-md-4 text-center mb-3 mb-md-0 student-avatar-col">
-						<div class="student-avatar-container d-flex flex-column justify-content-center align-items-center">
-							<div class="student-no-avatar">
-								<i class="icon-user"></i>
-								<span>{{ $lecturer->full_name }}</span>
-							</div>
-							<small class="text-muted mt-2">{{ $lecturer->lecturer_code }}</small>
-						</div>
-					</div>
+				<div class="row g-3">
 					<div class="col-md-8">
-						<div class="row g-3">
-							<div class="col-md-12 mb-3 student-info-main">
-								<label class="student-info-label">Mã Giảng Viên:</label>
-								<div class="student-info-code">{{ $lecturer->lecturer_code }}</div>
-							</div>
-							<div class="col-md-12 mb-3 student-info-main">
-								<label class="student-info-label">Họ và Tên:</label>
-								<div class="student-info-name">{{ $lecturer->full_name }}</div>
-							</div>
-							<div class="col-md-6 mb-3">
-								<label class="student-info-label">Khoa:</label>
-								<div class="student-info-value">{{ $lecturer->faculty_code ?: 'Chưa cập nhật' }}</div>
-							</div>
-							<div class="col-md-6 mb-3">
-								<label class="student-info-label">Người dùng liên kết:</label>
-								<div class="student-info-value">{{ $lecturer->user_id ?: 'Chưa liên kết' }}</div>
-							</div>
-							<div class="col-md-6 mb-3">
-								<label class="student-info-label">Email:</label>
-								<div class="student-info-value student-info-email">{{ $lecturer->email ?: 'Chưa cập nhật' }}</div>
-							</div>
-							<div class="col-md-6 mb-3">
-								<label class="student-info-label">Số Điện Thoại:</label>
-								<div class="student-info-value">{{ $lecturer->phone ?: 'Chưa cập nhật' }}</div>
-							</div>
-						</div>
+						{{-- Tăng kích thước chữ để khớp với modal sinh viên: dd dùng fs-4, tên dùng fs-3 fw-bold --}}
+						<dl class="row mb-0 fs-4">
+							<dt class="col-sm-4 text-muted">Mã Giảng Viên</dt>
+							<dd class="col-sm-8">{{ $lecturer->lecturer_code }}</dd>
+
+							<dt class="col-sm-4 text-muted">Họ và Tên</dt>
+							<dd class="col-sm-8">{{ $lecturer->full_name }}</dd>
+
+							<dt class="col-sm-4 text-muted">Khoa</dt>
+							<dd class="col-sm-8">{{ $lecturer->faculty_code ?: 'Chưa cập nhật' }}</dd>
+
+							<dt class="col-sm-4 text-muted">Người dùng liên kết</dt>
+							<dd class="col-sm-8">{{ $lecturer->user_id ?: 'Chưa liên kết' }}</dd>
+
+							<dt class="col-sm-4 text-muted">Email</dt>
+							<dd class="col-sm-8">{{ $lecturer->email ?: 'Chưa cập nhật' }}</dd>
+
+							<dt class="col-sm-4 text-muted">Số Điện Thoại</dt>
+							<dd class="col-sm-8">{{ $lecturer->phone ?: 'Chưa cập nhật' }}</dd>
+						</dl>
 					</div>
 				</div>
 			</div>

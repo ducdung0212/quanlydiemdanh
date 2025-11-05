@@ -238,6 +238,47 @@ document.addEventListener('DOMContentLoaded', function () {
             if (buttonText) {
                 buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
             }
+            // Clear any previous import errors shown in the modal
+            const errorBox = form.querySelector('#importErrors');
+            if (errorBox) {
+                errorBox.innerHTML = '';
+                errorBox.classList.add('d-none');
+            }
+        };
+
+        const showImportErrors = (messages) => {
+            const errorBoxId = 'importErrors';
+            let errorBox = form.querySelector('#' + errorBoxId);
+            if (!errorBox) {
+                errorBox = document.createElement('div');
+                errorBox.id = errorBoxId;
+                errorBox.className = 'alert alert-danger mt-2';
+                errorBox.style.whiteSpace = 'pre-wrap';
+                form.insertBefore(errorBox, form.firstChild);
+            }
+
+            if (typeof messages === 'string') {
+                errorBox.textContent = messages;
+            } else if (Array.isArray(messages)) {
+                errorBox.innerHTML = messages.map(m => escapeHtml(m)).join('<br>');
+            } else if (typeof messages === 'object' && messages !== null) {
+                // Laravel-style errors: { errors: { field: [..] }, message: '...' }
+                if (messages.errors) {
+                    const lines = [];
+                    Object.keys(messages.errors).forEach((field) => {
+                        messages.errors[field].forEach((msg) => lines.push(msg));
+                    });
+                    errorBox.innerHTML = lines.map(l => escapeHtml(l)).join('<br>');
+                } else if (messages.message) {
+                    errorBox.textContent = messages.message;
+                } else {
+                    errorBox.textContent = JSON.stringify(messages);
+                }
+            } else {
+                errorBox.textContent = String(messages);
+            }
+
+            errorBox.classList.remove('d-none');
         };
 
         const populateHeadings = (headings) => {
@@ -289,8 +330,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const result = await response.json();
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Không thể đọc tiêu đề cột');
+            if (!response.ok) {
+                // Show validation/import errors inline in the modal
+                showImportErrors(result);
+                return;
+            }
+
+            if (!result.success) {
+                showImportErrors(result.message || 'Không thể đọc tiêu đề cột');
+                return;
             }
 
             tokenInput.value = result.token;
@@ -331,8 +379,17 @@ document.addEventListener('DOMContentLoaded', function () {
 
             const result = await response.json();
 
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Import thất bại');
+            if (!response.ok) {
+                // Show detailed errors inline and also toast
+                showImportErrors(result);
+                showToast('Lỗi', result.message || 'Import thất bại', 'danger');
+                return;
+            }
+
+            if (!result.success) {
+                showImportErrors(result.message || 'Import thất bại');
+                showToast('Lỗi', result.message || 'Import thất bại', 'danger');
+                return;
             }
 
             modalInstance.hide();

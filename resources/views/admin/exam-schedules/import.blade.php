@@ -61,9 +61,22 @@
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>
+                            <div class="col-12 col-md-6">
+                                <label class="form-label">Thời lượng (phút) <span class="text-danger">*</span></label>
+                                <select class="form-select column-mapping" data-field="duration" data-required="true">
+                                    <option value="">-- Chọn cột --</option>
+                                </select>
+                                <div class="form-text">Hỗ trợ: 90, 1h30, 01:30, 2h, 120m</div>
+                            </div>
                             <div class="col-12">
                                 <label class="form-label">Phòng <span class="text-danger">*</span></label>
                                 <select class="form-select column-mapping" data-field="room" data-required="true">
+                                    <option value="">-- Chọn cột --</option>
+                                </select>
+                            </div>
+                            <div class="col-12">
+                                <label class="form-label">Ghi chú</label>
+                                <select class="form-select column-mapping" data-field="note" data-required="false">
                                     <option value="">-- Chọn cột --</option>
                                 </select>
                             </div>

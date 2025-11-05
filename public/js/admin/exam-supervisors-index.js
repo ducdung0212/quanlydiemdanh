@@ -65,24 +65,40 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderTable() {
         if (!paginationData || !paginationData.data || paginationData.data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="6" class="text-center">${currentQuery ? 'Không tìm thấy giám thị nào' : 'Không có dữ liệu'}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="10" class="text-center">${currentQuery ? 'Không tìm thấy giám thị nào' : 'Không có dữ liệu'}</td></tr>`;
             return;
         }
 
         const { data: supervisors, from } = paginationData;
         const rowsHtml = supervisors.map((supervisor, index) => {
             const isChecked = selectedSupervisors.has(supervisor.id) ? 'checked' : '';
+            
+            // Extract exam schedule info
+            const examSchedule = supervisor.exam_schedule || {};
+            const subject = examSchedule.subject || {};
+            const subjectName = subject.name || subject.subject_name || 'N/A';
+            const examDate = examSchedule.exam_date ? formatDate(examSchedule.exam_date) : 'N/A';
+            const examTime = examSchedule.exam_time ? formatTime(examSchedule.exam_time) : 'N/A';
+            const room = examSchedule.room || 'N/A';
+            
             return `
                 <tr>
                     <td>
                         <input type="checkbox" class="supervisor-checkbox" value="${escapeHtml(supervisor.id)}" ${isChecked} style="cursor: pointer;" data-action="toggle-select">
                     </td>
-                    <td >${from + index}</td>
-                    <td >${escapeHtml(supervisor.exam_schedule_id || '')}</td>
-                    <td >${escapeHtml(supervisor.lecturer_code || '')}</td>
-                    <td >${escapeHtml(supervisor.lecturer_name || '')}</td>
-                    <td >
+                    <td>${from + index}</td>
+                    <td>${escapeHtml(supervisor.exam_schedule_id || '')}</td>
+                    <td>${escapeHtml(subjectName)}</td>
+                    <td>${examDate}</td>
+                    <td>${examTime}</td>
+                    <td>${escapeHtml(room)}</td>
+                    <td>${escapeHtml(supervisor.lecturer_code || '')}</td>
+                    <td>${escapeHtml(supervisor.lecturer_name || '')}</td>
+                    <td>
                         <div class="list-icon-function">
+                                <a href="#" data-action="edit-supervisor" data-supervisor_id="${escapeHtml(supervisor.id)}" title="Sửa">
+                                    <div class="item text-primary me-2"><i class="icon-edit-2"></i></div>
+                                </a>
                             <a href="#" data-action="delete-supervisor" data-supervisor_id="${escapeHtml(supervisor.id)}" title="Xóa">
                                 <div class="item text-danger delete"><i class="icon-trash-2"></i></div>
                             </a>
@@ -93,6 +109,33 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('');
 
         tableBody.innerHTML = rowsHtml;
+    }
+    
+    // Helper function to format date
+    function formatDate(dateString) {
+        try {
+            const date = new Date(dateString);
+            const day = String(date.getDate()).padStart(2, '0');
+            const month = String(date.getMonth() + 1).padStart(2, '0');
+            const year = date.getFullYear();
+            return `${day}/${month}/${year}`;
+        } catch (e) {
+            return dateString;
+        }
+    }
+    
+    // Helper function to format time
+    function formatTime(timeString) {
+        try {
+            // If timeString is in format HH:MM:SS, extract HH:MM
+            if (timeString.includes(':')) {
+                const parts = timeString.split(':');
+                return `${parts[0]}:${parts[1]}`;
+            }
+            return timeString;
+        } catch (e) {
+            return timeString;
+        }
     }
 
     function renderPagination() {
@@ -365,6 +408,41 @@ document.addEventListener('DOMContentLoaded', function () {
         resetMappingUI();
     }
 
+    function initializeEditSupervisorModal(modalInstance) {
+        const form = document.getElementById('editSupervisorForm');
+        if (!form || form.dataset.initialized === 'true') return;
+
+        const lecturerSelect = document.getElementById('editLecturerCode');
+        const submitButton = form.querySelector('button[type="submit"]');
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            toggleButtonLoading(submitButton, true);
+            try {
+                const supervisorId = document.getElementById('editSupervisorId').value;
+                const body = { lecturer_code: lecturerSelect.value };
+                const result = await apiFetch(`${API_BASE_URL}/${supervisorId}`, {
+                    method: 'PUT',
+                    body: JSON.stringify(body),
+                });
+
+                if (result.success) {
+                    showToast('Thành công', result.message || 'Cập nhật giám thị thành công', 'success');
+                    if (modalInstance && typeof modalInstance.hide === 'function') modalInstance.hide();
+                    document.dispatchEvent(new CustomEvent('examSupervisorsUpdated'));
+                } else {
+                    showToast('Lỗi', result.message || 'Không thể cập nhật', 'danger');
+                }
+            } catch (err) {
+                showToast('Lỗi', err.message || 'Lỗi khi cập nhật giám thị', 'danger');
+            } finally {
+                toggleButtonLoading(submitButton, false);
+            }
+        });
+
+        form.dataset.initialized = 'true';
+    }
+
     async function setupEventListeners() {
         searchInput.addEventListener('keyup', debounce(() => {
             fetchExamSupervisors(1, searchInput.value.trim());
@@ -397,6 +475,14 @@ document.addEventListener('DOMContentLoaded', function () {
             const supervisorId = target.dataset.supervisor_id;
 
             switch (action) {
+                    case 'edit-supervisor':
+                        if (supervisorId) {
+                            const modal = await loadModal(`/exam-supervisors/modals/edit/${supervisorId}`, 'editSupervisorModal');
+                            if (!modal) return;
+                            modal.show();
+                            initializeEditSupervisorModal(modal);
+                        }
+                        break;
                 case 'delete-supervisor':
                     if (supervisorId) deleteSupervisor(supervisorId);
                     break;

@@ -133,26 +133,7 @@ class AttendanceRecord extends Model
     /**
      * Check if the attendance is successful (matched).
      */
-    public function isSuccessful(): bool
-    {
-        return $this->rekognition_result === 'match';
-    }
-
-    /**
-     * Check if the attendance failed (not matched).
-     */
-    public function isFailed(): bool
-    {
-        return $this->rekognition_result === 'not_match';
-    }
-
-    /**
-     * Check if the attendance is unknown.
-     */
-    public function isUnknown(): bool
-    {
-        return $this->rekognition_result === 'unknown';
-    }
+    // Helper boolean checks removed (unused) to reduce unused code surface.
 
     /**
      * Get the status label for display.

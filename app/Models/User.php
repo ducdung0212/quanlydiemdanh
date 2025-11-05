@@ -4,6 +4,7 @@ namespace App\Models;
 
 use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
@@ -47,13 +48,13 @@ class User extends Authenticatable
             'password' => 'hashed',
         ];
     }
-    public function isAdmin(): bool
+
+    /**
+     * Get the lecturer profile associated with the user.
+     */
+    public function lecturer(): HasOne
     {
-        return $this->role === 'admin';
+        return $this->hasOne(\App\Models\Lecturer::class, 'user_id', 'id');
     }
 
-    public function isLecturer(): bool
-    {
-        return $this->role === 'lecturer';
-    }
 }

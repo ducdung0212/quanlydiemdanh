@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use App\Imports\ExamSupervisorImport;
 use App\Models\ExamSupervisor;
+use App\Http\Requests\SupervisorRequest;
+use Illuminate\Validation\ValidationException;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -21,35 +23,48 @@ class ExamSupervisorController extends Controller
         $date = request()->query('date');
         $limit = (int) request()->query('limit', 10);
 
-        $examSupervisors = ExamSupervisor::with('lecturer')->latest();
+        $examSupervisors = ExamSupervisor::with(['lecturer', 'examSchedule.subject'])->latest();
 
         if ($q) {
             $examSupervisors->where(function ($query) use ($q) {
+                // Tìm theo mã giảng viên
                 $query->where('lecturer_code', 'like', "%{$q}%")
+                    // Tìm theo tên giảng viên
+                    ->orWhereHas('lecturer', function ($lecturerQuery) use ($q) {
+                        $lecturerQuery->where('full_name', 'like', "%{$q}%");
+                    })
+                    // Tìm theo mã ca thi
+                    ->orWhere('exam_schedule_id', 'like', "%{$q}%")
+                    // Tìm theo phòng thi
                     ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
                         $examScheduleQuery->where('room', 'like', "%{$q}%");
                     })
+                    // Tìm theo mã môn học
                     ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
                         $examScheduleQuery->where('subject_code', 'like', "%{$q}%");
                     })
+                    // Tìm theo tên môn học
+                    ->orWhereHas('examSchedule.subject', function ($subjectQuery) use ($q) {
+                        $subjectQuery->where('name', 'like', "%{$q}%");
+                    })
+                    // Tìm theo giờ thi
                     ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
                         $examScheduleQuery->where('exam_time', 'like', "%{$q}%");
                     })
+                    // Tìm theo ngày thi
                     ->orWhereHas('examSchedule', function ($examScheduleQuery) use ($q) {
-                        $examScheduleQuery->whereDate('exam_date', 'like', "%{$q}%");
-                    })
-                    ->orWhere('subject_code', 'like', "%{$q}%")
-                    ->orWhereHas('lecturer', function ($lecturerQuery) use ($q) {
-                        $lecturerQuery->where('name', 'like', "%{$q}%");
+                        $examScheduleQuery->where('exam_date', 'like', "%{$q}%");
                     });
             });
         }
 
         if ($date) {
             try {
-                $normalizedDate = Carbon::parse($date)->toDateString();
-                $examSchedules->whereDate('exam_date', $normalizedDate);
-            } catch (Throwable $e) {
+                $normalizedDate = \Carbon\Carbon::parse($date)->toDateString();
+                $examSupervisors->whereHas('examSchedule', function ($examScheduleQuery) use ($normalizedDate) {
+                    $examScheduleQuery->whereDate('exam_date', $normalizedDate);
+                });
+            } catch (\Throwable $e) {
                 // If the provided date cannot be parsed, ignore the filter.
             }
         }
@@ -243,6 +258,36 @@ class ExamSupervisorController extends Controller
             'message' => 'Exam Supervisor deleted successfully',
         ]);
     }
+    public function update(SupervisorRequest $request, string $id)
+    {
+        try {
+            $supervisor = ExamSupervisor::find($id);
+            if (!$supervisor) {
+                return response()->json([
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Exam Supervisor Not Found'
+                ], 404);
+            }
+
+            if ($request->filled('lecturer_code')) {
+                $supervisor->lecturer_code = $request->input('lecturer_code');
+            }
+
+            $supervisor->save();
+            return response()->json([
+                'success' => true,
+                'data' => $supervisor,
+                'message'=>'Update Supervisor Successfully'
+            ]);
+        } catch (ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'errors' => $e->errors(),
+            ], 422);
+        }
+    }
+
 
     /**
      * Remove all supervisor assignments.

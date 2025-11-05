@@ -68,10 +68,17 @@ document.addEventListener('DOMContentLoaded', function () {
         return t;
     }
 
+    // Format duration (minutes) to display format
+    function formatDuration(minutes) {
+        if (!minutes || isNaN(minutes)) return '';
+        const mins = parseInt(minutes, 10);
+        return `${mins} phút`;
+    }
+
     async function fetchExamSchedules(page = 1, query = '', date = '') {
         if (isLoading) return;
         isLoading = true;
-        tableBody.innerHTML = '<tr><td colspan="8" class="text-center">Đang tải...</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="10" class="text-center">Đang tải...</td></tr>';
 
         try {
             const url = `${API_BASE_URL}?page=${page}&q=${encodeURIComponent(query)}&date=${encodeURIComponent(date)}`;
@@ -89,7 +96,7 @@ document.addEventListener('DOMContentLoaded', function () {
             }
         } catch (error) {
             console.error('Failed to fetch exam schedules:', error);
-            tableBody.innerHTML = '<tr><td colspan="8" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="10" class="text-center text-danger">Lỗi khi tải dữ liệu.</td></tr>';
             paginationData = null;
             render();
         } finally {
@@ -106,7 +113,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function renderTable() {
         if (!paginationData || !paginationData.data || paginationData.data.length === 0) {
-            tableBody.innerHTML = `<tr><td colspan="8" class="text-center">${currentQuery || currentDate ? 'Không tìm thấy lịch thi nào' : 'Không có dữ liệu'}</td></tr>`;
+            tableBody.innerHTML = `<tr><td colspan="10" class="text-center">${currentQuery || currentDate ? 'Không tìm thấy lịch thi nào' : 'Không có dữ liệu'}</td></tr>`;
             return;
         }
 
@@ -124,6 +131,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${escapeHtml(schedule.subject_name || '')}</td>
                     <td>${escapeHtml(formatDate(schedule.exam_date || ''))}</td>
                     <td>${escapeHtml(formatTime(schedule.exam_time || ''))}</td>
+                    <td>${escapeHtml(formatDuration(schedule.duration))}</td>
                     <td>${escapeHtml(schedule.room || '')}</td>
                     <td>
                         <div class="list-icon-function">
@@ -537,7 +545,7 @@ document.addEventListener('DOMContentLoaded', function () {
             const examRoom = document.getElementById('exam-room');
             const totalStudents = document.getElementById('total-students');
             const presentCount = document.getElementById('present-count');
-            const lateCount = document.getElementById('late-count');
+            const pendingCount = document.getElementById('pending-count');
             const absentCount = document.getElementById('absent-count');
             const attendanceTableBody = document.getElementById('attendance-table-body');
             const btnRefresh = document.getElementById('btnRefresh');
@@ -560,10 +568,10 @@ document.addEventListener('DOMContentLoaded', function () {
             function attendance_getStatusBadge(status) {
                 const statusMap = {
                     'present': { class: 'badge bg-success', text: 'Có mặt' },
-                    'late': { class: 'badge bg-warning', text: 'Đi muộn' },
+                    'pending': { class: 'badge bg-secondary', text: '-' },
                     'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
                 };
-                const statusInfo = statusMap[status] || statusMap['absent'];
+                const statusInfo = statusMap[status] || statusMap['pending'];
                 return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
             }
 
@@ -616,12 +624,15 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (examSubjectName) examSubjectName.textContent = exam.subject_name || '-';
                     if (examDate) examDate.textContent = attendance_formatDate(exam.exam_date);
                     if (examTime) examTime.textContent = attendance_formatTime(exam.exam_time);
+                    const examDuration = document.getElementById('exam-duration');
+                    if (examDuration) examDuration.textContent = formatDuration(exam.duration);
                     if (examRoom) examRoom.textContent = exam.room || '-';
 
                     // Update stats
                     if (totalStudents) totalStudents.textContent = stats.total_students || 0;
                     if (presentCount) presentCount.textContent = stats.present || 0;
-                    if (lateCount) lateCount.textContent = stats.late || 0;
+                    const pendingCount = document.getElementById('pending-count');
+                    if (pendingCount) pendingCount.textContent = stats.pending || 0;
                     if (absentCount) absentCount.textContent = stats.absent || 0;
 
                     // Update students table
@@ -688,7 +699,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (examRoom) examRoom.textContent = '-';
                     if (totalStudents) totalStudents.textContent = '0';
                     if (presentCount) presentCount.textContent = '0';
-                    if (lateCount) lateCount.textContent = '0';
+                    if (pendingCount) pendingCount.textContent = '0';
                     if (absentCount) absentCount.textContent = '0';
                 }
             }

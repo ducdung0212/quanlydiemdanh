@@ -1,0 +1,38 @@
+<?php
+
+namespace App\Http\Requests;
+
+use Illuminate\Foundation\Http\FormRequest;
+
+class SupervisorRequest extends FormRequest
+{
+    /**
+     * Determine if the user is authorized to make this request.
+     */
+    public function authorize(): bool
+    {
+        // Allow access; controller will handle authorization/permissions elsewhere
+        return true;
+    }
+
+    /**
+     * Get the validation rules that apply to the request.
+     *
+     * @return array<string, \Illuminate\Contracts\Validation\ValidationRule|array<mixed>|string>
+     */
+    public function rules(): array
+    {
+        // Different rules for create (POST) vs update (PUT/PATCH)
+        if ($this->isMethod('post')) {
+            return [
+                'exam_schedule_id' => ['required', 'integer', 'exists:exam_schedules,id'],
+                'lecturer_code' => ['required', 'string', 'exists:lecturers,lecturer_code'],
+            ];
+        }
+
+        // For update allow changing the lecturer_code
+        return [
+            'lecturer_code' => ['required', 'string', 'exists:lecturers,lecturer_code'],
+        ];
+    }
+}

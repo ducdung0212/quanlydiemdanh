@@ -44,7 +44,6 @@ class StudentFaceRegistrationController extends Controller
                 $fileType = $file['file_type'];
 
                 // Tách student_code từ tên tệp (ví dụ: "SV001.jpg" -> "SV001")
-                // Quan trọng: Phải khớp với logic Lambda của bạn
                 $studentCode = pathinfo($fileName, PATHINFO_FILENAME);
 
                 if (empty($studentCode)) {

@@ -32,8 +32,17 @@ class ExamSchedulesController extends Controller
 
         // Nếu là lecturer, chỉ xem ca thi được phân công
         if ($user && $user->role === 'lecturer') {
-            $examSchedules->whereHas('supervisors', function ($query) use ($user) {
-                $query->where('lecturer_code', $user->lecturer_code);
+            $lecturer = $user->lecturer;
+            
+            if (!$lecturer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài khoản chưa được liên kết với giảng viên. Vui lòng liên hệ quản trị viên.',
+                ], 400);
+            }
+
+            $examSchedules->whereHas('supervisors', function ($query) use ($lecturer) {
+                $query->where('lecturer_code', $lecturer->lecturer_code);
             });
         }
 
@@ -116,10 +125,20 @@ public function exportAttendance($id)
             ], 404);
         }
 
-        // Nếu là lecturer, kiểm tra quyền truy cập
+        // Nếu là lecturer, kiểm tra quyền truy cập và thời gian
         if ($user && $user->role === 'lecturer') {
+            $lecturer = $user->lecturer;
+            
+            if (!$lecturer) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài khoản chưa được liên kết với giảng viên. Vui lòng liên hệ quản trị viên.',
+                ], 400);
+            }
+
+            // Kiểm tra quyền truy cập
             $hasAccess = $examSchedule->supervisors()
-                ->where('lecturer_code', $user->lecturer_code)
+                ->where('lecturer_code', $lecturer->lecturer_code)
                 ->exists();
             
             if (!$hasAccess) {
@@ -128,31 +147,72 @@ public function exportAttendance($id)
                     'message' => 'Bạn không có quyền xem ca thi này',
                 ], 403);
             }
+
+            // Kiểm tra thời gian: Chỉ cho phép tải thông tin khi đã đến 30 phút trước giờ thi
+            try {
+                $examDate = \Carbon\Carbon::parse($examSchedule->exam_date)->startOfDay();
+                $examTime = \Carbon\Carbon::parse($examSchedule->exam_time);
+                $examDateTime = $examDate->setTimeFromTimeString($examTime->format('H:i:s'));
+                $now = \Carbon\Carbon::now();
+                $thirtyMinutesBefore = $examDateTime->copy()->subMinutes(30);
+                
+                if ($now->isBefore($thirtyMinutesBefore)) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'Chưa đến giờ thi. Vui lòng quay lại sau ' . $thirtyMinutesBefore->format('H:i d/m/Y'),
+                    ], 403);
+                }
+            } catch (\Exception $e) {
+                // Nếu không parse được thời gian, cho phép tiếp tục
+            }
         }
 
         $attendanceRecords = AttendanceRecord::with('student')
             ->where('exam_schedule_id', $examSchedule->id)
             ->get();
 
-       // BẮT ĐẦU KHỐI CODE THAY THẾ
-        
+        // Tính thời gian kết thúc ca thi (exam_date + exam_time + duration)
+        $examEndTime = null;
+        try {
+            $examDateTime = \Carbon\Carbon::parse($examSchedule->exam_date . ' ' . $examSchedule->exam_time);
+            $examEndTime = $examDateTime->addMinutes($examSchedule->duration ?? 0);
+        } catch (\Exception $e) {
+            // Nếu không parse được, để null
+        }
+
+        $now = \Carbon\Carbon::now();
+        $isExamEnded = $examEndTime && $now->isAfter($examEndTime);
+
         $students = [];
         $present = 0;
         $absent = 0;
+        $pending = 0; // Số sinh viên chưa điểm danh
 
         // Lặp qua TẤT CẢ các bản ghi điểm danh 
         foreach ($attendanceRecords as $record) {
             $student = $record->student;
-            $status = 'absent'; // 1. Mặc định là 'Vắng mặt'
+            $status = 'pending'; // Mặc định: chưa điểm danh
             $attendanceTime = null;
 
-            // 2. Chỉ kiểm tra rekognition_result
+            // Kiểm tra rekognition_result
             if ($record->rekognition_result === 'match') {
-                $status = 'present'; // Nếu match -> 'Có mặt'
+                // Đã điểm danh thành công
+                $status = 'present';
                 $attendanceTime = optional($record->attendance_time)?->toDateTimeString();
                 $present++;
+            } elseif ($record->rekognition_result === null) {
+                // Chưa điểm danh
+                if ($isExamEnded) {
+                    // Nếu ca thi đã kết thúc → Vắng mặt
+                    $status = 'absent';
+                    $absent++;
+                } else {
+                    // Ca thi chưa kết thúc → Chưa điểm danh
+                    $status = 'pending';
+                    $pending++;
+                }
             } else {
-                // Bất cứ trường hợp nào khác (null, no_match, ...) -> 'Vắng mặt'
+                // rekognition_result khác (no_match, error, ...) → Vắng mặt
                 $status = 'absent';
                 $absent++;
             }
@@ -162,14 +222,12 @@ public function exportAttendance($id)
                 'student_code' => $record->student_code,
                 'full_name' => $student->full_name ?? null,
                 'class_code' => $student->class_code ?? null,
-                'attendance_time' => $attendanceTime, // Chỉ hiện thời gian khi 'Có mặt'
+                'attendance_time' => $attendanceTime,
                 'status' => $status,
             ];
         }
 
         $total = count($attendanceRecords);
-
-        // KẾT THÚC KHỐI CODE THAY THẾ
 
         return response()->json([
             'success' => true,
@@ -181,6 +239,7 @@ public function exportAttendance($id)
                     'subject_name' => optional($examSchedule->subject)->name,
                     'exam_date' => optional($examSchedule->exam_date)?->toDateString() ?? (string) $examSchedule->exam_date,
                     'exam_time' => optional($examSchedule->exam_time)?->format('H:i:s') ?? (string) $examSchedule->exam_time,
+                    'duration' => $examSchedule->duration,
                     'room' => $examSchedule->room,
                     'note' => $examSchedule->note,
                     'registered_count' => $examSchedule->registered_count,
@@ -190,8 +249,8 @@ public function exportAttendance($id)
               'stats' => [
                     'total_students' => $total,
                     'present' => $present,
-                    'late' => 0, // Bỏ 'late'
-                    'absent' => $absent, // Dùng biến $absent đã đếm
+                    'pending' => $pending, // Số sinh viên chưa điểm danh
+                    'absent' => $absent,
                 ],
                 'students' => $students,
             ],
@@ -296,6 +355,9 @@ public function exportAttendance($id)
                 'exam-time',
                 'exam_date',
                 'exam_time',
+                'duration',
+                'thoi-gian',
+                'thoi-luong',
                 'room',
                 'phong',
                 'ghi-chu',
@@ -378,7 +440,8 @@ public function exportAttendance($id)
             'mapping.subject_code' => 'required|string',
             'mapping.exam_date' => 'required|string',
             'mapping.exam_time' => 'required|string',
-            'mapping.room' => 'nullable|string',
+            'mapping.duration' => 'required|string',
+            'mapping.room' => 'required|string',
             'mapping.note' => 'nullable|string',
         ]);
 
@@ -467,6 +530,105 @@ public function exportAttendance($id)
             'success' => true,
             'data' => $examSchedules->paginate($limit),
             'message' => 'Lịch coi thi của bạn',
+        ]);
+    }
+
+    /**
+     * Get current active exam schedule for lecturer (đến giờ thi).
+     * Trả về ca thi đang diễn ra hoặc sắp diễn ra trong vòng 30 phút.
+     */
+    public function currentExam()
+    {
+        $user = auth()->user();
+
+        if (!$user || $user->role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ giảng viên mới có thể xem ca thi hiện tại',
+            ], 403);
+        }
+
+        if (!$user->lecturer_code) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản chưa được liên kết với giảng viên',
+            ], 400);
+        }
+
+        $now = \Carbon\Carbon::now();
+        
+        // Log để debug
+        \Log::info('Current Exam Request', [
+            'user_id' => $user->id,
+            'lecturer_code' => $user->lecturer_code,
+            'now' => $now->toDateTimeString(),
+        ]);
+        
+        // Tìm ca thi của giảng viên:
+        // - Đang diễn ra: exam_date + exam_time <= now < exam_date + exam_time + duration
+        // - Hoặc sắp diễn ra trong 30 phút: exam_date + exam_time trong khoảng (now, now + 30 phút)
+        $examSchedules = ExamSchedule::query()
+            ->with(['subject', 'supervisors.lecturer'])
+            ->whereHas('supervisors', function ($query) use ($user) {
+                $query->where('lecturer_code', $user->lecturer_code);
+            })
+            ->whereDate('exam_date', $now->toDateString())
+            ->get();
+
+        \Log::info('Found exam schedules today', [
+            'count' => $examSchedules->count(),
+            'exams' => $examSchedules->map(function($e) {
+                return [
+                    'id' => $e->id,
+                    'subject' => $e->subject_code,
+                    'date' => $e->exam_date,
+                    'time' => $e->exam_time,
+                    'duration' => $e->duration,
+                ];
+            }),
+        ]);
+
+        $examSchedule = $examSchedules->filter(function ($exam) use ($now) {
+                try {
+                    $examDateTime = \Carbon\Carbon::parse($exam->exam_date . ' ' . $exam->exam_time);
+                    $examEndTime = $examDateTime->copy()->addMinutes($exam->duration ?? 90);
+                    
+                    // Ca thi đang diễn ra
+                    if ($now->between($examDateTime, $examEndTime)) {
+                        \Log::info('Exam is ongoing', ['exam_id' => $exam->id]);
+                        return true;
+                    }
+                    
+                    // Ca thi sắp diễn ra trong 30 phút
+                    $thirtyMinutesLater = $now->copy()->addMinutes(30);
+                    if ($examDateTime->between($now, $thirtyMinutesLater)) {
+                        \Log::info('Exam starting soon', ['exam_id' => $exam->id]);
+                        return true;
+                    }
+                    
+                    return false;
+                } catch (\Exception $e) {
+                    \Log::error('Error filtering exam', ['exam_id' => $exam->id, 'error' => $e->getMessage()]);
+                    return false;
+                }
+            })
+            ->sortBy(function ($exam) {
+                return $exam->exam_date . ' ' . $exam->exam_time;
+            })
+            ->first();
+
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có ca thi nào đang diễn ra hoặc sắp diễn ra',
+                'data' => null,
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'data' => $examSchedule,
+            'message' => 'Ca thi hiện tại',
         ]);
     }
 }

@@ -120,9 +120,11 @@ Route::middleware(['auth', 'verified'])->group(function () {
         } else {
             $query->orderBy('name');
         }
+        $users = \App\Models\User::orderBy('id')->get();
         return view('admin.lecturers.edit', [
             'lecturer' => $lecturer,
             'faculties' => $query->get(),
+            'users' => $users,
         ]);
     });
 
@@ -190,6 +192,20 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     Route::get('/exam-supervisors/modals/import', function () {
         return view('admin.exam-supervisors.import');
+    });
+    
+    // Edit supervisor modal
+    Route::get('/exam-supervisors/modals/edit/{id}', function ($id) {
+        $supervisor = \App\Models\ExamSupervisor::find($id);
+        if (!$supervisor) {
+            return response('Supervisor not found', 404);
+        }
+        // Provide list of lecturers for selection
+        $lecturers = \App\Models\Lecturer::orderBy('full_name')->get();
+        return view('admin.exam-supervisors.edit', [
+            'supervisor' => $supervisor,
+            'lecturers' => $lecturers,
+        ]);
     });
 
     // ==================== ATTENDANCE RECORDS ====================

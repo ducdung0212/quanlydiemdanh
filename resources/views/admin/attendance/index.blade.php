@@ -21,7 +21,6 @@
 </div>
 
 <div class="attendance-container">
-    <!-- Lựa chọn ca thi -->
     <div class="wg-box mb-27">
         <h5 class="section-title">Chọn ca thi để điểm danh</h5>
         <div class="row align-items-end">
@@ -30,8 +29,7 @@
                     <label for="examScheduleSelect" class="form-label">Chọn ca thi</label>
                     <select id="examScheduleSelect" class="form-control form-control-lg">
                         <option value="">-- Chọn ca thi --</option>
-                        <!-- Options sẽ được load bằng JavaScript -->
-                    </select>
+                        </select>
                 </div>
             </div>
             <div class="col-md-4">
@@ -44,7 +42,6 @@
         </div>
     </div>
 
-    <!-- Thông tin ca thi -->
     <div class="wg-box mb-27" id="examInfoSection" style="display: none;">
         <h5 class="section-title">Thông tin ca thi</h5>
         <div class="exam-info-grid">
@@ -75,7 +72,6 @@
         </div>
     </div>
 
-    <!-- Thống kê điểm danh -->
     <div class="stats-grid mb-27" id="statsSection" style="display: none;">
         <div class="stat-card">
             <div class="stat-number" id="total-students">0</div>
@@ -85,20 +81,22 @@
             <div class="stat-number" id="present-count">0</div>
             <div class="stat-label">Có mặt</div>
         </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-number" id="pending-count">0</div>
+            <div class="stat-label">Chưa điểm danh</div>
+        </div>
         <div class="stat-card stat-absent">
             <div class="stat-number" id="absent-count">0</div>
             <div class="stat-label">Vắng mặt</div>
         </div>
     </div>
 
-    <!-- Nút bắt đầu điểm danh -->
     <div class="text-center mb-27" id="startAttendanceSection" style="display: none;">
         <button class="tf-button style-1 w208" id="btnStartAttendance">
             <i class="icon-camera"></i> Bắt đầu điểm danh
         </button>
     </div>
 
-    <!-- Danh sách sinh viên điểm danh -->
     <div class="wg-box" id="attendanceListSection" style="display: none;">
         <div class="flex items-center justify-between gap10 flex-wrap mb-20">
             <h5 class="section-title" style="margin: 0;">Danh sách sinh viên điểm danh</h5>
@@ -128,7 +126,6 @@
     </div>
 </div>
 
-<!-- Modal điểm danh bằng camera -->
 <div class="modal fade" id="attendanceModal" tabindex="-1" aria-labelledby="attendanceModalLabel" aria-hidden="true">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
@@ -138,13 +135,17 @@
             </div>
             <div class="modal-body">
                 <div class="camera-container text-center">
-                    <div id="cameraPreview" class="camera-preview mb-3">
-                        <video id="video" autoplay playsinline class="w-100" style="max-height: 400px; background: #000;"></video>
+                    <div id="cameraPreview" class="camera-preview mb-3" style="position:relative;">
+                        <video id="video" autoplay playsinline class="w-100" style="max-height: 400px; background: #000; position:relative; z-index:1; display:block; object-fit:contain;">
+                        </video>
+                        <canvas id="overlay" style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2; display:block;"></canvas>
                         <canvas id="canvas" class="d-none"></canvas>
                     </div>
-                    <div id="capturedImage" class="captured-image mb-3 d-none">
-                        <img id="photo" src="#" alt="Ảnh đã chụp" class="w-100" style="max-height: 400px;">
-                    </div>
+
+                    <div id="capturedImage" 
+                         class="captured-image mb-3 d-none" 
+                         style="max-height: 400px; overflow-y: auto; background: #f0f0f0; padding: 10px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                        </div>
                     <div class="camera-controls">
                         <button id="btnCapture" class="tf-button style-1 me-2">
                             <i class="icon-camera"></i> Chụp ảnh
@@ -153,7 +154,7 @@
                             <i class="icon-refresh-cw"></i> Chụp lại
                         </button>
                         <button id="btnSubmit" class="tf-button style-3 d-none">
-                            <i class="icon-send"></i> Gửi điểm danh
+                            <i class="icon-send"></i> Kiểm tra
                         </button>
                     </div>
                     <div id="attendanceResult" class="mt-3"></div>
@@ -164,5 +165,7 @@
 </div>
 @endsection
 @push('scripts')
+<script src="{{ asset('js/vendor/tf.min.js') }}"></script>
+<script src="{{ asset('js/vendor/blazeface.min.js') }}"></script>
 <script src="{{ asset('js/admin/attendance-index.js') }}"></script>
 @endpush

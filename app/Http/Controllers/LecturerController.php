@@ -303,7 +303,7 @@ class LecturerController extends Controller
             'heading_row' => 'nullable|integer|min:1',
             'mapping' => 'required|array',
             'mapping.lecturer_code' => 'required|string',
-            'mapping.faculty_code' => 'required|string',
+            'mapping.faculty_code' => 'nullable|string',
             'mapping.full_name' => 'required|string',
             'mapping.email' => 'nullable|string',
             'mapping.phone' => 'nullable|string',

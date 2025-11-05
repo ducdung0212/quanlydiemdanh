@@ -23,7 +23,7 @@
 
                     <div class="row">
                         <div class="col-md-6 mb-4">
-                            <label for="faculty_code" class="form-label">Mã Khoa <span class="text-danger">*</span></label>
+                            <label for="faculty_code" class="form-label">Mã Khoa </label>
                             <select class="form-select" id="faculty_code" name="faculty_code" required>
                                 <option value="" selected disabled>Chọn khoa</option>
                                 @foreach ($faculties as $faculty)

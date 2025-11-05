@@ -4,6 +4,7 @@ namespace App\Imports;
 
 use App\Models\AttendanceRecord;
 use App\Models\ExamSchedule;
+use App\Models\Student;
 use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
@@ -61,6 +62,9 @@ class AttendanceRecordImport implements
      */
     public function collection(Collection $rows): void
     {
+        $toUpsert = [];
+        $studentCodes = [];
+
         foreach ($rows as $row) {
             if ($row instanceof Collection) {
                 $row = $row->toArray();
@@ -109,13 +113,38 @@ class AttendanceRecordImport implements
                 // attendance_time is intentionally excluded from import
             ], fn ($value) => !is_null($value));
 
-            // Upsert attendance record using natural key-derived exam_schedule_id + student_code
+            // Collect rows to upsert later. We'll verify students exist first to avoid FK errors.
+            $toUpsert[] = [
+                'exam_schedule_id' => $examSchedule->id,
+                'student_code' => $studentCode,
+                'payload' => $payload,
+            ];
+
+            $studentCodes[] = $studentCode;
+        }
+
+        // If there are candidate rows, validate all referenced students exist before DB writes
+        $studentCodes = array_values(array_unique(array_filter($studentCodes, fn($v) => $v !== null && $v !== '')));
+
+        if (!empty($studentCodes)) {
+            $existing = Student::whereIn('student_code', $studentCodes)->pluck('student_code')->all();
+            $missing = array_values(array_diff($studentCodes, $existing));
+
+            if (!empty($missing)) {
+                // Throw a clear validation error listing missing student codes — controller will
+                // convert InvalidArgumentException into a 422 JSON response.
+                throw new InvalidArgumentException('Các mã sinh viên sau không tồn tại: ' . implode(', ', $missing));
+            }
+        }
+
+        // All students exist — perform upserts
+        foreach ($toUpsert as $item) {
             AttendanceRecord::updateOrCreate(
                 [
-                    'exam_schedule_id' => $examSchedule->id,
-                    'student_code' => $studentCode,
+                    'exam_schedule_id' => $item['exam_schedule_id'],
+                    'student_code' => $item['student_code'],
                 ],
-                $payload
+                $item['payload']
             );
         }
     }

@@ -61,7 +61,11 @@ class ExamSupervisorImport implements
      */
     public function collection(Collection $rows): void
     {
-        foreach ($rows as $row) {
+        $imported = 0;
+        $skipped = 0;
+        $errors = [];
+
+        foreach ($rows as $rowIndex => $row) {
             if ($row instanceof Collection) {
                 $row = $row->toArray();
             }
@@ -83,6 +87,14 @@ class ExamSupervisorImport implements
 
             // Skip rows missing required data after normalization
             if (!$subjectCode || !$examDate || !$examTime || !$room || !$lecturerCode) {
+                $skipped++;
+                \Log::warning("ExamSupervisor Import: Row " . ($rowIndex + 1) . " skipped - missing required fields", [
+                    'subject_code' => $subjectCode,
+                    'exam_date' => $examDate,
+                    'exam_time' => $examTime,
+                    'room' => $room,
+                    'lecturer_code' => $lecturerCode,
+                ]);
                 continue;
             }
 
@@ -96,6 +108,13 @@ class ExamSupervisorImport implements
 
             if (!$examSchedule) {
                 // Skip if exam session not found
+                $skipped++;
+                \Log::warning("ExamSupervisor Import: Row " . ($rowIndex + 1) . " skipped - ExamSchedule not found", [
+                    'subject_code' => $subjectCode,
+                    'exam_date' => $examDate,
+                    'exam_time' => $examTime,
+                    'room' => $room,
+                ]);
                 continue;
             }
 
@@ -106,14 +125,29 @@ class ExamSupervisorImport implements
             ], fn ($value) => !is_null($value));
 
             // Upsert supervisor assignment using natural key-derived exam_schedule_id + lecturer_code
-            ExamSupervisor::updateOrCreate(
-                [
+            try {
+                ExamSupervisor::updateOrCreate(
+                    [
+                        'exam_schedule_id' => $examSchedule->id,
+                        'lecturer_code' => $lecturerCode,
+                    ],
+                    $payload
+                );
+                $imported++;
+            } catch (\Throwable $e) {
+                $skipped++;
+                \Log::error("ExamSupervisor Import: Row " . ($rowIndex + 1) . " failed", [
+                    'error' => $e->getMessage(),
                     'exam_schedule_id' => $examSchedule->id,
                     'lecturer_code' => $lecturerCode,
-                ],
-                $payload
-            );
+                ]);
+            }
         }
+
+        \Log::info("ExamSupervisor Import completed", [
+            'imported' => $imported,
+            'skipped' => $skipped,
+        ]);
     }
 
     public function headingRow(): int

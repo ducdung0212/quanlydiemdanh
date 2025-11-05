@@ -54,6 +54,10 @@
                 <span id="exam-time">-</span>
             </div>
             <div class="exam-info-item">
+                <strong>Thời lượng</strong>
+                <span id="exam-duration">-</span>
+            </div>
+            <div class="exam-info-item">
                 <strong>Phòng thi</strong>
                 <span id="exam-room">-</span>
             </div>
@@ -69,6 +73,10 @@
         <div class="stat-card stat-present">
             <div class="stat-number" id="present-count">0</div>
             <div class="stat-label">Có mặt</div>
+        </div>
+        <div class="stat-card stat-pending">
+            <div class="stat-number" id="pending-count">0</div>
+            <div class="stat-label">Chưa điểm danh</div>
         </div>
         <div class="stat-card stat-absent">
             <div class="stat-number" id="absent-count">0</div>

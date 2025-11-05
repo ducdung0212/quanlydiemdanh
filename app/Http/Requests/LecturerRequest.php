@@ -25,22 +25,22 @@ class LecturerRequest extends FormRequest
         $lecturerCode=$this->route('lecturer');
         if ($this->isMethod('post')){
             return[
-                'lecturer_code' => ['required','min:10','max:11', Rule::unique('lecturers')],
+                'lecturer_code' => ['required','min:1','max:11', Rule::unique('lecturers')],
                 'user_id' =>['nullable','exists:users,id'],
                 'full_name' => ['required','string','max:100'],
                 'email' => ['nullable','email',Rule::unique('lecturers')],
                 'phone' => ['nullable','string','max:15',Rule::unique('lecturers')],
-                'faculty_code' => ['required','exists:faculties,faculty_code'],
+                'faculty_code' => ['nullable','exists:faculties,faculty_code'],
             ];
         }
         if( $this->isMethod('put') || $this->isMethod('patch')){
             return[
-                'lecturer_code' => ['sometimes','required','min:10','max:11', Rule::unique('lecturers')->ignore($lecturerCode,'lecturer_code')],
+                'lecturer_code' => ['sometimes','required','min:1','max:11', Rule::unique('lecturers')->ignore($lecturerCode,'lecturer_code')],
                 'user_id' =>['sometimes','nullable','exists:users,id'],
                 'full_name' => ['sometimes','required','string','max:100'],
                 'email' => ['sometimes','nullable','email',Rule::unique('lecturers')->ignore($lecturerCode,'lecturer_code')],
                 'phone' => ['sometimes','nullable','string','max:15',Rule::unique('lecturers')->ignore($lecturerCode,'lecturer_code')],
-                'faculty_code' => ['sometimes','required','exists:faculties,faculty_code'],
+                'faculty_code' => ['sometimes','nullable','exists:faculties,faculty_code'],
             ];
         }
         return [];

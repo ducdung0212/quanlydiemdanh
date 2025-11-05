@@ -44,7 +44,7 @@ class ExamSchedulesImport implements
             ->map(fn ($column) => $this->normalizeColumnKey($column))
             ->toArray();
 
-        foreach (['subject_code', 'exam_date', 'exam_time'] as $required) {
+        foreach (['subject_code', 'exam_date', 'exam_time', 'duration'] as $required) {
             if (empty($normalized[$required])) {
                 throw new InvalidArgumentException("Mapping for \"{$required}\" is required.");
             }
@@ -75,8 +75,9 @@ class ExamSchedulesImport implements
             $subjectCode = $this->getValueFromRow($row, 'subject_code');
             $examDate = $this->normalizeDate($this->getValueFromRow($row, 'exam_date'));
             $examTime = $this->normalizeTime($this->getValueFromRow($row, 'exam_time'));
+            $duration = $this->normalizeDuration($this->getValueFromRow($row, 'duration'));
 
-            if (!$subjectCode || !$examDate || !$examTime) {
+            if (!$subjectCode || !$examDate || !$examTime || !$duration) {
                 continue;
             }
 
@@ -92,6 +93,7 @@ class ExamSchedulesImport implements
                     'subject_code' => $subjectCode,
                     'exam_date' => $examDate,
                     'exam_time' => $examTime,
+                    'duration' => $duration,
                     'room' => $room,
                 ],
                 $payload
@@ -197,6 +199,53 @@ class ExamSchedulesImport implements
                     }
                 }
                 return null;
+            }
+        }
+
+        return null;
+    }
+
+    protected function normalizeDuration(mixed $value): ?int
+    {
+        // Nếu đã là số nguyên dương → trả về trực tiếp
+        if (is_int($value) && $value > 0) {
+            return $value;
+        }
+
+        // Nếu là số thực (từ Excel) → làm tròn
+        if (is_numeric($value) && $value > 0) {
+            return (int) round($value);
+        }
+
+        // Nếu là chuỗi
+        if (is_string($value) && $value !== '') {
+            $value = trim($value);
+
+            // Trường hợp: "90", "120" → chuyển thành int
+            if (ctype_digit($value)) {
+                return (int) $value;
+            }
+
+            // Trường hợp: "1h30", "2h", "1.5h" → chuyển thành phút
+            if (preg_match('/^(\d+(?:\.\d+)?)\s*h(?:our)?s?\s*(\d+)?\s*m(?:in)?s?$/i', $value, $matches)) {
+                $hours = (float) $matches[1];
+                $minutes = isset($matches[2]) ? (int) $matches[2] : 0;
+                return (int) round($hours * 60 + $minutes);
+            }
+            if (preg_match('/^(\d+(?:\.\d+)?)\s*h(?:our)?s?$/i', $value, $matches)) {
+                return (int) round((float) $matches[1] * 60);
+            }
+
+            // Trường hợp: "01:30", "1:30" (giờ:phút) → chuyển thành phút
+            if (preg_match('/^(\d{1,2}):(\d{2})$/', $value, $matches)) {
+                $hours = (int) $matches[1];
+                $minutes = (int) $matches[2];
+                return $hours * 60 + $minutes;
+            }
+
+            // Trường hợp: "90m", "120 min", "90 phút" → lấy số phút
+            if (preg_match('/^(\d+)\s*(?:m(?:in)?s?|phút)$/i', $value, $matches)) {
+                return (int) $matches[1];
             }
         }
 
