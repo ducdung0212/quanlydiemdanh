@@ -18,6 +18,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const selectedCountSpan = document.getElementById('selectedCount');
     const selectAllCheckbox = document.getElementById('selectAll');
     const importExcelBtn = document.getElementById('importExcelBtn');
+    const btnAddExamSchedule = document.getElementById('btnAddExamSchedule');
 
     // --- State ---
     let currentPage = 1;
@@ -27,6 +28,7 @@ document.addEventListener('DOMContentLoaded', function () {
     let isLoading = false;
     const selectedSchedules = new Set();
     let importExcelModal;
+    let examScheduleFormManager = null;
 
     // --- Core Application Logic ---
 
@@ -129,8 +131,17 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td>${escapeHtml(schedule.room || '')}</td>
                     <td>
                         <div class="list-icon-function">
-                            <a href="/show/${escapeHtml(schedule.id)}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Chi tiết">
+                            <a href="#" data-action="edit-schedule" data-schedule_id="${escapeHtml(schedule.id)}" title="Chỉnh sửa">
+                                <div class="item text-primary"><i class="icon-edit"></i></div>
+                            </a>
+                            <a href="/show/${escapeHtml(schedule.id)}" data-action="view-attendance" data-schedule_id="${escapeHtml(schedule.id)}" title="Chi tiết điểm danh">
                                 <div class="item view"><i class="icon-clipboard"></i></div>
+                            </a>
+                            <a href="#" data-action="manage-students" data-schedule_id="${escapeHtml(schedule.id)}" title="Quản lý sinh viên">
+                                <div class="item text-info"><i class="icon-users"></i></div>
+                            </a>
+                            <a href="#" data-action="manage-supervisors" data-schedule_id="${escapeHtml(schedule.id)}" title="Quản lý giám thị">
+                                <div class="item text-warning"><i class="icon-user-check"></i></div>
                             </a>
                             <a href="#" data-action="delete-schedule" data-schedule_id="${escapeHtml(schedule.id)}" title="Xóa">
                                 <div class="item text-danger delete"><i class="icon-trash-2"></i></div>
@@ -271,6 +282,24 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
+    // Quản lý sinh viên tham gia ca thi (sử dụng StudentModalManager)
+    let studentModalManager = null;
+    async function openManageStudentsModal(scheduleId) {
+        if (!studentModalManager) {
+            studentModalManager = new StudentModalManager();
+        }
+        await studentModalManager.open(scheduleId);
+    }
+
+    // Quản lý giám thị ca thi (sử dụng SupervisorModalManager)
+    let supervisorModalManager = null;
+    async function openManageSupervisorsModal(scheduleId) {
+        if (!supervisorModalManager) {
+            supervisorModalManager = new SupervisorModalManager();
+        }
+        await supervisorModalManager.open(scheduleId);
+    }
+
     function initializeImportExamScheduleModal(modalInstance) {
         // ... (Code import excel giữ nguyên như cũ để tiết kiệm không gian)
         const form = document.getElementById('importExcelForm');
@@ -395,6 +424,21 @@ document.addEventListener('DOMContentLoaded', function () {
             });
         }
 
+        if (btnAddExamSchedule) {
+            btnAddExamSchedule.addEventListener('click', (e) => {
+                e.preventDefault();
+                console.log('btnAddExamSchedule clicked');
+                console.log('examScheduleFormManager:', examScheduleFormManager);
+                if (examScheduleFormManager) {
+                    examScheduleFormManager.openAddModal();
+                } else {
+                    console.error('examScheduleFormManager chưa được khởi tạo');
+                }
+            });
+        } else {
+            console.error('Không tìm thấy nút btnAddExamSchedule');
+        }
+
         tableBody.addEventListener('click', async function (event) {
             const target = event.target.closest('[data-action]');
             if (!target) return;
@@ -405,17 +449,29 @@ document.addEventListener('DOMContentLoaded', function () {
             const scheduleId = target.dataset.schedule_id;
 
             switch (action) {
+                case 'edit-schedule':
+                    event.preventDefault();
+                    if (scheduleId && examScheduleFormManager) {
+                        examScheduleFormManager.openEditModal(scheduleId);
+                    }
+                    break;
                 case 'view-attendance':
-                    event.preventDefault(); // Chỉ chặn hành vi mặc định với link/button điều hướng
+                    event.preventDefault();
                     window.location.href = `/exam-schedules/show/${scheduleId}`;
                     break;
+                case 'manage-students':
+                    event.preventDefault();
+                    if (scheduleId) openManageStudentsModal(scheduleId);
+                    break;
+                case 'manage-supervisors':
+                    event.preventDefault();
+                    if (scheduleId) openManageSupervisorsModal(scheduleId);
+                    break;
                 case 'delete-schedule':
-                    event.preventDefault(); // Chặn hành vi mặc định (tránh reload hoặc cuộn trang nếu là thẻ a href="#")
+                    event.preventDefault();
                     if (scheduleId) deleteSchedule(scheduleId);
                     break;
                 case 'toggle-select':
-                    // QUAN TRỌNG: Không có event.preventDefault() ở đây
-                    // Để trình duyệt tự động render dấu tick
                     const checkbox = event.target.closest('.schedule-checkbox');
                     if (checkbox) toggleScheduleSelection(checkbox.value, checkbox.checked);
                     break;
@@ -495,6 +551,18 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function init() {
+        // Initialize form manager
+        console.log('Init function called');
+        console.log('ExamScheduleFormManager available:', typeof ExamScheduleFormManager !== 'undefined');
+
+        if (typeof ExamScheduleFormManager !== 'undefined') {
+            examScheduleFormManager = new ExamScheduleFormManager();
+            examScheduleFormManager.init();
+            console.log('examScheduleFormManager initialized:', examScheduleFormManager);
+        } else {
+            console.error('ExamScheduleFormManager class không tồn tại');
+        }
+
         setupEventListeners();
         setupExportHandlers();
         const { page, query, date } = getURLParams();

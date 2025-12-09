@@ -79,6 +79,9 @@
                     style="padding: 12px 20px; border-radius: 10px; font-size: 14px; height: 46px; background-color: #dc3545; color: white; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s;">
                     <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                 </button>
+                <a class="tf-button style-1 w208" href="#" id="btnAddExamSchedule">
+                    <i class="icon-plus"></i>Thêm Ca Thi
+                </a>
                 <a class="tf-button style-2 w208" href="#" id="importExcelBtn">
                     <i class="icon-upload"></i>Import Excel
                 </a>
@@ -89,12 +92,23 @@
         <div class="alert alert-info mt-3 mb-4" role="alert"
             style="font-size: 15px; padding: 16px 20px; border-radius: 10px; background-color: #e8f4ff; border: 1px solid #b3d9ff;">
             <div class="d-flex align-items-center">
-                <i class="icon-info" style="font-size: 20px; margin-right: 12px; color: #2377FC;"></i>
+
                 <div>
+                    <i class="icon-info" style="font-size: 20px; margin-right: 12px; color: #2377FC;"></i>
                     <strong style="font-size: 15px; color: #2377FC;">HƯỚNG DẪN:</strong>
+                    <hr>
                     <span style="color: #333; font-weight: 500;">
-                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để xem chi tiết ca thi
-                        tương ứng.
+                        <ul style="line-height: 1;">
+                            <li style="margin-bottom: 10px;">
+                                <i class="icon-clipboard" style="color: #2377FC;"></i> Chi tiết ca thi tương ứng.
+                            </li>
+                            <li style="margin-bottom: 10px;">
+                                <i class="icon-users" style="color: #2377FC;"></i> Quản lý thí sinh dự thi
+                            </li>
+                            <li style="margin-bottom: 10px;">
+                                <i class="icon-user-check" style="color: #2377FC;"></i> Quản lý giám thị coi thi
+                            </li>
+                        </ul>
                     </span>
                 </div>
             </div>
@@ -115,7 +129,7 @@
                         <th>Giờ Thi</th>
                         <th>Thời lượng</th>
                         <th>Phòng</th>
-                        <th style="width: 100px">Action</th>
+                        <th style="width: 210px">Action</th>
                     </tr>
                 </thead>
                 <tbody id="exam-schedules-table-body">
@@ -140,8 +154,29 @@
 
     <!-- Modals will be loaded here -->
     <div id="modal-container"></div>
+
+    <!-- Form Modal -->
+    @include('admin.exam-schedules.form-modal')
 @endsection
 
 @push('scripts')
+    <script>
+        // Test function
+        function testModal() {
+            console.log('Test button clicked');
+            const modalElement = document.getElementById('examScheduleFormModal');
+            console.log('Modal element:', modalElement);
+            if (modalElement) {
+                const modal = new bootstrap.Modal(modalElement);
+                console.log('Bootstrap modal created:', modal);
+                modal.show();
+            } else {
+                console.error('Modal element not found');
+            }
+        }
+    </script>
+    <script src="{{ asset('js/admin/exam-schedules-form.js') }}"></script>
+    <script src="{{ asset('js/admin/exam-schedules-students-modal.js') }}"></script>
+    <script src="{{ asset('js/admin/exam-schedules-supervisors-modal.js') }}"></script>
     <script src="{{ asset('js/admin/exam-schedules-index.js') }}"></script>
 @endpush

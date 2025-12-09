@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamSchedulesController;
+use App\Http\Controllers\ProfileController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -190,6 +191,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
         Route::get('/exam-schedules/modals/export', function () {
             return view('admin.exam-schedules.export-modal');
+        });
+
+        Route::get('/exam-schedules/{id}/modals/students', function ($id) {
+            return view('admin.exam-schedules.students-modal');
+        });
+
+        Route::get('/exam-schedules/{id}/modals/supervisors', function ($id) {
+            return view('admin.exam-schedules.supervisors-modal');
         });
 
         Route::get('/exam-schedules/{id}/export', [ExamSchedulesController::class, 'exportAttendance'])

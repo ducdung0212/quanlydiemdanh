@@ -37,16 +37,28 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('lecturers/import/preview', [LecturerController::class, 'previewImport']);
     Route::post('lecturers/import', [LecturerController::class, 'import']);
 
-    Route::apiResource('exam-schedules', ExamSchedulesController::class);
+    // Các route cụ thể phải đặt TRƯỚC apiResource
     Route::get('exam-schedules/my/schedule', [ExamSchedulesController::class, 'mySchedule']);
     Route::get('exam-schedules/today/all', [ExamSchedulesController::class, 'todayExams']);
     Route::get('exam-schedules/current/exam', [ExamSchedulesController::class, 'currentExam']);
     Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulkDelete'])->name('exam-schedules.bulk-delete');
     Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
     Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);
-    // Export routes
     Route::post('exam-schedules/export/multiple', [ExamSchedulesController::class, 'exportMultipleAttendance'])->name('exam-schedules.export.multiple');
     Route::post('exam-schedules/export/by-date', [ExamSchedulesController::class, 'exportByDate'])->name('exam-schedules.export.by-date');
+    
+    // Quản lý sinh viên tham gia ca thi
+    Route::get('exam-schedules/{id}/students', [ExamSchedulesController::class, 'getStudents']);
+    Route::post('exam-schedules/{id}/students', [ExamSchedulesController::class, 'addStudent']);
+    Route::delete('exam-schedules/{id}/students/{recordId}', [ExamSchedulesController::class, 'removeStudent']);
+    
+    // Quản lý giám thị ca thi
+    Route::get('exam-schedules/{id}/supervisors', [ExamSchedulesController::class, 'getSupervisors']);
+    Route::post('exam-schedules/{id}/supervisors', [ExamSchedulesController::class, 'addSupervisor']);
+    Route::delete('exam-schedules/{id}/supervisors/{supervisor_id}', [ExamSchedulesController::class, 'removeSupervisor']);
+    
+    // apiResource phải đặt SAU các route cụ thể
+    Route::apiResource('exam-schedules', ExamSchedulesController::class);
 
     Route::apiResource('exam-supervisors', ExamSupervisorController::class);
     Route::post('exam-supervisors/bulk-delete', [ExamSupervisorController::class, 'bulkDelete'])->name('exam-supervisors.bulk-delete');

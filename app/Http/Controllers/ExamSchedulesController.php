@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Exports\MultiExamSchedulesExport;
+use App\Http\Requests\ExamScheduleRequest;
 use App\Imports\ExamSchedulesImport;
 use App\Models\AttendanceRecord;
 use App\Models\ExamSchedule;
@@ -85,15 +86,31 @@ class ExamSchedulesController extends Controller
      */
     public function create()
     {
-        //
+        
     }
 
     /**
      * Store a newly created resource in storage.
      */
-    public function store(Request $request)
+    public function store(ExamScheduleRequest $request)
     {
-        //
+        try {
+            $validated = $request->validated();
+            
+            $examSchedule = ExamSchedule::create($validated);
+
+            return response()->json([
+                'success' => true,
+                'data' => $examSchedule->load('subject'),
+                'message' => 'Tạo ca thi thành công',
+            ], 201);
+        } catch (\Exception $e) {
+            Log::error('Error creating exam schedule: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi tạo ca thi: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -356,9 +373,33 @@ class ExamSchedulesController extends Controller
     /**
      * Update the specified resource in storage.
      */
-    public function update(Request $request, string $id)
+    public function update(ExamScheduleRequest $request, string $id)
     {
-        //
+        try {
+            $examSchedule = ExamSchedule::find($id);
+
+            if (!$examSchedule) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không tìm thấy ca thi',
+                ], 404);
+            }
+
+            $validated = $request->validated();
+            $examSchedule->update($validated);
+
+            return response()->json([
+                'success' => true,
+                'data' => $examSchedule->load('subject'),
+                'message' => 'Cập nhật ca thi thành công',
+            ]);
+        } catch (\Exception $e) {
+            Log::error('Error updating exam schedule: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi khi cập nhật ca thi: ' . $e->getMessage(),
+            ], 500);
+        }
     }
 
     /**
@@ -793,6 +834,245 @@ class ExamSchedulesController extends Controller
             'success' => true,
             'data' => $examSchedule,
             'message' => 'Ca thi hiện tại',
+        ]);
+    }
+
+    /**
+     * Lấy danh sách sinh viên tham gia ca thi
+     */
+    public function getStudents($id)
+    {
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        $students = AttendanceRecord::where('exam_schedule_id', $id)
+            ->with('student:student_code,full_name,class_code')
+            ->get()
+            ->map(function ($record) {
+                return [
+                    'student_code' => $record->student_code,
+                    'full_name' => $record->student->full_name ?? '',
+                    'class_code' => $record->student->class_code ?? '',
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $students,
+        ]);
+    }
+
+    /**
+     * Thêm sinh viên vào ca thi
+     */
+    public function addStudent(Request $request, $id)
+    {
+        $request->validate([
+            'student_code' => 'required|string',
+        ]);
+
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        // Kiểm tra sinh viên có tồn tại
+        $student = \App\Models\Student::where('student_code', $request->student_code)->first();
+        if (!$student) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy sinh viên với mã: ' . $request->student_code,
+            ], 404);
+        }
+
+        // Kiểm tra sinh viên đã tham gia ca thi này chưa
+        $exists = AttendanceRecord::where('exam_schedule_id', $id)
+            ->where('student_code', $request->student_code)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sinh viên đã tham gia ca thi này',
+            ], 400);
+        }
+
+        // Kiểm tra sinh viên có tham gia ca thi khác cùng thời gian không
+        $conflictExam = AttendanceRecord::whereHas('examSchedule', function ($query) use ($examSchedule) {
+            $query->where('exam_date', $examSchedule->exam_date)
+                ->where('exam_time', $examSchedule->exam_time);
+        })
+            ->where('student_code', $request->student_code)
+            ->where('exam_schedule_id', '!=', $id)
+            ->exists();
+
+        if ($conflictExam) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Sinh viên đã có ca thi khác cùng thời gian',
+            ], 400);
+        }
+
+        // Thêm sinh viên
+        AttendanceRecord::create([
+            'exam_schedule_id' => $id,
+            'student_code' => $request->student_code,
+            'rekognition_result' => null,
+            'attendance_time' => null,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã thêm sinh viên vào ca thi',
+        ]);
+    }
+
+    /**
+     * Xóa sinh viên khỏi ca thi
+     */
+    public function removeStudent($id, $student_code)
+    {
+        $deleted = AttendanceRecord::where('exam_schedule_id', $id)
+            ->where('student_code', $student_code)
+            ->delete();
+
+        if (!$deleted) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy sinh viên trong ca thi này',
+            ], 404);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa sinh viên khỏi ca thi',
+        ]);
+    }
+
+    /**
+     * Lấy danh sách giám thị ca thi
+     */
+    public function getSupervisors($id)
+    {
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        $supervisors = \App\Models\ExamSupervisor::where('exam_schedule_id', $id)
+            ->with('lecturer:lecturer_code,full_name')
+            ->get()
+            ->map(function ($supervisor) {
+                return [
+                    'lecturer_code' => $supervisor->lecturer_code,
+                    'full_name' => $supervisor->getLecturerName() ?? '',
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => $supervisors,
+        ]);
+    }
+
+    /**
+     * Thêm giám thị vào ca thi
+     */
+    public function addSupervisor(Request $request, $id)
+    {
+        $request->validate([
+            'lecturer_code' => 'required|string',
+        ]);
+
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        // Kiểm tra giảng viên có tồn tại
+        $lecturer = \App\Models\Lecturer::where('lecturer_code', $request->lecturer_code)->first();
+        if (!$lecturer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy giảng viên với mã: ' . $request->lecturer_code,
+            ], 404);
+        }
+
+        // Kiểm tra giảng viên đã là giám thị ca thi này chưa
+        $exists = \App\Models\ExamSupervisor::where('exam_schedule_id', $id)
+            ->where('lecturer_code', $request->lecturer_code)
+            ->exists();
+
+        if ($exists) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Giảng viên đã là giám thị ca thi này',
+            ], 400);
+        }
+
+        // Kiểm tra giảng viên có coi thi ca khác cùng thời gian không
+        $conflictExam = \App\Models\ExamSupervisor::whereHas('examSchedule', function ($query) use ($examSchedule) {
+            $query->where('exam_date', $examSchedule->exam_date)
+                ->where('exam_time', $examSchedule->exam_time);
+        })
+            ->where('lecturer_code', $request->lecturer_code)
+            ->where('exam_schedule_id', '!=', $id)
+            ->exists();
+
+        if ($conflictExam) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Giảng viên đã coi thi ca khác cùng thời gian',
+            ], 400);
+        }
+
+        // Thêm giám thị
+        \App\Models\ExamSupervisor::create([
+            'exam_schedule_id' => $id,
+            'lecturer_code' => $request->lecturer_code,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã thêm giám thị vào ca thi',
+        ]);
+    }
+
+    /**
+     * Xóa giám thị khỏi ca thi
+     */
+    public function removeSupervisor($id, $supervisor_id)
+    {
+        $supervisor = \App\Models\ExamSupervisor::where('id', $supervisor_id)
+            ->where('exam_schedule_id', $id)
+            ->first();
+
+        if (!$supervisor) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy giám thị trong ca thi này',
+            ], 404);
+        }
+
+        $supervisor->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đã xóa giám thị khỏi ca thi',
         ]);
     }
 }

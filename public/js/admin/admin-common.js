@@ -111,14 +111,22 @@ const AdminHelpers = {
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const html = await response.text();
 
-            const existingModal = document.querySelector('.modal');
+            // Chỉ xóa modal cùng ID nếu đã tồn tại
+            const existingModal = document.getElementById(modalId);
             if (existingModal) {
                 const modalInstance = bootstrap.Modal.getInstance(existingModal);
-                if (modalInstance) modalInstance.hide();
-                existingModal.parentElement.remove();
+                if (modalInstance) {
+                    modalInstance.hide();
+                }
+                // Xóa container của modal cũ
+                const container = existingModal.closest('.modal-container, div');
+                if (container && container.parentElement === document.body) {
+                    container.remove();
+                }
             }
 
             const tempDiv = document.createElement('div');
+            tempDiv.className = 'modal-container';
             tempDiv.innerHTML = html;
             document.body.appendChild(tempDiv);
 

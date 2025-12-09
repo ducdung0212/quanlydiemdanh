@@ -35,7 +35,7 @@ class Lecturer extends Model
         'updated_at' => 'datetime',
     ];
     public function faculty(): BelongsTo{
-        return $this->belongsTo(Faculty::class,'faculty_code','faculty_code');
+        return $this->belongsTo(Faculties::class,'faculty_code','faculty_code');
     }
     public function user(): BelongsTo{
         return $this->belongsTo(User::class,'user_id','id');
