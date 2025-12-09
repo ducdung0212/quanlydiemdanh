@@ -23,6 +23,10 @@ class AppServiceProvider extends ServiceProvider
     public function boot(): void
     {
         Schema::defaultStringLength(191);
+        // Register role middleware alias so routes can use ->middleware('role:admin')
+        if ($this->app->bound('router')) {
+            $this->app['router']->aliasMiddleware('role', \App\Http\Middleware\RoleMiddleware::class);
+        }
     }
 
 }

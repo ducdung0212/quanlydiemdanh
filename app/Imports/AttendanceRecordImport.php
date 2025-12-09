@@ -9,6 +9,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -24,21 +25,9 @@ class AttendanceRecordImport implements
     WithBatchInserts,
     SkipsEmptyRows
 {
-    /**
-     * Map of model attributes to heading keys chosen by the user.
-     *
-     * @var array<string, string>
-     */
     protected array $columnMap;
-
-    /**
-     * The heading row in the worksheet.
-     */
     protected int $headingRow;
 
-    /**
-     * @param  array<string, string|null>  $columnMap
-     */
     public function __construct(array $columnMap, int $headingRow = 1)
     {
         $normalized = collect($columnMap)
@@ -46,7 +35,6 @@ class AttendanceRecordImport implements
             ->map(fn ($column) => $this->normalizeColumnKey($column))
             ->toArray();
 
-        // Required mappings for natural key lookup + student
         foreach (['subject_code', 'exam_date', 'exam_time', 'room', 'student_code'] as $required) {
             if (empty($normalized[$required])) {
                 throw new InvalidArgumentException("Mapping for \"{$required}\" is required.");
@@ -57,15 +45,13 @@ class AttendanceRecordImport implements
         $this->headingRow = max(1, $headingRow);
     }
 
-    /**
-     * @inheritDoc
-     */
     public function collection(Collection $rows): void
     {
         $toUpsert = [];
         $studentCodes = [];
+        $skippedCount = 0;
 
-        foreach ($rows as $row) {
+        foreach ($rows as $index => $row) {
             if ($row instanceof Collection) {
                 $row = $row->toArray();
             }
@@ -74,23 +60,33 @@ class AttendanceRecordImport implements
                 continue;
             }
 
-            // Normalize incoming row keys to snake_case for safe lookups
             $row = collect($row)
                 ->mapWithKeys(fn ($value, $key) => [$this->normalizeColumnKey((string) $key) => $value])
                 ->toArray();
 
+            $rawDate = $this->getValueFromRow($row, 'exam_date');
+
             $subjectCode = $this->getValueFromRow($row, 'subject_code');
-            $examDate = $this->normalizeDate($this->getValueFromRow($row, 'exam_date'));
+            $examDate = $this->normalizeDate($rawDate);
             $examTime = $this->normalizeTime($this->getValueFromRow($row, 'exam_time'));
             $room = $this->getValueFromRow($row, 'room');
             $studentCode = $this->getValueFromRow($row, 'student_code');
 
-            // Skip rows missing required data after normalization
+            // Xử lý Attendance Time
+            // Lấy giá trị từ file excel, nếu có thì format, nếu không thì để null
+            $attendanceTime = $this->normalizeDateTime($this->getValueFromRow($row, 'attendance_time'));
+
             if (!$subjectCode || !$examDate || !$examTime || !$room || !$studentCode) {
+                $skippedCount++;
+                Log::warning("Attendance Import: Dòng " . ($index + $this->headingRow + 1) . " bị bỏ qua - Dữ liệu không hợp lệ", [
+                    'raw_date' => $rawDate,
+                    'parsed_date' => $examDate,
+                    'student_code' => $studentCode,
+                    'subject_code' => $subjectCode
+                ]);
                 continue;
             }
 
-            // Lookup ExamSchedule by natural key
             $examSchedule = ExamSchedule::where([
                 ['subject_code', '=', $subjectCode],
                 ['exam_date', '=', $examDate],
@@ -99,21 +95,25 @@ class AttendanceRecordImport implements
             ])->first();
 
             if (!$examSchedule) {
-                // Skip if exam session not found
+                $skippedCount++;
+                Log::warning("Attendance Import: Dòng " . ($index + $this->headingRow + 1) . " bị bỏ qua - Không tìm thấy ca thi", [
+                    'subject' => $subjectCode, 'date' => $examDate, 'room' => $room
+                ]);
                 continue;
             }
 
-            // Optional payload fields if mapped
-            // NOTE: attendance_time should NOT be imported, it should only be set during actual attendance marking
-            
+            // Lọc các trường payload khác (image, confidence...)
             $payload = array_filter([
                 'captured_image_url' => $this->getValueFromRow($row, 'captured_image_url'),
                 'rekognition_result' => $this->getValueFromRow($row, 'rekognition_result'),
                 'confidence' => $this->getValueFromRow($row, 'confidence'),
-                // attendance_time is intentionally excluded from import
             ], fn ($value) => !is_null($value));
 
-            // Collect rows to upsert later. We'll verify students exist first to avoid FK errors.
+            // [QUAN TRỌNG] Gán attendance_time một cách tường minh.
+            // Nếu $attendanceTime là null, nó sẽ gửi null vào DB, ngăn chặn DB tự lấy NOW().
+            // Việc gán này nằm ngoài array_filter phía trên.
+            $payload['attendance_time'] = $attendanceTime;
+
             $toUpsert[] = [
                 'exam_schedule_id' => $examSchedule->id,
                 'student_code' => $studentCode,
@@ -123,7 +123,6 @@ class AttendanceRecordImport implements
             $studentCodes[] = $studentCode;
         }
 
-        // If there are candidate rows, validate all referenced students exist before DB writes
         $studentCodes = array_values(array_unique(array_filter($studentCodes, fn($v) => $v !== null && $v !== '')));
 
         if (!empty($studentCodes)) {
@@ -131,13 +130,10 @@ class AttendanceRecordImport implements
             $missing = array_values(array_diff($studentCodes, $existing));
 
             if (!empty($missing)) {
-                // Throw a clear validation error listing missing student codes — controller will
-                // convert InvalidArgumentException into a 422 JSON response.
                 throw new InvalidArgumentException('Các mã sinh viên sau không tồn tại: ' . implode(', ', $missing));
             }
         }
 
-        // All students exist — perform upserts
         foreach ($toUpsert as $item) {
             AttendanceRecord::updateOrCreate(
                 [
@@ -146,6 +142,10 @@ class AttendanceRecordImport implements
                 ],
                 $item['payload']
             );
+        }
+        
+        if ($skippedCount > 0) {
+            Log::info("Attendance Import Batch: Đã bỏ qua {$skippedCount} dòng do lỗi dữ liệu.");
         }
     }
 
@@ -164,47 +164,24 @@ class AttendanceRecordImport implements
         return 200;
     }
 
-    /**
-     * Safely get a value from a normalized row using the configured column map.
-     */
     protected function getValueFromRow(array $row, string $attribute): mixed
     {
         $columnKey = $this->columnMap[$attribute] ?? null;
-
-        if (!$columnKey) {
-            return null;
-        }
-
-        if (!Arr::exists($row, $columnKey)) {
-            return null;
-        }
-
+        if (!$columnKey || !Arr::exists($row, $columnKey)) return null;
         $value = $row[$columnKey];
-
-        if (is_string($value)) {
-            $value = trim($value);
-        }
-
-        if ($value === '') {
-            return null;
-        }
-
-        return $value;
+        if (is_string($value)) $value = trim($value);
+        return ($value === '') ? null : $value;
     }
 
-    /**
-     * Normalize user-provided heading/column keys to snake_case.
-     */
     protected function normalizeColumnKey(string $column): string
     {
         return Str::slug($column, '_');
     }
 
-    /**
-     * Normalize various date representations to Y-m-d.
-     */
     protected function normalizeDate(mixed $value): ?string
     {
+        if (empty($value)) return null;
+
         if ($value instanceof \DateTimeInterface) {
             return Carbon::instance($value)->toDateString();
         }
@@ -212,75 +189,85 @@ class AttendanceRecordImport implements
         if (is_numeric($value)) {
             try {
                 return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->toDateString();
-            } catch (\Throwable) {
-                return null;
-            }
+            } catch (\Throwable) { return null; }
         }
 
         if (is_string($value) && $value !== '') {
+            $value = trim($value);
+            try {
+                if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value)) {
+                    return Carbon::createFromFormat('d/m/Y', $value)->toDateString();
+                }
+            } catch (\Throwable) {}
+
             try {
                 return Carbon::parse($value)->toDateString();
-            } catch (\Throwable) {
-                return null;
-            }
+            } catch (\Throwable) { return null; }
         }
 
         return null;
     }
 
-    /**
-     * Normalize various time representations to H:i:s.
-     */
+    // Thêm hàm này để xử lý ngày giờ đầy đủ
+    protected function normalizeDateTime(mixed $value): ?string
+    {
+        if (empty($value)) return null;
+
+        if ($value instanceof \DateTimeInterface) {
+            return Carbon::instance($value)->format('Y-m-d H:i:s');
+        }
+
+        if (is_numeric($value)) {
+            try {
+                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->format('Y-m-d H:i:s');
+            } catch (\Throwable) { return null; }
+        }
+
+        if (is_string($value) && $value !== '') {
+            $value = trim($value);
+            // Thử format d/m/Y H:i:s
+            try {
+                return Carbon::createFromFormat('d/m/Y H:i:s', $value)->format('Y-m-d H:i:s');
+            } catch (\Throwable) {}
+            
+            // Thử format d/m/Y H:i
+            try {
+                return Carbon::createFromFormat('d/m/Y H:i', $value)->format('Y-m-d H:i:s');
+            } catch (\Throwable) {}
+
+            // Fallback sang parse thông thường
+            try {
+                return Carbon::parse($value)->format('Y-m-d H:i:s');
+            } catch (\Throwable) { return null; }
+        }
+
+        return null;
+    }
+
     protected function normalizeTime(mixed $value): ?string
     {
         if ($value instanceof \DateTimeInterface) {
-            return Carbon::instance($value)->toTimeString();
+            return Carbon::instance($value)->format('H:i:s');
         }
-
         if (is_numeric($value)) {
             try {
-                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->toTimeString();
-            } catch (\Throwable) {
-                return null;
-            }
+                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->format('H:i:s');
+            } catch (\Throwable) { return null; }
         }
-
         if (is_string($value) && $value !== '') {
             try {
-                return Carbon::parse($value)->toTimeString();
+                return Carbon::parse($value)->format('H:i:s');
             } catch (\Throwable) {
+                $clean = preg_replace('/[^0-9:]/', '', $value);
+                if ($clean && preg_match('/^\d{1,2}:\d{2}(?::\d{2})?$/', $clean)) {
+                    try {
+                        $format = strlen($clean) === 5 ? 'H:i' : 'H:i:s';
+                        return Carbon::createFromFormat($format, $clean)->format('H:i:s');
+                    } catch (\Throwable) { return null; }
+                }
                 return null;
             }
         }
-
-        return null;
-    }
-
-    /**
-     * Normalize various datetime representations to Y-m-d H:i:s.
-     */
-    protected function normalizeDateTime(mixed $value): ?string
-    {
-        if ($value instanceof \DateTimeInterface) {
-            return Carbon::instance($value)->toDateTimeString();
-        }
-
-        if (is_numeric($value)) {
-            try {
-                return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->toDateTimeString();
-            } catch (\Throwable) {
-                return null;
-            }
-        }
-
-        if (is_string($value) && $value !== '') {
-            try {
-                return Carbon::parse($value)->toDateTimeString();
-            } catch (\Throwable) {
-                return null;
-            }
-        }
-
         return null;
     }
 }

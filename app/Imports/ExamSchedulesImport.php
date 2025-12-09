@@ -7,6 +7,7 @@ use Carbon\Carbon;
 use Illuminate\Support\Arr;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Str;
+use Illuminate\Support\Facades\Log;
 use InvalidArgumentException;
 use Maatwebsite\Excel\Concerns\SkipsEmptyRows;
 use Maatwebsite\Excel\Concerns\ToCollection;
@@ -39,6 +40,7 @@ class ExamSchedulesImport implements
      */
     public function __construct(array $columnMap, int $headingRow = 1)
     {
+        // Chuẩn hóa mapping key về dạng slug gạch dưới (snake_case)
         $normalized = collect($columnMap)
             ->filter(fn ($column) => filled($column))
             ->map(fn ($column) => $this->normalizeColumnKey($column))
@@ -59,7 +61,10 @@ class ExamSchedulesImport implements
      */
     public function collection(Collection $rows): void
     {
-        foreach ($rows as $row) {
+        $successCount = 0;
+        $skipCount = 0;
+
+        foreach ($rows as $index => $row) {
             if ($row instanceof Collection) {
                 $row = $row->toArray();
             }
@@ -68,21 +73,36 @@ class ExamSchedulesImport implements
                 continue;
             }
 
+            // Chuẩn hóa key của row dữ liệu từ Excel để khớp với mapping
             $row = collect($row)
                 ->mapWithKeys(fn ($value, $key) => [$this->normalizeColumnKey((string) $key) => $value])
                 ->toArray();
 
+            // Lấy dữ liệu thô để debug nếu cần
+            $rawDate = $this->getValueFromRow($row, 'exam_date');
+            
             $subjectCode = $this->getValueFromRow($row, 'subject_code');
-            $examDate = $this->normalizeDate($this->getValueFromRow($row, 'exam_date'));
+            $examDate = $this->normalizeDate($rawDate);
             $examTime = $this->normalizeTime($this->getValueFromRow($row, 'exam_time'));
             $duration = $this->normalizeDuration($this->getValueFromRow($row, 'duration'));
 
+            // LOGGING: Kiểm tra xem có trường nào bị null không
             if (!$subjectCode || !$examDate || !$examTime || !$duration) {
+                $skipCount++;
+                // Ghi log cảnh báo để debug (xem trong storage/logs/laravel.log)
+                Log::warning("ExamSchedulesImport: Bỏ qua dòng số " . ($index + $this->headingRow + 1), [
+                    'reason' => 'Thiếu dữ liệu hoặc sai định dạng',
+                    'raw_date_input' => $rawDate,
+                    'parsed_date' => $examDate,
+                    'subject_code' => $subjectCode,
+                    'exam_time' => $examTime,
+                    'duration' => $duration
+                ]);
                 continue;
             }
 
             $room = $this->getValueFromRow($row, 'room');
-
+            
             $payload = array_filter([
                 'room' => $room,
                 'note' => $this->getValueFromRow($row, 'note'),
@@ -98,7 +118,10 @@ class ExamSchedulesImport implements
                 ],
                 $payload
             );
+            $successCount++;
         }
+
+        Log::info("ExamSchedulesImport: Hoàn tất batch. Thành công: {$successCount}, Bỏ qua: {$skipCount}");
     }
 
     public function headingRow(): int
@@ -143,15 +166,20 @@ class ExamSchedulesImport implements
 
     protected function normalizeColumnKey(string $column): string
     {
+        // Luôn sử dụng separator là '_' để đồng bộ giữa mapping và row keys
         return Str::slug($column, '_');
     }
 
     protected function normalizeDate(mixed $value): ?string
     {
+        if (empty($value)) return null;
+
+        // Trường hợp 1: Excel Date Object
         if ($value instanceof \DateTimeInterface) {
             return Carbon::instance($value)->toDateString();
         }
 
+        // Trường hợp 2: Số serial của Excel (VD: 45250)
         if (is_numeric($value)) {
             try {
                 return Carbon::instance(ExcelDate::excelToDateTimeObject($value))->toDateString();
@@ -160,7 +188,20 @@ class ExamSchedulesImport implements
             }
         }
 
+        // Trường hợp 3: Chuỗi ký tự
         if (is_string($value) && $value !== '') {
+            $value = trim($value);
+            
+            // Ưu tiên format Việt Nam: d/m/Y (VD: 25/11/2025)
+            try {
+                if (preg_match('/^\d{1,2}\/\d{1,2}\/\d{4}$/', $value)) {
+                    return Carbon::createFromFormat('d/m/Y', $value)->toDateString();
+                }
+            } catch (\Throwable) {
+                // Tiếp tục thử format khác nếu lỗi
+            }
+
+            // Format quốc tế hoặc mặc định (Y-m-d, m/d/Y...)
             try {
                 return Carbon::parse($value)->toDateString();
             } catch (\Throwable) {

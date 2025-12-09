@@ -47,11 +47,6 @@
                             <input type="email" class="form-control" id="email" name="email">
                             <div class="invalid-feedback"></div>
                         </div>
-                        <div class="col-md-6 mb-4">
-                            <label for="avatar_url" class="form-label">Link Ảnh đại diện</label>
-                            <input type="url" class="form-control" id="avatar_url" name="photo_url" placeholder="https://example.com/image.jpg">
-                            <div class="invalid-feedback"></div>
-                        </div>
                     </div>
                 </div>
                 <div class="modal-footer">

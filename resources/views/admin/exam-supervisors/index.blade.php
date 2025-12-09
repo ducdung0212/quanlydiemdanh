@@ -23,15 +23,15 @@
             <div class="wg-filter flex-grow">
                 <form class="form-search" id="searchForm">
                     <fieldset class="name">
-                        <input type="text" placeholder="Tìm kiếm theo tên giảng viên, môn học,..." class="" name="q"
-                            tabindex="2" value="" aria-required="true" id="searchInput">
+                        <input type="text" placeholder="Tìm kiếm theo tên giảng viên, môn học,..." class=""
+                            name="q" tabindex="2" value="" aria-required="true" id="searchInput">
                     </fieldset>
                     <div class="button-submit">
                         <button class="" type="submit"><i class="icon-search"></i></button>
                     </div>
                 </form>
             </div>
-            <div class="d-flex gap10 align-items-center">           
+            <div class="d-flex gap10 align-items-center">
                 <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
                     <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                 </button>
@@ -42,33 +42,34 @@
         </div>
 
         <div class="table-responsive mt-3">
-           <table id="exam-supervisors-table" class="table table-striped table-bordered">
-    <thead>
-        <tr>
-            <th style="width: 50px; text-align: center;">
-                <input type="checkbox" id="selectAll" style="cursor: pointer;">
-            </th>
-            <th style="width: 60px; text-align: center;">STT</th>
-            <th style="text-align: left;">Mã Ca Thi</th>
-            <th style="text-align: left;">Môn học</th>
-            <th style="text-align: left;">Ngày thi</th>
-            <th style="text-align: left;">Giờ thi</th>
-            <th style="text-align: left;">Phòng thi</th>
-            <th style="text-align: left;">Mã Giảng Viên</th>
-            <th style="text-align: left;">Tên Giảng Viên</th>
-            <th style="width: 100px; text-align: center;">Action</th>
-        </tr>
-    </thead>
-    <tbody id="exam-supervisors-table-body">
-        <!-- JavaScript sẽ render dữ liệu ở đây -->
-    </tbody>
-</table>
+            <table id="exam-supervisors-table" class="table table-striped table-bordered">
+                <thead>
+                    <tr>
+                        <th style="width: 50px; text-align: center;">
+                            <input type="checkbox" id="selectAll" style="cursor: pointer;">
+                        </th>
+                        <th style="width: 60px; text-align: center;">STT</th>
+                        <th style="text-align: left;">Mã Ca Thi</th>
+                        <th style="text-align: left;">Môn học</th>
+                        <th style="text-align: left;">Ngày thi</th>
+                        <th style="text-align: left;">Giờ thi</th>
+                        <th style="text-align: left;">Phòng thi</th>
+                        <th style="text-align: left;">Mã Giảng Viên</th>
+                        <th style="text-align: left;">Tên Giảng Viên</th>
+                        <th style="width: 100px; text-align: center;">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="exam-supervisors-table-body">
+                    <!-- JavaScript sẽ render dữ liệu ở đây -->
+                </tbody>
+            </table>
         </div>
 
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> giám thị
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span
+                    id="pagination-total">0</span> giám thị
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">

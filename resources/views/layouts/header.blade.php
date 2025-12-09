@@ -28,32 +28,54 @@
         <div class="header-grid" style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
             <div class="popup-wrap user type-header">
                 <div class="dropdown">
-                    <a class="dropdown-toggle" href="{{ route('profile.edit') }}" role="button" id="dropdownMenuLink" aria-expanded="false">
-                        <span class="header-user wg-user">
-                            <span class="image">
-                                <img src="{{ asset('images/avatar/user-1.png') }}" alt="">
+                    <a class="dropdown-toggle d-flex align-items-center" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                        <span class="header-user wg-user d-flex align-items-center">
+                            <span class="image me-2">
+                                <img src="{{ asset('images/avatar/user-1.png') }}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                             </span>
-                            <span class="flex flex-column">
-                                <span class="body-title mb-2">{{ Auth::user()->name }}</span>
+                            <span class="flex flex-column text-start">
+                                <span class="body-title mb-0">{{ Auth::user()->name }}</span>
                                 <span class="text-tiny">{{ Auth::user()->role }}</span>
                             </span>
                         </span>
                     </a>
+                    <ul class="dropdown-menu dropdown-menu-end" aria-labelledby="dropdownMenuLink">
+                        <li>
+                            <a class="dropdown-item" href="{{ route('profile.edit') }}">Xem hồ sơ</a>
+                        </li>
+                        <li>
+                            <form method="POST" action="{{ route('logout') }}" id="logoutFormDropdown">
+                                @csrf
+                                <button type="submit" class="dropdown-item">Đăng xuất</button>
+                            </form>
+                        </li>
+                    </ul>
                 </div>
             </div>
 
-            <div class="logout-button">
-                <form method="POST" action="{{ route('logout') }}" class="inline">
-                    @csrf
-                    <a href="{{ route('logout') }}"
-                        onclick="event.preventDefault(); this.closest('form').submit();"
-                        class="user-item flex items-center" 
-                        title="Đăng xuất"
-                        style="font-size: 24px; color: #555; text-decoration: none; margin-left:-70px ">
-                        <i class="icon-log-out"></i>
-                    </a>
-                </form>
-            </div>
+     
+            
         </div>
     </div>
 </div>
+
+
+
+<script>
+    document.addEventListener('DOMContentLoaded', function () {
+        const btn = document.getElementById('openProfileEdit');
+        if (btn) {
+            btn.addEventListener('click', function (e) {
+                e.preventDefault();
+                const modalEl = document.getElementById('profileEditModal');
+                if (modalEl) {
+                    const modal = new bootstrap.Modal(modalEl);
+                    modal.show();
+                } else {
+                    // fallback: navigate to profile page
+                    window.location.href = '{{ route('profile.edit') }}';
+                }
+            });
+        }
+    });
+</script>

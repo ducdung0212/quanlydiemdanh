@@ -35,7 +35,7 @@
                 <select class="form-select" id="sessionFilter" style="width: 220px; font-size: 14px; padding: 10px 12px;">
                     <option value="">Tất cả ca thi</option>
                 </select>
-                
+
                 <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
                     <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                 </button>
@@ -68,7 +68,8 @@
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> sinh viên
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span
+                    id="pagination-total">0</span> sinh viên
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">

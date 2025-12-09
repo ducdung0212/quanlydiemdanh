@@ -43,20 +43,23 @@ class StudentFaceRegistrationController extends Controller
                 $fileName = $file['file_name'];
                 $fileType = $file['file_type'];
 
-                // Tách student_code từ tên tệp (ví dụ: "SV001.jpg" -> "SV001")
+                // Tách student_code từ tên tệp (ví dụ: "DH52025001.jpg" -> "DH52025001")
                 $studentCode = pathinfo($fileName, PATHINFO_FILENAME);
+                $extension = strtolower(pathinfo($fileName, PATHINFO_EXTENSION));
 
-                if (empty($studentCode)) {
+                // Kiểm tra format: DH + 8 chữ số
+                if (empty($studentCode) || !preg_match('/^DH\d{8}$/i', $studentCode) || !in_array($extension, ['jpg', 'jpeg', 'png'])) {
                     $uploadUrls[] = [
                         'file_name' => $fileName,
                         'success' => false,
-                        'message' => 'Tên tệp không hợp lệ.'
+                        'message' => 'Tên tệp phải có định dạng DHxxxxxxxx.jpg (x là chữ số) và định dạng ảnh hợp lệ (jpg/jpeg/png).'
                     ];
                     continue; // Bỏ qua tệp này
                 }
 
-                // Đường dẫn trên S3
-                $s3Key = "images_to_register/{$fileName}";
+                // An toàn hóa tên tệp khi lưu trên S3
+                $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
+                $s3Key = "images_to_register/{$safeFileName}";
 
                 // 4. Tạo Presigned Request cho tệp này
                 $cmd = $s3Client->getCommand('PutObject', [

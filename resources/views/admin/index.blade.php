@@ -12,47 +12,45 @@
         </ul>
     </div>
 
-    {{-- Statistics Cards --}}
-    <div class="row mb-4">
-        <div class="col-md-3">
-            <div class="wg-box">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="text-tiny text-secondary">Tổng sinh viên</div>
-                        <h4 class="mb-0" id="totalStudents">0</h4>
-                    </div>
-                    <div class="icon-box">
-                        <i class="icon-user" style="font-size: 2rem; color: #2377FC;"></i>
-                    </div>
-                </div>
+    {{-- Ongoing Exams Section --}}
+    <div class="wg-box">
+        <div class="flex items-center justify-between mb-20">
+            <h5>Ca thi đang diễn ra</h5>
+            <div class="text-tiny text-secondary">
+                <i class="icon-clock"></i> Cập nhật: <span id="lastUpdate">{{ now()->format('H:i - d/m/Y') }}</span>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="wg-box">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="text-tiny text-secondary">Tổng giảng viên</div>
-                        <h4 class="mb-0" id="totalTeachers">0</h4>
-                    </div>
-                    <div class="icon-box">
-                        <i class="icon-users" style="font-size: 2rem; color: #52c41a;"></i>
-                    </div>
+
+        {{-- Search Box --}}
+        <div class="search-box-wrapper mb-20">
+            <div class="search-input-group">
+                <i class="icon-search"></i>
+                <input type="text" 
+                       id="searchInput"
+                       class="search-input" 
+                       placeholder="Tìm kiếm theo phòng thi, tên môn học, mã môn học..." 
+                       autocomplete="off">
+                <button type="button" id="clearSearch" class="clear-search" style="display: none;" title="Xóa tìm kiếm">
+                    <i class="icon-x"></i>
+                </button>
+                <div id="searchLoading" class="search-loading" style="display: none;">
+                    <div class="spinner"></div>
                 </div>
             </div>
+            <div id="searchResultInfo" class="search-result-info" style="display: none;">
+                <span class="text-tiny"></span>
+            </div>
         </div>
-        <div class="col-md-3">
-            <div class="wg-box">
-                <div class="flex items-center justify-between">
-                    <div>
-                        <div class="text-tiny text-secondary">Điểm danh hôm nay</div>
-                        <h4 class="mb-0" id="todayAttendance">0</h4>
-                    </div>
-                    <div class="icon-box">
-                        <i class="icon-check-circle" style="font-size: 2rem; color: #13c2c2;"></i>
-                    </div>
-                </div>
+
+        {{-- Exams Container --}}
+        <div id="ongoingExamsContainer">
+            <div class="text-center py-5" id="loadingState">
+                <div class="spinner-large mb-3"></div>
+                <p class="text-secondary">Đang tải dữ liệu...</p>
             </div>
         </div>
     </div>
 @endsection
-
+@push('scripts')
+    <script src="{{ asset('js/admin/dashboard.js') }}"></script>
+@endpush

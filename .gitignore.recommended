@@ -1,0 +1,146 @@
+# Updated .gitignore for Laravel 12
+# Add these entries to your existing .gitignore
+
+# ============================================
+# IDE & Editors
+# ============================================
+/.fleet
+/.idea
+/.nova
+/.vscode
+/.zed
+.phpactor.json
+.DS_Store
+Thumbs.db
+
+# ============================================
+# Laravel Framework
+# ============================================
+/vendor
+/node_modules
+/public/hot
+/public/storage
+/public/build
+/storage/*.key
+/storage/pail
+
+# ============================================
+# Environment & Config
+# ============================================
+.env
+.env.backup
+.env.production
+.env.local
+.env.*.local
+auth.json
+Homestead.json
+Homestead.yaml
+
+# ============================================
+# Testing & CI
+# ============================================
+.phpunit.result.cache
+/.phpunit.cache
+phpunit.xml
+/coverage
+
+# ============================================
+# Logs
+# ============================================
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# ============================================
+# Cache & Temp Files
+# ============================================
+/bootstrap/cache/*
+!/bootstrap/cache/.gitignore
+
+/storage/framework/cache/*
+!/storage/framework/cache/.gitignore
+!/storage/framework/cache/data
+/storage/framework/cache/data/*
+!/storage/framework/cache/data/.gitignore
+
+/storage/framework/sessions/*
+!/storage/framework/sessions/.gitignore
+
+/storage/framework/views/*
+!/storage/framework/views/.gitignore
+
+/storage/logs/*
+!/storage/logs/.gitignore
+
+# ============================================
+# Build Artifacts
+# ============================================
+/public/css/app.css
+/public/js/app.js
+/public/mix-manifest.json
+public_html
+
+# ============================================
+# Database
+# ============================================
+*.sqlite
+*.sqlite-journal
+*.sql
+*.dump
+/database/*.sqlite
+/database/*.sqlite-journal
+
+# ============================================
+# OS Files
+# ============================================
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+desktop.ini
+
+# ============================================
+# Composer
+# ============================================
+composer.phar
+composer.lock  # Uncomment if not committing lock file
+
+# ============================================
+# NPM / Yarn
+# ============================================
+/node_modules
+npm-debug.log
+yarn-error.log
+package-lock.json  # Uncomment if using yarn
+# yarn.lock  # Uncomment if using npm
+
+# ============================================
+# Docker (if using)
+# ============================================
+/docker-compose.override.yml
+/.docker
+
+# ============================================
+# Backup Files
+# ============================================
+*.bak
+*.swp
+*.swo
+*~
+
+# ============================================
+# Laravel Specific
+# ============================================
+/_ide_helper.php
+/_ide_helper_models.php
+/.phpstorm.meta.php
+.phpunit.result.cache
+
+# ============================================
+# Custom (Project Specific)
+# ============================================
+# Add your custom ignores here

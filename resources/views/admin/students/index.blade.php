@@ -65,7 +65,8 @@
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> sinh viên
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span
+                    id="pagination-total">0</span> sinh viên
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">

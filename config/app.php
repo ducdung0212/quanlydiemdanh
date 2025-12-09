@@ -65,7 +65,7 @@ return [
     |
     */
 
-    'timezone' => 'UTC',
+    'timezone' => 'Asia/Ho_Chi_Minh',
 
     /*
     |--------------------------------------------------------------------------
@@ -127,6 +127,6 @@ return [
     | Import Excel
     |--------------------------------------------------------------------------
     */
-    Mattwebsite\Excel\ExcelServiceProvider::class,
+    Maatwebsite\Excel\ExcelServiceProvider::class,
     'Excel' => Maatwebsite\Excel\Facades\Excel::class,
 ];

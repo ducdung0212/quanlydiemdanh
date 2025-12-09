@@ -110,14 +110,14 @@
                         </a>
                     </li>
                     
-                    <li class="menu-item">
+                    {{-- <li class="menu-item">
                         <a href="{{ route('attendance')}}" class="menu-item-button">
                             <div class="icon">
                                 <img src="{{ asset('images/icon/attendance.svg') }}" alt="Điểm danh" class="svg-icon">
                             </div>
                             <div class="text">Điểm danh</div>
                         </a>
-                    </li>
+                    </li> --}}
                 </ul>
             </div>
         @else

@@ -38,29 +38,23 @@ document.addEventListener('DOMContentLoaded', function () {
     // Format various date inputs to dd-mm-YYYY
     function formatDate(dateStr) {
         if (!dateStr) return '';
-
-        // If it's ISO or contains time, take the date part before 'T'
         const datePart = String(dateStr).split('T')[0];
         const parts = datePart.split('-');
         if (parts.length === 3) {
-            // parts: [YYYY, MM, DD]
             return `${parts[2]}-${parts[1]}-${parts[0]}`;
         }
-
-        // Fallback: try to parse with Date
         const d = new Date(dateStr);
         if (!isNaN(d.getTime())) {
             return `${pad(d.getDate())}-${pad(d.getMonth() + 1)}-${d.getFullYear()}`;
         }
-
         return String(dateStr);
     }
 
-    // Format time strings like '09:51:06' or '09:51:06.000000' to 'HH:MM'
+    // Format time strings like '09:51:06' to 'HH:MM'
     function formatTime(timeStr) {
         if (!timeStr) return '';
-        let t = String(timeStr).split('.')[0]; // remove microseconds
-        if (t.includes('T')) t = t.split('T')[1] || t; // handle datetime
+        let t = String(timeStr).split('.')[0];
+        if (t.includes('T')) t = t.split('T')[1] || t;
         const parts = t.split(':');
         if (parts.length >= 2) {
             return `${pad(parts[0])}:${pad(parts[1])}`;
@@ -68,7 +62,7 @@ document.addEventListener('DOMContentLoaded', function () {
         return t;
     }
 
-    // Format duration (minutes) to display format
+    // Format duration
     function formatDuration(minutes) {
         if (!minutes || isNaN(minutes)) return '';
         const mins = parseInt(minutes, 10);
@@ -148,6 +142,11 @@ document.addEventListener('DOMContentLoaded', function () {
         }).join('');
 
         tableBody.innerHTML = rowsHtml;
+        // Sau khi render, cập nhật lại trạng thái checked cho các checkbox
+        const checkboxes = tableBody.querySelectorAll('.schedule-checkbox');
+        checkboxes.forEach(checkbox => {
+            checkbox.checked = selectedSchedules.has(checkbox.value);
+        });
     }
 
     function renderPagination() {
@@ -156,7 +155,6 @@ document.addEventListener('DOMContentLoaded', function () {
             updatePaginationInfo(paginationInfo, paginationData);
             return;
         }
-
         paginationContainer.innerHTML = renderPaginationHTML(paginationData);
         updatePaginationInfo(paginationInfo, paginationData);
     }
@@ -164,19 +162,13 @@ document.addEventListener('DOMContentLoaded', function () {
     function updateBulkDeleteButton() {
         const count = selectedSchedules.size;
         selectedCountSpan.textContent = count;
-        if (count > 0) {
-            btnBulkDelete.classList.remove('d-none');
-        } else {
-            btnBulkDelete.classList.add('d-none');
-        }
+        if (count > 0) btnBulkDelete.classList.remove('d-none');
+        else btnBulkDelete.classList.add('d-none');
     }
 
     function toggleScheduleSelection(scheduleId, isSelected) {
-        if (isSelected) {
-            selectedSchedules.add(scheduleId);
-        } else {
-            selectedSchedules.delete(scheduleId);
-        }
+        if (isSelected) selectedSchedules.add(scheduleId);
+        else selectedSchedules.delete(scheduleId);
         updateBulkDeleteButton();
         updateSelectAllCheckbox();
     }
@@ -197,16 +189,48 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function toggleSelectAll(event) {
         const isChecked = event.target.checked;
-        const checkboxes = tableBody.querySelectorAll('.schedule-checkbox');
-        checkboxes.forEach(checkbox => {
-            checkbox.checked = isChecked;
-            toggleScheduleSelection(checkbox.value, isChecked);
-        });
+        if (isChecked) {
+            fetch('/api/exam-schedules?limit=100000')
+                .then(res => res.json())
+                .then(result => {
+                    if (result.success && result.data && result.data.data) {
+                        result.data.data.forEach(schedule => {
+                            selectedSchedules.add(String(schedule.id));
+                        });
+                        const checkboxes = tableBody.querySelectorAll('.schedule-checkbox');
+                        checkboxes.forEach(checkbox => {
+                            checkbox.checked = true;
+                        });
+                        updateBulkDeleteButton();
+                        updateSelectAllCheckbox();
+                        // Cập nhật số lượng cạnh nút export
+                        const exportSelectedCount = document.getElementById('exportSelectedCount');
+                        if (exportSelectedCount) exportSelectedCount.textContent = selectedSchedules.size;
+                        const btnExportSelected = document.getElementById('btnExportSelected');
+                        if (btnExportSelected) {
+                            if (selectedSchedules.size > 0) btnExportSelected.classList.remove('d-none');
+                            else btnExportSelected.classList.add('d-none');
+                        }
+                    }
+                });
+        } else {
+            selectedSchedules.clear();
+            const checkboxes = tableBody.querySelectorAll('.schedule-checkbox');
+            checkboxes.forEach(checkbox => {
+                checkbox.checked = false;
+            });
+            updateBulkDeleteButton();
+            updateSelectAllCheckbox();
+            // Cập nhật số lượng cạnh nút export
+            const exportSelectedCount = document.getElementById('exportSelectedCount');
+            if (exportSelectedCount) exportSelectedCount.textContent = 0;
+            const btnExportSelected = document.getElementById('btnExportSelected');
+            if (btnExportSelected) btnExportSelected.classList.add('d-none');
+        }
     }
 
     async function deleteSchedule(scheduleId) {
         if (!confirm('Bạn có chắc chắn muốn xóa lịch thi này?')) return;
-
         try {
             const result = await apiFetch(`${API_BASE_URL}/${scheduleId}`, { method: 'DELETE' });
             if (result.success) {
@@ -228,17 +252,13 @@ document.addEventListener('DOMContentLoaded', function () {
     async function bulkDeleteSchedules() {
         const count = selectedSchedules.size;
         if (count === 0) return;
-
         if (!confirm(`Bạn có chắc chắn muốn xóa ${count} lịch thi đã chọn?`)) return;
-
         const scheduleIds = Array.from(selectedSchedules);
-
         try {
             const result = await apiFetch(`${API_BASE_URL}/bulk-delete`, {
                 method: 'POST',
                 body: JSON.stringify({ schedule_ids: scheduleIds })
             });
-
             if (result.success) {
                 showToast('Thành công', result.message, 'success');
                 selectedSchedules.clear();
@@ -252,11 +272,9 @@ document.addEventListener('DOMContentLoaded', function () {
     }
 
     function initializeImportExamScheduleModal(modalInstance) {
+        // ... (Code import excel giữ nguyên như cũ để tiết kiệm không gian)
         const form = document.getElementById('importExcelForm');
-        if (!form || form.dataset.initialized === 'true') {
-            return;
-        }
-
+        if (!form || form.dataset.initialized === 'true') return;
         const fileInput = form.querySelector('#excel_file');
         const tokenInput = form.querySelector('#import_token');
         const headingRowInput = form.querySelector('#import_heading_row');
@@ -273,7 +291,6 @@ document.addEventListener('DOMContentLoaded', function () {
             select.disabled = true;
             select.required = false;
         });
-
         const resetMappingUI = () => {
             form.dataset.step = 'preview';
             tokenInput.value = '';
@@ -287,135 +304,70 @@ document.addEventListener('DOMContentLoaded', function () {
                 select.disabled = true;
                 select.required = false;
             });
-            if (buttonText) {
-                buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
-            }
+            if (buttonText) buttonText.textContent = buttonText.dataset.textPreview || 'Tiếp tục';
         };
-
         const populateHeadings = (headings) => {
             const sanitize = window.escapeHtml ? window.escapeHtml.bind(window) : (value) => value;
-            headingsList.innerHTML = headings.map((heading) => `
-                <span class="badge bg-light text-dark border">${sanitize(heading)}</span>
-            `).join('');
-
+            headingsList.innerHTML = headings.map((heading) => `<span class="badge bg-light text-dark border">${sanitize(heading)}</span>`).join('');
             mappingSelects.forEach((select) => {
                 const defaultHtml = select.dataset.defaultOptions;
                 const tempContainer = document.createElement('div');
                 tempContainer.innerHTML = defaultHtml;
                 select.innerHTML = '';
                 Array.from(tempContainer.children).forEach((child) => select.appendChild(child));
-
                 headings.forEach((heading) => {
                     const option = document.createElement('option');
                     option.value = heading;
                     option.textContent = heading;
                     select.appendChild(option);
                 });
-
                 select.disabled = false;
-                if (select.dataset.required === 'true') {
-                    select.required = true;
-                }
+                if (select.dataset.required === 'true') select.required = true;
             });
-
             headingsPreview.classList.remove('d-none');
             mappingSection.classList.remove('d-none');
         };
-
         const handlePreview = async () => {
-            if (!fileInput.files.length) {
-                throw new Error('Vui lòng chọn file Excel trước khi tiếp tục.');
-            }
-
+            if (!fileInput.files.length) throw new Error('Vui lòng chọn file Excel trước khi tiếp tục.');
             const previewData = new FormData();
             previewData.append('excel_file', fileInput.files[0]);
-
             const response = await fetch('/api/exam-schedules/import/preview', {
-                method: 'POST',
-                body: previewData,
-                headers: {
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                }
+                method: 'POST', body: previewData, headers: { 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' }
             });
-
             const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Không thể đọc tiêu đề cột');
-            }
-
+            if (!response.ok || !result.success) throw new Error(result.message || 'Không thể đọc tiêu đề cột');
             tokenInput.value = result.token;
             headingRowInput.value = result.heading_row || '';
             populateHeadings(result.headings || []);
             form.dataset.step = 'mapping';
-
-            if (buttonText) {
-                buttonText.textContent = buttonText.dataset.textImport || 'Import';
-            }
-
+            if (buttonText) buttonText.textContent = buttonText.dataset.textImport || 'Import';
             showToast('Thông báo', 'Vui lòng map các cột trước khi import.', 'info');
         };
-
         const handleImport = async () => {
-            if (!tokenInput.value) {
-                throw new Error('Vui lòng tải lại file trước khi import.');
-            }
-
+            if (!tokenInput.value) throw new Error('Vui lòng tải lại file trước khi import.');
             const mapping = {};
-            mappingSelects.forEach((select) => {
-                mapping[select.dataset.field] = select.value;
-            });
-
+            mappingSelects.forEach((select) => { mapping[select.dataset.field] = select.value; });
             const response = await fetch('/api/exam-schedules/import', {
                 method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'X-CSRF-TOKEN': csrfToken,
-                    'Accept': 'application/json',
-                },
-                body: JSON.stringify({
-                    token: tokenInput.value,
-                    heading_row: headingRowInput.value ? Number(headingRowInput.value) : undefined,
-                    mapping,
-                }),
+                headers: { 'Content-Type': 'application/json', 'X-CSRF-TOKEN': csrfToken, 'Accept': 'application/json' },
+                body: JSON.stringify({ token: tokenInput.value, heading_row: headingRowInput.value ? Number(headingRowInput.value) : undefined, mapping }),
             });
-
             const result = await response.json();
-
-            if (!response.ok || !result.success) {
-                throw new Error(result.message || 'Import thất bại');
-            }
-
+            if (!response.ok || !result.success) throw new Error(result.message || 'Import thất bại');
             modalInstance.hide();
             showToast('Thành công', result.message || 'Đã import danh sách lịch thi.', 'success');
             await fetchExamSchedules(1, '', '');
             resetMappingUI();
         };
-
-        form.addEventListener('change', (event) => {
-            if (event.target === fileInput) {
-                resetMappingUI();
-            }
-        });
-
+        form.addEventListener('change', (event) => { if (event.target === fileInput) resetMappingUI(); });
         form.addEventListener('submit', async (event) => {
             event.preventDefault();
             toggleButtonLoading(submitButton, true);
-
             try {
-                if (form.dataset.step === 'mapping') {
-                    await handleImport();
-                } else {
-                    await handlePreview();
-                }
-            } catch (error) {
-                showToast('Lỗi', error.message || 'Có lỗi xảy ra khi import', 'danger');
-            } finally {
-                toggleButtonLoading(submitButton, false);
-            }
+                if (form.dataset.step === 'mapping') await handleImport();
+                else await handlePreview();
+            } catch (error) { showToast('Lỗi', error.message || 'Có lỗi xảy ra khi import', 'danger'); } finally { toggleButtonLoading(submitButton, false); }
         });
-
         form.dataset.initialized = 'true';
         resetMappingUI();
     }
@@ -447,20 +399,23 @@ document.addEventListener('DOMContentLoaded', function () {
             const target = event.target.closest('[data-action]');
             if (!target) return;
 
-            // Prevent default anchor behavior to avoid # in URL
-            event.preventDefault();
+            // XÓA DÒNG: event.preventDefault(); ở đây đi
 
             const action = target.dataset.action;
             const scheduleId = target.dataset.schedule_id;
 
             switch (action) {
                 case 'view-attendance':
+                    event.preventDefault(); // Chỉ chặn hành vi mặc định với link/button điều hướng
                     window.location.href = `/exam-schedules/show/${scheduleId}`;
                     break;
                 case 'delete-schedule':
+                    event.preventDefault(); // Chặn hành vi mặc định (tránh reload hoặc cuộn trang nếu là thẻ a href="#")
                     if (scheduleId) deleteSchedule(scheduleId);
                     break;
                 case 'toggle-select':
+                    // QUAN TRỌNG: Không có event.preventDefault() ở đây
+                    // Để trình duyệt tự động render dấu tick
                     const checkbox = event.target.closest('.schedule-checkbox');
                     if (checkbox) toggleScheduleSelection(checkbox.value, checkbox.checked);
                     break;
@@ -486,19 +441,47 @@ document.addEventListener('DOMContentLoaded', function () {
         });
     }
 
+    function setupExportHandlers() {
+        // ... (Export handler giữ nguyên)
+        const btnExportSelected = document.getElementById('btnExportSelected');
+        const btnExportOptions = document.getElementById('btnExportOptions');
+        const exportSelectedCount = document.getElementById('exportSelectedCount');
+        import('/js/admin/exam-export.js').then(module => {
+            const { exportMultipleExams, showExportOptionsModal } = module;
+            document.addEventListener('click', (e) => {
+                if (e.target.classList.contains('schedule-checkbox') || e.target.id === 'selectAll') {
+                    setTimeout(() => {
+                        const count = selectedSchedules.size;
+                        if (exportSelectedCount) exportSelectedCount.textContent = count;
+                        if (btnExportSelected) {
+                            if (count > 0) btnExportSelected.classList.remove('d-none');
+                            else btnExportSelected.classList.add('d-none');
+                        }
+                    }, 10);
+                }
+            });
+            if (btnExportSelected) {
+                btnExportSelected.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const selectedIds = Array.from(selectedSchedules);
+                    if (selectedIds.length > 0) exportMultipleExams(selectedIds);
+                });
+            }
+            if (btnExportOptions) {
+                btnExportOptions.addEventListener('click', (e) => {
+                    e.preventDefault();
+                    const selectedIds = Array.from(selectedSchedules);
+                    showExportOptionsModal(selectedIds);
+                });
+            }
+        }).catch(err => { console.error('Failed to load export module:', err); });
+    }
+
     function updateURL(page, query, date) {
         const url = new URL(window.location);
         url.searchParams.set('page', page);
-        if (query) {
-            url.searchParams.set('q', query);
-        } else {
-            url.searchParams.delete('q');
-        }
-        if (date) {
-            url.searchParams.set('date', date);
-        } else {
-            url.searchParams.delete('date');
-        }
+        if (query) url.searchParams.set('q', query); else url.searchParams.delete('q');
+        if (date) url.searchParams.set('date', date); else url.searchParams.delete('date');
         window.history.replaceState({}, '', url);
     }
 
@@ -513,28 +496,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function init() {
         setupEventListeners();
+        setupExportHandlers();
         const { page, query, date } = getURLParams();
-        if (searchInput) {
-            searchInput.value = query;
-        }
-        if (dateFilter) {
-            dateFilter.value = date;
-        }
+        if (searchInput) searchInput.value = query;
+        if (dateFilter) dateFilter.value = date;
         fetchExamSchedules(page, query, date);
     }
 
     init();
 
-    // --- Attendance record integration ---
-    // If current page is an attendance detail page (path like /exam-schedules/show/{id}),
-    // initialize the attendance record loader that was previously in
-    // attendance-record.js. Functions and variables are namespaced with
-    // `attendance_` prefix to avoid collisions with existing code above.
+    // --- Attendance record integration (ĐÃ SỬA: Thêm Pagination) ---
+    // If current page is an attendance detail page (path like /exam-schedules/show/{id})
     if (window.location.pathname.startsWith('/exam-schedules/show/')) {
         (function attendanceModule() {
             const pathParts = window.location.pathname.split('/');
             const examScheduleId = pathParts[pathParts.length - 1];
-            const API_URL = `/api/exam-schedules/${examScheduleId}`;
+            const API_BASE_URL = `/api/exam-schedules/${examScheduleId}`;
+
+            // State
+            let currentPage = 1;
 
             // DOM Elements
             const examSessionCode = document.getElementById('exam-session-code');
@@ -551,12 +531,16 @@ document.addEventListener('DOMContentLoaded', function () {
             const btnRefresh = document.getElementById('btnRefresh');
             const btnExportExcel = document.getElementById('btnExportExcel');
 
+            // Pagination Elements (Trong trang show.blade.php)
+            const paginationStart = document.getElementById('attendance-pagination-start');
+            const paginationEnd = document.getElementById('attendance-pagination-end');
+            const paginationTotal = document.getElementById('attendance-pagination-total');
+            const paginationContainer = document.getElementById('attendance-pagination-container');
+
             function attendance_formatDate(dateStr) {
                 if (!dateStr) return '';
                 const parts = dateStr.split('-');
-                if (parts.length === 3) {
-                    return `${parts[2]}-${parts[1]}-${parts[0]}`;
-                }
+                if (parts.length === 3) return `${parts[2]}-${parts[1]}-${parts[0]}`;
                 return dateStr;
             }
 
@@ -565,13 +549,15 @@ document.addEventListener('DOMContentLoaded', function () {
                 return timeStr.substring(0, 5);
             }
 
-            function attendance_getStatusBadge(status) {
+            function attendance_getStatusBadge(rekognitionResult) {
                 const statusMap = {
-                    'present': { class: 'badge bg-success', text: 'Có mặt' },
-                    'pending': { class: 'badge bg-secondary', text: '-' },
-                    'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
+                    'match': { class: 'badge bg-success', text: 'Có mặt' },
+                    'not_match': { class: 'badge bg-danger', text: 'Vắng mặt' },
+                    'unknown': { class: 'badge bg-warning', text: 'Không xác định' },
+                    null: { class: 'badge bg-secondary', text: '-' },
+                    undefined: { class: 'badge bg-secondary', text: '-' }
                 };
-                const statusInfo = statusMap[status] || statusMap['pending'];
+                const statusInfo = statusMap[rekognitionResult] || statusMap[null];
                 return `<span class="${statusInfo.class}">${statusInfo.text}</span>`;
             }
 
@@ -580,43 +566,69 @@ document.addEventListener('DOMContentLoaded', function () {
                 try {
                     const date = new Date(timeStr);
                     return date.toLocaleString('vi-VN');
-                } catch (e) {
-                    return timeStr;
-                }
+                } catch (e) { return timeStr; }
             }
 
             function attendance_escapeHtml(unsafe) {
                 if (!unsafe) return '';
-                return unsafe
-                    .toString()
-                    .replace(/&/g, "&amp;")
-                    .replace(/</g, "&lt;")
-                    .replace(/>/g, "&gt;")
-                    .replace(/\"/g, "&quot;")
-                    .replace(/'/g, "&#039;");
+                return unsafe.toString().replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/\"/g, "&quot;").replace(/'/g, "&#039;");
             }
 
-            async function attendance_loadAttendanceData() {
+            // Hàm Render Pagination cho trang chi tiết
+            function attendance_renderPagination(paginationData) {
+                if (!paginationContainer) return;
+                const { current_page, last_page, from, to, total } = paginationData;
+
+                if (paginationStart) paginationStart.textContent = from || 0;
+                if (paginationEnd) paginationEnd.textContent = to || 0;
+                if (paginationTotal) paginationTotal.textContent = total || 0;
+
+                let html = '';
+                // Prev
+                html += `<li class="page-item ${current_page === 1 ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${current_page - 1}" aria-label="Previous">
+                                <span aria-hidden="true">&laquo;</span>
+                            </a>
+                        </li>`;
+                // Numbers
+                const range = 2;
+                for (let i = 1; i <= last_page; i++) {
+                    if (i === 1 || i === last_page || (i >= current_page - range && i <= current_page + range)) {
+                        html += `<li class="page-item ${i === current_page ? 'active' : ''}">
+                                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                                </li>`;
+                    } else if (i === current_page - range - 1 || i === current_page + range + 1) {
+                        html += `<li class="page-item disabled"><span class="page-link">...</span></li>`;
+                    }
+                }
+                // Next
+                html += `<li class="page-item ${current_page === last_page ? 'disabled' : ''}">
+                            <a class="page-link" href="#" data-page="${current_page + 1}" aria-label="Next">
+                                <span aria-hidden="true">&raquo;</span>
+                            </a>
+                        </li>`;
+                paginationContainer.innerHTML = html;
+            }
+
+            async function attendance_loadAttendanceData(page = 1) {
                 try {
+                    currentPage = page;
                     if (!attendanceTableBody) return;
                     attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
 
-                    const response = await fetch(API_URL);
+                    const url = `${API_BASE_URL}?page=${page}`; // Thêm page vào API call
+                    const response = await fetch(url);
 
                     if (!response.ok) {
-                        if (response.status === 404) {
-                            throw new Error('Không tìm thấy ca thi với ID: ' + examScheduleId);
-                        }
+                        if (response.status === 404) throw new Error('Không tìm thấy ca thi với ID: ' + examScheduleId);
                         throw new Error(`Lỗi HTTP: ${response.status}`);
                     }
 
                     const result = await response.json();
+                    if (!result.success) throw new Error(result.message || 'Không thể tải dữ liệu');
 
-                    if (!result.success) {
-                        throw new Error(result.message || 'Không thể tải dữ liệu');
-                    }
-
-                    const { exam, stats, students } = result.data;
+                    const { exam, stats, students: studentsPaginator } = result.data;
+                    const studentsList = studentsPaginator.data;
 
                     // Update exam info
                     if (examSessionCode) examSessionCode.textContent = exam.session_code || exam.id || '-';
@@ -631,12 +643,11 @@ document.addEventListener('DOMContentLoaded', function () {
                     // Update stats
                     if (totalStudents) totalStudents.textContent = stats.total_students || 0;
                     if (presentCount) presentCount.textContent = stats.present || 0;
-                    const pendingCount = document.getElementById('pending-count');
                     if (pendingCount) pendingCount.textContent = stats.pending || 0;
                     if (absentCount) absentCount.textContent = stats.absent || 0;
 
                     // Update students table
-                    if (!students || students.length === 0) {
+                    if (!studentsList || studentsList.length === 0) {
                         attendanceTableBody.innerHTML = `
                             <tr>
                                 <td colspan="6" class="text-center py-4">
@@ -647,77 +658,64 @@ document.addEventListener('DOMContentLoaded', function () {
                                 </td>
                             </tr>
                         `;
+                        attendance_renderPagination(studentsPaginator);
                         return;
                     }
 
-                    const rowsHtml = students.map((student, index) => `
+                    const from = studentsPaginator.from || 1;
+                    const rowsHtml = studentsList.map((student, index) => `
                         <tr>
-                            <td class="text-center">${index + 1}</td>
+                            <td class="text-center">${from + index}</td>
                             <td>${attendance_escapeHtml(student.student_code || '')}</td>
                             <td>${attendance_escapeHtml(student.full_name || '')}</td>
                             <td>${attendance_escapeHtml(student.class_code || '')}</td>
                             <td>${attendance_formatAttendanceTime(student.attendance_time)}</td>
-                            <td class="text-center">${attendance_getStatusBadge(student.status)}</td>
+                            <td class="text-center">${attendance_getStatusBadge(student.rekognition_result)}</td>
                         </tr>
                     `).join('');
 
                     attendanceTableBody.innerHTML = rowsHtml;
 
+                    // Render Pagination
+                    attendance_renderPagination(studentsPaginator);
+
                 } catch (error) {
                     console.error('Error loading attendance data:', error);
-
                     if (attendanceTableBody) {
-                        if (error.message.includes('Không tìm thấy ca thi')) {
-                            attendanceTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="6" class="text-center py-4">
-                                        <div class="text-warning">
-                                            <i class="icon-alert-triangle" style="font-size: 24px;"></i>
-                                            <div class="mt-2">${error.message}</div>
-                                            <small class="text-muted d-block mt-1">Vui lòng kiểm tra lại ID ca thi</small>
-                                        </div>
-                                    </td>
-                                </tr>
-                            `;
-                        } else {
-                            attendanceTableBody.innerHTML = `
-                                <tr>
-                                    <td colspan="6" class="text-center text-danger">
-                                        <i class="icon-alert-circle"></i> ${error.message}
-                                    </td>
-                                </tr>
-                            `;
-                        }
+                        attendanceTableBody.innerHTML = `<tr><td colspan="6" class="text-center text-danger"><i class="icon-alert-circle"></i> ${error.message}</td></tr>`;
                     }
-
-                    // Reset displayed fields
-                    if (examSessionCode) examSessionCode.textContent = '-';
-                    if (examSubjectCode) examSubjectCode.textContent = '-';
-                    if (examSubjectName) examSubjectName.textContent = '-';
-                    if (examDate) examDate.textContent = '-';
-                    if (examTime) examTime.textContent = '-';
-                    if (examRoom) examRoom.textContent = '-';
-                    if (totalStudents) totalStudents.textContent = '0';
-                    if (presentCount) presentCount.textContent = '0';
-                    if (pendingCount) pendingCount.textContent = '0';
-                    if (absentCount) absentCount.textContent = '0';
                 }
             }
 
             async function attendance_exportToExcel() {
                 try {
-                    alert('Tính năng xuất Excel đang được phát triển');
+                    const examId = window.location.pathname.split('/').pop();
+                    window.location.href = `/exam-schedules/${examId}/export`;
                 } catch (error) {
                     console.error('Error exporting Excel:', error);
-                    alert('Lỗi khi xuất file Excel');
+                    swal('Lỗi', 'Lỗi khi xuất file Excel', 'error');
                 }
             }
 
-            if (btnRefresh) btnRefresh.addEventListener('click', attendance_loadAttendanceData);
+            if (btnRefresh) btnRefresh.addEventListener('click', () => attendance_loadAttendanceData(currentPage));
             if (btnExportExcel) btnExportExcel.addEventListener('click', attendance_exportToExcel);
 
+            // Xử lý sự kiện click phân trang
+            if (paginationContainer) {
+                paginationContainer.addEventListener('click', function (e) {
+                    e.preventDefault();
+                    const target = e.target.closest('.page-link');
+                    if (target) {
+                        const page = parseInt(target.dataset.page);
+                        if (page && !isNaN(page) && page !== currentPage) {
+                            attendance_loadAttendanceData(page);
+                        }
+                    }
+                });
+            }
+
             // Initial load
-            attendance_loadAttendanceData();
+            attendance_loadAttendanceData(1);
         })();
     }
 });

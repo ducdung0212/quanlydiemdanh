@@ -9,8 +9,6 @@ document.addEventListener('DOMContentLoaded', function () {
     const captureQuality = 0.7;
 
     // DOM Elements
-    const examScheduleSelect = document.getElementById('examScheduleSelect');
-    const btnLoadExam = document.getElementById('btnLoadExam');
     const examInfoSection = document.getElementById('examInfoSection');
     const statsSection = document.getElementById('statsSection');
     const startAttendanceSection = document.getElementById('startAttendanceSection');
@@ -62,8 +60,6 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadFaceModel() {
         if (faceModel) return;
         try {
-            // Sửa hàm ensureBlazeFaceScripts: Bỏ đi vì đã nhúng file local
-            // await ensureBlazeFaceScripts();
             if (typeof blazeface === 'undefined') {
                 console.warn('Thư viện BlazeFace (blazeface) không tồn tại. Kiểm tra file blade.php.');
                 return;
@@ -76,12 +72,6 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Xóa hàm ensureBlazeFaceScripts - không cần nữa
-    /*
-    async function ensureBlazeFaceScripts() {
-        // ... (code cũ đã bị xóa) ...
-    }
-    */
 
     function startDetectionLoop() {
         if (!faceModel) {
@@ -107,44 +97,25 @@ document.addEventListener('DOMContentLoaded', function () {
 
     async function detectionFrame() {
         if (!detectionLoopActive || !faceModel) return;
-        
-        // Sửa: Chuyển sang setTimeout thay vì requestAnimationFrame
+
+
         try {
             if (video.readyState < 2) {
-                // Video chưa sẵn sàng, thử lại sau
+
                 if (detectionLoopActive) setTimeout(detectionFrame, 100);
                 return;
             }
-
-            // Giảm tần suất chạy AI (Đã chuyển ra ngoài)
-            // const now = Date.now();
-            // if (now - lastDetectionTime >= detectionIntervalMs) {
-            //     lastDetectionTime = now;
-            // ... (code cũ) ...
-            // }
-
             const srcW = video.videoWidth;
             const srcH = video.videoHeight;
             if (srcW && srcH) {
-                // Giảm gánh nặng: Dùng kích thước thật thay vì resize liên tục
-                // const scale = DETECTION_WIDTH / srcW;
-                // const detW = Math.max(64, Math.round(srcW * scale));
-                // const detH = Math.max(64, Math.round(srcH * scale));
-                // detectionCanvas.width = detW;
-                // detectionCanvas.height = detH;
-                // detectionCtx.drawImage(video, 0, 0, detW, detH);
+
 
                 try {
-                    // Chạy AI trực tiếp trên video element
-                    const predictions = await faceModel.estimateFaces(video, false); 
-                    // const scaleX = srcW / detW;
-                    // const scaleY = srcH / detH;
+
+                    const predictions = await faceModel.estimateFaces(video, false);
+
                     currentDetections = predictions || [];
-                    // currentDetections = (predictions || []).map(pred => ({
-                    //     ...pred,
-                    //     topLeft: pred.topLeft.map((v, i) => v * (i === 0 ? scaleX : scaleY)),
-                    //     bottomRight: pred.bottomRight.map((v, i) => v * (i === 0 ? scaleX : scaleY))
-                    // }));
+
                 } catch (e) {
                     console.error('Detection error', e);
                     currentDetections = [];
@@ -173,7 +144,7 @@ document.addEventListener('DOMContentLoaded', function () {
                         const [x, y] = pred.topLeft;
                         const w = pred.bottomRight[0] - pred.topLeft[0];
                         const h = pred.bottomRight[1] - pred.topLeft[1];
-                        
+
                         ctx.beginPath();
                         ctx.rect(x, y, w, h);
                         ctx.fill();
@@ -199,78 +170,86 @@ document.addEventListener('DOMContentLoaded', function () {
         }
     }
 
-    // Load danh sách ca thi
-    async function loadExamSchedules() {
+    // Load tất cả ca thi trong ngày cho giảng viên
+    async function loadTodayExamsForLecturer() {
         try {
-            // Load danh sách ca thi để chọn (cho cả admin và lecturer)
-            const response = await fetch('/api/exam-schedules?page=1&limit=100');
+            // Ẩn tất cả các section ngay lập tức khi bắt đầu load
+            examInfoSection.style.display = 'none';
+            statsSection.style.display = 'none';
+            startAttendanceSection.style.display = 'none';
+
+            const response = await fetch('/api/exam-schedules/today/all');
             const result = await response.json();
 
-            if (result.success && result.data) {
-                const schedules = result.data.data || [];
-                examScheduleSelect.innerHTML = '<option value="">-- Chọn ca thi --</option>';
-                
-                schedules.forEach(schedule => {
-                    const option = document.createElement('option');
-                    option.value = schedule.id;
-                    option.textContent = `${schedule.subject_code} - ${schedule.subject_name} - ${formatDate(schedule.exam_date)} ${formatTime(schedule.exam_time)}`;
-                    examScheduleSelect.appendChild(option);
-                });
-            }
-        } catch (error) {
-            console.error('Error loading exam schedules:', error);
-        }
-    }
+            if (result.success && result.data && result.data.length > 0) {
+                const exams = result.data;
 
-    // Load ca thi hiện tại cho giảng viên (đến giờ thi)
-    async function loadCurrentExamForLecturer() {
-        try {
-            const response = await fetch('/api/exam-schedules/current/exam');
-            const result = await response.json();
+                // Tìm ca thi đang diễn ra
+                const ongoingExam = exams.find(e => e.status === 'ongoing');
 
-            if (result.success && result.data) {
-                const exam = result.data;
-                // Tự động load thông tin ca thi
-                currentExamScheduleId = exam.id;
-                await loadExamAttendanceData(exam.id);
-                
-                // Ẩn phần chọn ca thi, hiện luôn giao diện điểm danh
-                if (examScheduleSelect && examScheduleSelect.closest('.wg-box')) {
-                    examScheduleSelect.closest('.wg-box').style.display = 'none';
+                if (ongoingExam) {
+                    // Có ca thi đang diễn ra - Tự động tải và hiển thị
+                    currentExamScheduleId = ongoingExam.id;
+
+                    // Tải thông tin ca thi
+                    await loadExamAttendanceData(ongoingExam.id);
+
+                    // Hiển thị thông báo (delay để đảm bảo DOM đã ready)
+                    setTimeout(() => {
+                        showToast('Thông báo', `Ca thi ${ongoingExam.subject_name} đang diễn ra`, 'success');
+                    }, 300);
+                } else {
+                    // Không có ca thi đang diễn ra - Hiển thị thông báo
+                    setTimeout(() => {
+                        showToast('Thông báo', `Bạn có ${exams.length} ca thi hôm nay, hiện tại chưa có ca nào đang diễn ra`, 'info');
+                    }, 300);
+
+                    // Hiện bảng danh sách với thông báo
+                    attendanceListSection.style.display = 'block';
+
+                    // Hiện thông báo trong bảng
+                    if (attendanceTableBody) {
+                        attendanceTableBody.innerHTML = `
+                            <tr>
+                                <td colspan="6" class="text-center py-4">
+                                    <div class="text-muted">
+                                        <i class="icon-clock" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                                        <div class="mt-2" style="font-size: 18px; font-weight: 500;">Hiện tại không có ca thi đang diễn ra</div>
+                                        <small class="d-block mt-2" style="color: #6c757d;">Vui lòng chờ ca thi bắt đầu</small>
+                                    </div>
+                                </td>
+                            </tr>
+                        `;
+                    }
                 }
-                
-                showToast('Thông báo', 'Đã tải ca thi hiện tại', 'info');
+
             } else {
-                // Không có ca thi hiện tại
-                showToast('Thông báo', result.message || 'Chưa đến giờ thi hoặc không có ca thi', 'warning');
-                
-                // Hiện thông báo thân thiện
+                // Không có ca thi trong ngày
+                setTimeout(() => {
+                    showToast('Thông báo', 'Hôm nay bạn không có ca thi nào', 'info');
+                }, 300);
+
+                // Hiện bảng danh sách với thông báo
+                attendanceListSection.style.display = 'block';
+
+                // Hiện thông báo trong bảng
                 if (attendanceTableBody) {
                     attendanceTableBody.innerHTML = `
                         <tr>
                             <td colspan="6" class="text-center py-4">
                                 <div class="text-muted">
-                                    <i class="icon-clock" style="font-size: 32px; opacity: 0.5;"></i>
-                                    <div class="mt-2">Chưa đến giờ thi hoặc không có ca thi nào</div>
-                                    <small class="d-block mt-1">Hệ thống sẽ tự động hiển thị ca thi khi đến giờ</small>
+                                    <i class="icon-calendar" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                                    <div class="mt-2" style="font-size: 18px; font-weight: 500;">Hôm nay bạn không có ca thi nào</div>
+                                    <small class="d-block mt-2" style="color: #6c757d;">Vui lòng kiểm tra lại lịch giảng dạy hoặc liên hệ phòng đào tạo</small>
                                 </div>
                             </td>
                         </tr>
                     `;
                 }
-                
-                // Ẩn các phần không cần thiết
-                examInfoSection.style.display = 'none';
-                statsSection.style.display = 'none';
-                startAttendanceSection.style.display = 'none';
-                if (examScheduleSelect && examScheduleSelect.closest('.wg-box')) {
-                    examScheduleSelect.closest('.wg-box').style.display = 'none';
-                }
-                attendanceListSection.style.display = 'block';
             }
         } catch (error) {
-            console.error('Error loading current exam:', error);
-            showToast('Lỗi', 'Không thể tải ca thi hiện tại', 'danger');
+            console.error('Error loading today exams:', error);
+            showToast('Lỗi', 'Không thể tải danh sách ca thi', 'danger');
         }
     }
 
@@ -281,7 +260,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!isNaN(date.getTime())) {
                 return date.toLocaleDateString('vi-VN');
             }
-        } catch (e) {}
+        } catch (e) { }
         return dateStr;
     }
 
@@ -289,14 +268,20 @@ document.addEventListener('DOMContentLoaded', function () {
         return timeStr ? timeStr.substring(0, 5) : '';
     }
 
-    function getStatusBadge(status) {
+    function formatDuration(minutes) {
+        if (!minutes || isNaN(minutes)) return '';
+        return `${parseInt(minutes, 10)} phút`;
+    }
+
+    function getStatusBadge(rekognitionResult) {
         const statusMap = {
-            'present': { class: 'badge bg-success', text: 'Có mặt' },
-            'pending': { class: 'badge bg-secondary', text: '-' },
-            'late': { class: 'badge bg-success', text: 'Có mặt' }, 
-            'absent': { class: 'badge bg-danger', text: 'Vắng mặt' }
+            'match': { class: 'badge bg-success', text: 'Có mặt' },
+            'not_match': { class: 'badge bg-danger', text: 'Vắng mặt' },
+            'unknown': { class: 'badge bg-warning', text: 'Không xác định' },
+            null: { class: 'badge bg-secondary', text: '-' },
+            undefined: { class: 'badge bg-secondary', text: '-' }
         };
-        const statusInfo = statusMap[status] || statusMap['pending'];
+        const statusInfo = statusMap[rekognitionResult] || statusMap[null];
         return statusInfo ? `<span class="${statusInfo.class}">${statusInfo.text}</span>` : '-';
     }
 
@@ -322,25 +307,34 @@ document.addEventListener('DOMContentLoaded', function () {
     async function loadExamAttendanceData(examScheduleId) {
         try {
             if (!attendanceTableBody) return;
-            
+
             attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
-            const response = await fetch(`/api/exam-schedules/${examScheduleId}`);
+            
+            // Mẹo: Thêm limit lớn nếu bạn muốn hiện tất cả sinh viên (vì backend đang mặc định limit=10)
+            const response = await fetch(`/api/exam-schedules/${examScheduleId}?limit=100`);
             const result = await response.json();
 
             if (!response.ok) {
-                // Hiển thị message từ backend
                 throw new Error(result.message || `Lỗi HTTP: ${response.status}`);
             }
 
             if (!result.success) throw new Error(result.message || 'Không thể tải dữ liệu');
 
-            const { exam, stats, students } = result.data;
+            // --- SỬA ĐOẠN NÀY ---
+            const { exam, stats, students: studentsData } = result.data;
+            
+            // Kiểm tra: Nếu là Paginator Object thì lấy .data, nếu là mảng thì lấy chính nó
+            const studentsList = (studentsData && studentsData.data) ? studentsData.data : (Array.isArray(studentsData) ? studentsData : []);
+            // --------------------
 
             examSessionCode.textContent = exam.session_code || exam.id || '-';
             examSubjectCode.textContent = exam.subject_code || '-';
             examSubjectName.textContent = exam.subject_name || '-';
             examDate.textContent = formatDate(exam.exam_date);
             examTime.textContent = formatTime(exam.exam_time);
+            
+            const examDuration = document.getElementById('exam-duration');
+            if (examDuration) examDuration.textContent = formatDuration(exam.duration);
             examRoom.textContent = exam.room || '-';
 
             totalStudents.textContent = stats.total_students || 0;
@@ -354,19 +348,40 @@ document.addEventListener('DOMContentLoaded', function () {
             startAttendanceSection.style.display = 'block';
             attendanceListSection.style.display = 'block';
 
-            if (!students || students.length === 0) {
+            // Xử lý nút điểm danh (giữ nguyên logic của bạn)
+            const canAttend = exam.can_attend;
+            if (!canAttend) {
+                if (btnStartAttendance) {
+                    btnStartAttendance.disabled = true;
+                    btnStartAttendance.classList.add('disabled');
+                    // ... (logic hiển thị text nút giữ nguyên)
+                    btnStartAttendance.innerHTML = '<i class="icon-camera"></i> Không thể điểm danh';
+                }
+            } else {
+                if (btnStartAttendance) {
+                    btnStartAttendance.disabled = false;
+                    btnStartAttendance.classList.remove('disabled');
+                    btnStartAttendance.innerHTML = '<i class="icon-camera"></i> Bắt đầu điểm danh';
+                    btnStartAttendance.removeAttribute('title');
+                }
+            }
+
+            // --- SỬA ĐOẠN RENDER BẢNG ---
+            if (!studentsList || studentsList.length === 0) {
                 attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center py-4"><div class="text-muted">Không có dữ liệu điểm danh</div></td></tr>';
                 return;
             }
 
-            attendanceTableBody.innerHTML = students.map((student, index) => `
-                <tr>
+            // Backend đã transform dữ liệu phẳng (id, student_code, full_name nằm cùng cấp)
+            // Xem ExamSchedulesController.php dòng 276
+            attendanceTableBody.innerHTML = studentsList.map((student, index) => `
+            <tr>
                     <td class="text-center">${index + 1}</td>
                     <td>${escapeHtml(student.student_code || '')}</td>
                     <td>${escapeHtml(student.full_name || '')}</td>
                     <td>${escapeHtml(student.class_code || '')}</td>
                     <td>${formatAttendanceTime(student.attendance_time)}</td>
-                    <td class="text-center">${getStatusBadge(student.status)}</td>
+                    <td class="text-center">${getStatusBadge(student.rekognition_result)}</td>
                 </tr>
             `).join('');
 
@@ -460,7 +475,7 @@ document.addEventListener('DOMContentLoaded', function () {
         const ctx = canvas.getContext('2d');
         const fullW = video.videoWidth;
         const fullH = video.videoHeight;
-        
+
         if (!fullW || !fullH) {
             showResult('Camera chưa sẵn sàng, vui lòng thử lại.', 'error');
             return;
@@ -503,7 +518,7 @@ document.addEventListener('DOMContentLoaded', function () {
         }
 
         capturedPhoto = crops; // Giờ đây capturedPhoto LUÔN LUÔN là một mảng
-        
+
         // --- BẮT ĐẦU KHỐI SỬA ---
         // Lấy VÀ XÓA NỘI DUNG CŨ
         const previewContainer = document.getElementById('capturedImage');
@@ -593,7 +608,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (r.ok && r.res.data && r.res.data.student) {
                     const s = r.res.data.student;
                     // Dùng student_code làm key
-                    successMap[s.student_code] = s; 
+                    successMap[s.student_code] = s;
                 } else {
                     // Lấy thông báo lỗi từ server (ví dụ: "Đã điểm danh rồi")
                     const msg = (r.res && r.res.message) ? r.res.message : `Khuôn mặt ${r.index + 1}: Không nhận diện được`;
@@ -608,15 +623,15 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (successes.length > 0) {
                 const names = successes.map(s => `${escapeHtml(s.full_name)} (${escapeHtml(s.student_code)})`).join(', ');
-                successMsg = `✅ Điểm danh thành công cho: ${names}`;
+                successMsg = `Điểm danh thành công cho: ${names}`;
                 // Tải lại bảng điểm danh
                 setTimeout(() => loadExamAttendanceData(currentExamScheduleId), 800);
                 // Ẩn modal sau 2.5 giây
-                setTimeout(() => attendanceModal.hide(), 2500); 
+                setTimeout(() => attendanceModal.hide(), 2500);
             }
 
             if (failures.length > 0) {
-                errorMsg = `❌ Lỗi: ${failures.join('; ')}`;
+                errorMsg = `Lỗi: ${failures.join('; ')}`;
             }
 
             // Hiển thị kết quả tổng hợp
@@ -637,31 +652,49 @@ document.addEventListener('DOMContentLoaded', function () {
             btnSubmit.disabled = false;
         }
     }
-    
-    // Xóa hàm showConfirmation - không cần nữa
-    /*
-    function showConfirmation(student, confidence, imageData) {
-        // ... (code cũ đã bị xóa) ...
-    }
-    */
+
 
     function showResult(message, type) {
-        const className = type === 'success' ? 'result-success' : 
-                         type === 'error' ? 'result-error' : 'text-info';
+        const className = type === 'success' ? 'result-success' :
+            type === 'error' ? 'result-error' : 'text-info';
         attendanceResult.innerHTML = `<div class="${className}">${message}</div>`;
     }
 
-    // Event Listeners
-    btnLoadExam.addEventListener('click', () => {
-        const selectedExamId = examScheduleSelect.value;
-        if (!selectedExamId) {
-            alert('Vui lòng chọn ca thi');
-            return;
-        }
-        currentExamScheduleId = selectedExamId;
-        loadExamAttendanceData(selectedExamId);
-    });
+    // showToast được import từ toast.js component
 
+    function showLargeNotification(examCount) {
+        const overlay = document.createElement('div');
+        overlay.className = 'notification-overlay';
+
+        overlay.innerHTML = `
+            <div class="notification-box">
+                <div class="notification-icon">
+                    <i class="icon-calendar"></i>
+                </div>
+                <h2 class="notification-title">
+                    Hôm nay bạn có ${examCount} ca thi
+                </h2>
+                <p class="notification-message">
+                    Vui lòng chọn ca thi để bắt đầu điểm danh
+                </p>
+                <button class="notification-button">Đã hiểu</button>
+            </div>
+        `;
+
+        document.body.appendChild(overlay);
+
+        const closeNotification = () => {
+            overlay.classList.add('fade-out');
+            setTimeout(() => overlay.remove(), 300);
+        };
+
+        overlay.querySelector('.notification-button').addEventListener('click', closeNotification);
+        overlay.addEventListener('click', (e) => {
+            if (e.target === overlay) closeNotification();
+        });
+    }
+
+    // Event Listeners
     btnStartAttendance.addEventListener('click', () => {
         if (!currentExamScheduleId) {
             alert('Vui lòng chọn ca thi trước');
@@ -681,5 +714,25 @@ document.addEventListener('DOMContentLoaded', function () {
     });
 
     // Khởi tạo
-    loadExamSchedules();
+    const userRole = window.userRole || 'guest';
+
+    // Chỉ giảng viên mới có thể sử dụng chức năng điểm danh
+    if (userRole === 'lecturer') {
+        loadTodayExamsForLecturer();
+    } else {
+        attendanceListSection.style.display = 'block';
+        if (attendanceTableBody) {
+            attendanceTableBody.innerHTML = `
+                <tr>
+                    <td colspan="6" class="text-center py-4">
+                        <div class="text-muted">
+                            <i class="icon-info" style="font-size: 48px; opacity: 0.3; margin-bottom: 16px;"></i>
+                            <div class="mt-2" style="font-size: 18px; font-weight: 500;">Chức năng chỉ dành cho giảng viên</div>
+                            <small class="d-block mt-2" style="color: #6c757d;">Vui lòng đăng nhập bằng tài khoản giảng viên để điểm danh</small>
+                        </div>
+                    </td>
+                </tr>
+            `;
+        }
+    }
 });

@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="vi">
+
 <head>
     @include('layouts.header')
     <meta name="csrf-token" content="{{ csrf_token() }}">
@@ -15,6 +16,7 @@
     <link rel="apple-touch-icon-precomposed" href="{{ asset('images/favicon.ico') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/custom.css') }}">
 </head>
+
 <body data-user-role="{{ auth()->user()->role ?? '' }}">
     <div id="wrapper">
         <div id="page" class="">
@@ -37,10 +39,13 @@
 
     <script src="{{ asset('js/jquery.min.js') }}"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>   
+    <script src="{{ asset('js/bootstrap-select.min.js') }}"></script>
+    <script src="{{ asset('js/sweetalert.min.js') }}"></script>
     <script src="{{ asset('js/apexcharts/apexcharts.js') }}"></script>
     <script src="{{ asset('js/main.js') }}"></script>
     <script src="{{ asset('js/admin/admin-common.js') }}"></script>
+    <script src="{{ asset('js/admin/BaseResourceManager.js') }}"></script>
     @stack('scripts')
 </body>
+
 </html>

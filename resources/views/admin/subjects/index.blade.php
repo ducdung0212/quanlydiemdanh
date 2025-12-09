@@ -23,8 +23,8 @@
             <div class="wg-filter flex-grow">
                 <form class="form-search" id="searchForm">
                     <fieldset class="name">
-                        <input type="text" placeholder="Tìm kiếm môn học..." class="" name="q"
-                            tabindex="2" value="" aria-required="true" id="searchInput">
+                        <input type="text" placeholder="Tìm kiếm môn học..." class="" name="q" tabindex="2"
+                            value="" aria-required="true" id="searchInput">
                     </fieldset>
                     <div class="button-submit">
                         <button class="" type="submit"><i class="icon-search"></i></button>
@@ -65,7 +65,8 @@
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> môn học
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span
+                    id="pagination-total">0</span> môn học
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">

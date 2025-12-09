@@ -191,14 +191,9 @@
   }
 
   var retinaLogos = function() {
-    var retina = window.devicePixelRatio > 1 ? true : false;
-      if(retina) {
-        if ($(".dark-theme").length > 0) {
-          $('#logo_header').attr({src:'images/logo/logo.png',width:'154px',height:'52px'});
-        } else {
-          $('#logo_header').attr({src:'images/logo/logo.png',width:'154px',height:'52px'});
-        }
-      }
+    // Logo đã được cấu hình trong sidebar.blade.php
+    // Không cần thay đổi logo động nữa
+    return;
   };  
 
   var preloader = function () {

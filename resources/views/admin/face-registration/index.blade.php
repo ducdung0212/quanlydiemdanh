@@ -5,9 +5,9 @@
 
     <div class="face-registration">
 
-        <div class="d-flex justify-content-between align-items-center mb-3">
+            <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">Đăng ký khuôn mặt hàng loạt</h3>
-            <h4 class="text-muted">Tải lên nhiều ảnh; tên tệp phải là <code>[MSSV].jpg</code></h4>
+            <h4 class="text-muted">Tải lên nhiều ảnh; tên tệp phải là <code>DHxxxxxxxx.jpg</code> (x là chữ số)</h4>
         </div>
 
         <div class="wg-box p-4 shadow-sm">
@@ -58,6 +58,10 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Keep an internal list of selected files (File objects)
     let selectedFiles = [];
+
+    // Validation pattern: DH followed by 8 digits (case-insensitive)
+    const filenamePattern = /^DH\d{8}$/i;
+    const allowedExts = ['jpg', 'jpeg', 'png'];
 
     function renderFileList() {
         fileListEl.innerHTML = '';
@@ -110,13 +114,24 @@ document.addEventListener('DOMContentLoaded', function() {
         });
     }
 
-    // Handle file input selection
+    // Handle file input selection with filename validation
     fileInput.addEventListener('change', function(e){
         const files = Array.from(e.target.files || []);
-        // append but avoid duplicates by name
+        const invalid = [];
         files.forEach(f => {
+            const ext = (f.name.split('.').pop() || '').toLowerCase();
+            const base = f.name.replace(/\.[^/.]+$/, '').trim();
+            if (!allowedExts.includes(ext) || !filenamePattern.test(base)) {
+                invalid.push(f.name);
+                return;
+            }
             if (!selectedFiles.some(sf => sf.name === f.name && sf.size === f.size)) selectedFiles.push(f);
         });
+
+        if (invalid.length) {
+            appendStatus('❌ Một số tệp bị bỏ (tên/định dạng không hợp lệ): ' + invalid.join(', '), 'error');
+        }
+
         renderFileList();
     });
 
@@ -130,7 +145,21 @@ document.addEventListener('DOMContentLoaded', function() {
     dropzone.addEventListener('drop', (e) => {
         const dt = e.dataTransfer;
         const files = Array.from(dt.files || []).filter(f => /^image\//.test(f.type));
-        files.forEach(f => { if (!selectedFiles.some(sf => sf.name === f.name && sf.size === f.size)) selectedFiles.push(f); });
+        const invalid = [];
+        files.forEach(f => {
+            const ext = (f.name.split('.').pop() || '').toLowerCase();
+            const base = f.name.replace(/\.[^/.]+$/, '').trim();
+            if (!allowedExts.includes(ext) || !filenamePattern.test(base)) {
+                invalid.push(f.name);
+                return;
+            }
+            if (!selectedFiles.some(sf => sf.name === f.name && sf.size === f.size)) selectedFiles.push(f);
+        });
+
+        if (invalid.length) {
+            appendStatus('❌ Một số tệp bị bỏ (tên/định dạng không hợp lệ): ' + invalid.join(', '), 'error');
+        }
+
         renderFileList();
     });
 
@@ -140,7 +169,7 @@ document.addEventListener('DOMContentLoaded', function() {
     // Register button — upload using presigned URLs and show progress
     btnRegister.addEventListener('click', async function() {
         if (selectedFiles.length === 0) {
-            showStatus('Vui lòng chọn (các) tệp ảnh. Tên tệp phải là [MSSV].jpg', 'error');
+            showStatus('Vui lòng chọn (các) tệp ảnh hợp lệ. Tên tệp phải là DHxxxxxxx.jpg (x là chữ số)', 'error');
             return;
         }
 

@@ -40,23 +40,43 @@
                             ->orderBy('exam_date', 'desc')
                             ->get();
                     @endphp
-                    @foreach($examDates as $date)
+                    @foreach ($examDates as $date)
                         @php
                             try {
-                                $dt = \Carbon\Carbon::parse($date->exam_date);
-                                $formattedDate = $dt ? $dt->format('d-m-Y') : (string) $date->exam_date;
-                                $valueDate = $dt ? $dt->toDateString() : (string) $date->exam_date;
+                                if ($date->exam_date instanceof \Carbon\Carbon) {
+                                    $valueDate = $date->exam_date->format('Y-m-d');
+                                    $formattedDate = $date->exam_date->format('d-m-Y');
+                                } else {
+                                    $dateString = (string) $date->exam_date;
+                                    // Nếu có cả giờ, chỉ lấy phần ngày
+                                    if (strpos($dateString, ' ') !== false) {
+                                        $dateString = explode(' ', $dateString)[0];
+                                    }
+                                    // Không ép timezone, chỉ format lại
+                                    $dt = \Carbon\Carbon::parse($dateString);
+                                    $valueDate = $dt->format('Y-m-d');
+                                    $formattedDate = $dt->format('d-m-Y');
+                                }
                             } catch (\Exception $e) {
-                                $formattedDate = (string) $date->exam_date;
-                                // try to extract Y-m-d portion if present
-                                $valueDate = preg_match('/^(\d{4}-\d{2}-\d{2})/', $formattedDate, $m) ? $m[1] : $formattedDate;
+                                $dateString = (string) $date->exam_date;
+                                $valueDate = preg_match('/^(\d{4}-\d{2}-\d{2})/', $dateString, $m)
+                                    ? $m[1]
+                                    : $dateString;
+                                $formattedDate = $valueDate;
                             }
                         @endphp
                         <option value="{{ $valueDate }}">{{ $formattedDate }}</option>
                     @endforeach
                 </select>
-                
-                <button class="btn btn-danger d-none" id="btnBulkDelete" style="padding: 8px 16px; border-radius: 8px;">
+
+                <a class="tf-button style-3 w208 d-none" href="#" id="btnExportSelected">
+                    <i class="icon-download"></i>Export(<span id="exportSelectedCount">0</span>)
+                </a>
+                <a class="tf-button style-3 w208" href="#" id="btnExportOptions">
+                    <i class="icon-calendar"></i>Export theo ngày
+                </a>
+                <button class="d-none w208" id="btnBulkDelete"
+                    style="padding: 12px 20px; border-radius: 10px; font-size: 14px; height: 46px; background-color: #dc3545; color: white; border: none; cursor: pointer; font-weight: 500; transition: all 0.3s;">
                     <i class="icon-trash-2"></i> Xóa đã chọn (<span id="selectedCount">0</span>)
                 </button>
                 <a class="tf-button style-2 w208" href="#" id="importExcelBtn">
@@ -65,14 +85,16 @@
             </div>
         </div>
 
-        <!-- Chú thích với kích thước lớn hơn và dễ nhìn -->
-        <div class="alert alert-info mt-3 mb-4" role="alert" style="font-size: 15px; padding: 16px 20px; border-radius: 10px; background-color: #e8f4ff; border: 1px solid #b3d9ff;">
+
+        <div class="alert alert-info mt-3 mb-4" role="alert"
+            style="font-size: 15px; padding: 16px 20px; border-radius: 10px; background-color: #e8f4ff; border: 1px solid #b3d9ff;">
             <div class="d-flex align-items-center">
                 <i class="icon-info" style="font-size: 20px; margin-right: 12px; color: #2377FC;"></i>
                 <div>
-                    <strong style="font-size: 15px; color: #2377FC;">HƯỚNG DẪN:</strong> 
+                    <strong style="font-size: 15px; color: #2377FC;">HƯỚNG DẪN:</strong>
                     <span style="color: #333; font-weight: 500;">
-                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để xem chi tiết ca thi tương ứng.
+                        Nhấn vào biểu tượng <i class="icon-clipboard" style="color: #2377FC;"></i> để xem chi tiết ca thi
+                        tương ứng.
                     </span>
                 </div>
             </div>
@@ -104,7 +126,8 @@
         <div class="divider"></div>
         <div class="flex items-center justify-between flex-wrap gap10 wgp-pagination">
             <div class="text-tiny text-secondary">
-                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span id="pagination-total">0</span> lịch thi
+                Hiển thị <span id="pagination-start">0</span>-<span id="pagination-end">0</span> của <span
+                    id="pagination-total">0</span> lịch thi
             </div>
             <div class="pagination-controls">
                 <nav aria-label="Page navigation">

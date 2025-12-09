@@ -7,7 +7,7 @@ const AdminHelpers = {
     /**
      * Fetch API với CSRF token và error handling
      */
-    apiFetch: async function(url, options = {}) {
+    apiFetch: async function (url, options = {}) {
         const csrfToken = document.querySelector('meta[name="csrf-token"]')?.getAttribute('content');
         const defaultHeaders = { 'Accept': 'application/json' };
         if (csrfToken) defaultHeaders['X-CSRF-TOKEN'] = csrfToken;
@@ -17,7 +17,7 @@ const AdminHelpers = {
         }
 
         const config = { ...options, headers: { ...defaultHeaders, ...options.headers } };
-        
+
         if (config.body && typeof config.body === 'object' && !(config.body instanceof FormData)) {
             config.body = JSON.stringify(config.body);
         }
@@ -35,7 +35,7 @@ const AdminHelpers = {
     /**
      * Toggle loading state trên button
      */
-    toggleButtonLoading: function(button, isLoading) {
+    toggleButtonLoading: function (button, isLoading) {
         if (!button) return;
         const btnText = button.querySelector('.btn-text');
         const spinner = button.querySelector('.spinner-border');
@@ -47,7 +47,7 @@ const AdminHelpers = {
     /**
      * Xóa tất cả validation errors trong form
      */
-    clearValidationErrors: function(form) {
+    clearValidationErrors: function (form) {
         form.querySelectorAll('.is-invalid').forEach(el => el.classList.remove('is-invalid'));
         form.querySelectorAll('.invalid-feedback').forEach(el => el.textContent = '');
     },
@@ -55,7 +55,7 @@ const AdminHelpers = {
     /**
      * Hiển thị validation errors trong form
      */
-    displayValidationErrors: function(form, errors) {
+    displayValidationErrors: function (form, errors) {
         this.clearValidationErrors(form);
         for (const [field, messages] of Object.entries(errors)) {
             const fieldName = field.split('.')[0];
@@ -76,15 +76,16 @@ const AdminHelpers = {
     /**
      * Hiển thị toast notification
      */
-    showToast: function(title, message, type = 'info') {
+    showToast: function (title, message, type = 'info') {
         let toastContainer = document.getElementById('toast-container');
         if (!toastContainer) {
             toastContainer = document.createElement('div');
             toastContainer.id = 'toast-container';
-            toastContainer.className = 'toast-container';
+            toastContainer.className = 'toast-container position-fixed top-0 end-0 p-3';
+            toastContainer.style.zIndex = '9999';
             document.body.appendChild(toastContainer);
         }
-        
+
         const toastId = 'toast-' + Date.now();
         const toastHtml = `
             <div id="${toastId}" class="toast" role="alert" aria-live="assertive" aria-atomic="true">
@@ -104,12 +105,12 @@ const AdminHelpers = {
     /**
      * Load modal từ server
      */
-    loadModal: async function(url, modalId) {
+    loadModal: async function (url, modalId) {
         try {
             const response = await fetch(url);
             if (!response.ok) throw new Error(`HTTP error! status: ${response.status}`);
             const html = await response.text();
-            
+
             const existingModal = document.querySelector('.modal');
             if (existingModal) {
                 const modalInstance = bootstrap.Modal.getInstance(existingModal);
@@ -120,13 +121,13 @@ const AdminHelpers = {
             const tempDiv = document.createElement('div');
             tempDiv.innerHTML = html;
             document.body.appendChild(tempDiv);
-            
+
             const modalElement = document.getElementById(modalId);
             if (!modalElement) {
                 console.error(`Modal with id ${modalId} not found in loaded content.`);
                 return null;
             }
-            
+
             const modal = new bootstrap.Modal(modalElement);
             modalElement.addEventListener('hidden.bs.modal', () => tempDiv.remove());
             return modal;
@@ -140,7 +141,7 @@ const AdminHelpers = {
     /**
      * Debounce function
      */
-    debounce: function(func, delay) {
+    debounce: function (func, delay) {
         let timeout;
         return (...args) => {
             clearTimeout(timeout);
@@ -151,7 +152,7 @@ const AdminHelpers = {
     /**
      * Escape HTML để tránh XSS
      */
-    escapeHtml: function(text) {
+    escapeHtml: function (text) {
         if (typeof text !== 'string') return text;
         const map = {
             '&': '&amp;',
@@ -166,7 +167,7 @@ const AdminHelpers = {
     /**
      * Update URL với pagination và search params
      */
-    updateURL: function(page, query) {
+    updateURL: function (page, query) {
         const url = new URL(window.location);
         if (page > 1) {
             url.searchParams.set('page', page);
@@ -184,7 +185,7 @@ const AdminHelpers = {
     /**
      * Get URL params
      */
-    getURLParams: function() {
+    getURLParams: function () {
         const params = new URLSearchParams(window.location.search);
         return {
             page: parseInt(params.get('page')) || 1,
@@ -195,7 +196,7 @@ const AdminHelpers = {
     /**
      * Render pagination HTML
      */
-    renderPaginationHTML: function(paginationData) {
+    renderPaginationHTML: function (paginationData) {
         if (!paginationData || paginationData.last_page <= 1) {
             return '';
         }
@@ -257,9 +258,9 @@ const AdminHelpers = {
     /**
      * Update pagination info text
      */
-    updatePaginationInfo: function(paginationInfo, paginationData) {
+    updatePaginationInfo: function (paginationInfo, paginationData) {
         if (!paginationInfo || !paginationData) return;
-        
+
         paginationInfo.start.textContent = paginationData.from || 0;
         paginationInfo.end.textContent = paginationData.to || 0;
         paginationInfo.total.textContent = paginationData.total || 0;
