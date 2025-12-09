@@ -1,4 +1,4 @@
-$(document).ready(function() {
+$(document).ready(function () {
     let searchTimeout = null;
     const searchInput = $('#searchInput');
     const clearButton = $('#clearSearch');
@@ -10,23 +10,23 @@ $(document).ready(function() {
     loadExams();
 
     // Search with debounce (300ms)
-    searchInput.on('input', function() {
+    searchInput.on('input', function () {
         const value = $(this).val().trim();
-        
+
         // Show/hide clear button
         clearButton.toggle(value.length > 0);
-        
+
         // Clear previous timeout
         clearTimeout(searchTimeout);
-        
+
         // Set new timeout
-        searchTimeout = setTimeout(function() {
+        searchTimeout = setTimeout(function () {
             loadExams(value);
         }, 300);
     });
 
     // Clear search
-    clearButton.on('click', function() {
+    clearButton.on('click', function () {
         searchInput.val('').focus();
         clearButton.hide();
         searchResultInfo.hide();
@@ -34,7 +34,7 @@ $(document).ready(function() {
     });
 
     // Enter key to search immediately
-    searchInput.on('keypress', function(e) {
+    searchInput.on('keypress', function (e) {
         if (e.which === 13) {
             clearTimeout(searchTimeout);
             loadExams($(this).val().trim());
@@ -44,17 +44,18 @@ $(document).ready(function() {
     function loadExams(searchQuery = '') {
         // Show loading
         searchLoading.show();
-        
+
         $.ajax({
             url: '/dashboard/stats',
             method: 'GET',
             data: { search: searchQuery },
-            success: function(response) {
+            success: function (response) {
                 searchLoading.hide();
                 renderExams(response.ongoingExams, searchQuery);
+                updateFaceStats(response.faceRegistrationStats);
                 updateLastUpdateTime();
             },
-            error: function(xhr, status, error) {
+            error: function (xhr, status, error) {
                 searchLoading.hide();
                 console.error('Error loading exams:', error);
                 container.html(`
@@ -85,12 +86,12 @@ $(document).ready(function() {
 
         // Empty state
         if (exams.length === 0) {
-            const emptyMessage = searchQuery 
+            const emptyMessage = searchQuery
                 ? `<p class="text-secondary mb-0">Không tìm thấy ca thi nào</p>
                    <p class="text-tiny text-secondary">Thử tìm kiếm với từ khóa khác</p>`
                 : `<p class="text-secondary mb-0">Không có ca thi nào đang diễn ra</p>
                    <p class="text-tiny text-secondary">Các ca thi sẽ được hiển thị khi bắt đầu</p>`;
-            
+
             container.html(`
                 <div class="text-center py-5">
                     <div class="mb-3">
@@ -104,12 +105,12 @@ $(document).ready(function() {
 
         // Render exam cards
         let html = '<div class="row">';
-        exams.forEach(function(exam) {
+        exams.forEach(function (exam) {
             const attendanceRate = parseFloat(exam.attendance_rate);
             const progressColor = attendanceRate >= 80 ? 'bg-success' : (attendanceRate >= 50 ? 'bg-warning' : 'bg-danger');
             const rateColor = attendanceRate >= 80 ? 'text-success' : (attendanceRate >= 50 ? 'text-warning' : 'text-danger');
             const absentCount = exam.registered_count - exam.attended_count;
-            
+
             html += `
                 <div class="col-xl-4 col-lg-6 col-md-6 col-sm-12 mb-20 fade-in">
                     <div class="card-exam">
@@ -194,15 +195,15 @@ $(document).ready(function() {
             `;
         });
         html += '</div>';
-        
+
         container.html(html);
     }
 
     function updateLastUpdateTime() {
         const now = new Date();
-        const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) + 
-                          ' - ' + 
-                          now.toLocaleDateString('vi-VN');
+        const timeString = now.toLocaleTimeString('vi-VN', { hour: '2-digit', minute: '2-digit' }) +
+            ' - ' +
+            now.toLocaleDateString('vi-VN');
         $('#lastUpdate').text(timeString);
     }
 
@@ -217,8 +218,157 @@ $(document).ready(function() {
         return text.replace(/[&<>"']/g, m => map[m]);
     }
 
+    // Face Registration Stats
+    function updateFaceStats(stats) {
+        if (!stats) return;
+
+        $('#totalStudentsCount').text(stats.total.toLocaleString());
+        $('#registeredCount').text(stats.registered.toLocaleString());
+        $('#unregisteredCount').text(stats.unregistered.toLocaleString());
+        $('#registeredPercentage').text(stats.registered_percentage + '%');
+    }
+
+    // Face Registration Modal
+    const faceModal = new bootstrap.Modal(document.getElementById('faceRegistrationModal'));
+    let currentFacePage = 1;
+    let currentFaceStatus = 'all';
+    let currentFaceSearch = '';
+
+    $('#btnViewFaceDetails').on('click', function () {
+        faceModal.show();
+        loadFaceStudents();
+    });
+
+    $('#faceStudentSearch').on('input', debounce(function () {
+        currentFaceSearch = $(this).val().trim();
+        currentFacePage = 1;
+        loadFaceStudents();
+    }, 300));
+
+    $('#faceStatusFilter').on('change', function () {
+        currentFaceStatus = $(this).val();
+        currentFacePage = 1;
+        loadFaceStudents();
+    });
+
+    function loadFaceStudents() {
+        const tbody = $('#faceStudentTableBody');
+        tbody.html('<tr><td colspan="5" class="text-center"><div class="spinner-border text-primary"></div></td></tr>');
+
+        $.ajax({
+            url: '/dashboard/face-registration-students',
+            method: 'GET',
+            data: {
+                status: currentFaceStatus,
+                q: currentFaceSearch,
+                limit: 20,
+                page: currentFacePage
+            },
+            success: function (response) {
+                if (response.success) {
+                    renderFaceStudents(response.data, response.pagination);
+                }
+            },
+            error: function () {
+                tbody.html('<tr><td colspan="5" class="text-center text-danger">Lỗi khi tải dữ liệu</td></tr>');
+            }
+        });
+    }
+
+    function renderFaceStudents(students, pagination) {
+        const tbody = $('#faceStudentTableBody');
+
+        if (students.length === 0) {
+            tbody.html('<tr><td colspan="6" class="text-center text-muted">Không có dữ liệu</td></tr>');
+            return;
+        }
+
+        let html = '';
+        students.forEach((student, index) => {
+            const stt = (pagination.current_page - 1) * pagination.per_page + index + 1;
+            const hasPhotos = student.photos && student.photos.length > 0;
+            const statusBadge = hasPhotos
+                ? '<span class="badge bg-success"><i class="icon-check-circle"></i> Đã đăng ký</span>'
+                : '<span class="badge bg-danger"><i class="icon-x-circle"></i> Chưa đăng ký</span>';
+            const photoCount = hasPhotos ? student.photos.length : 0;
+
+            html += `
+                <tr>
+                    <td class="text-center">${stt}</td>
+                    <td>${escapeHtml(student.student_code)}</td>
+                    <td>${escapeHtml(student.full_name)}</td>
+                    <td>${escapeHtml(student.class_code || '-')}</td>
+                    <td class="text-center">${statusBadge}</td>
+                </tr>
+            `;
+        });
+
+        tbody.html(html);
+
+        // Update pagination info
+        $('#faceStudentFrom').text(pagination.from || 0);
+        $('#faceStudentTo').text(pagination.to || 0);
+        $('#faceStudentTotal').text(pagination.total);
+
+        // Render pagination
+        renderFacePagination(pagination);
+    }
+
+    function renderFacePagination(pagination) {
+        const container = $('#faceStudentPagination');
+
+        if (pagination.last_page <= 1) {
+            container.empty();
+            return;
+        }
+
+        let html = '';
+
+        // Previous
+        html += `<li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${pagination.current_page - 1}">«</a>
+        </li>`;
+
+        // Pages
+        for (let i = 1; i <= pagination.last_page; i++) {
+            if (i === 1 || i === pagination.last_page ||
+                (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
+                html += `<li class="page-item ${i === pagination.current_page ? 'active' : ''}">
+                    <a class="page-link" href="#" data-page="${i}">${i}</a>
+                </li>`;
+            } else if (i === pagination.current_page - 3 || i === pagination.current_page + 3) {
+                html += '<li class="page-item disabled"><span class="page-link">...</span></li>';
+            }
+        }
+
+        // Next
+        html += `<li class="page-item ${pagination.current_page === pagination.last_page ? 'disabled' : ''}">
+            <a class="page-link" href="#" data-page="${pagination.current_page + 1}">»</a>
+        </li>`;
+
+        container.html(html);
+
+        // Bind click events
+        container.find('a.page-link').on('click', function (e) {
+            e.preventDefault();
+            const page = parseInt($(this).data('page'));
+            if (page && page !== currentFacePage) {
+                currentFacePage = page;
+                loadFaceStudents();
+            }
+        });
+    }
+
+    function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+            clearTimeout(timeout);
+            timeout = setTimeout(() => func.apply(this, args), wait);
+        };
+    }
+
     // Auto refresh every 30 seconds
-    setInterval(function() {
+    setInterval(function () {
         if (!searchInput.val().trim()) {
             loadExams();
         }

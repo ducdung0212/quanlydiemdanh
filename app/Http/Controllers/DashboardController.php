@@ -38,8 +38,59 @@ class DashboardController extends Controller
             ];
         });
 
+        // Face registration statistics
+        $totalStudents = Student::count();
+        $studentsWithPhotos = Student::has('photos')->count();
+        $studentsWithoutPhotos = $totalStudents - $studentsWithPhotos;
+
         return response()->json([
             'ongoingExams' => $examsData,
+            'faceRegistrationStats' => [
+                'total' => $totalStudents,
+                'registered' => $studentsWithPhotos,
+                'unregistered' => $studentsWithoutPhotos,
+                'registered_percentage' => $totalStudents > 0 ? round(($studentsWithPhotos / $totalStudents) * 100, 1) : 0,
+            ],
+        ]);
+    }
+
+    public function faceRegistrationStudents(Request $request)
+    {
+        $status = $request->query('status', 'all'); // all, registered, unregistered
+        $search = $request->query('q', '');
+        $limit = $request->query('limit', 20);
+
+        $query = Student::with('photos');
+
+        // Filter by status
+        if ($status === 'registered') {
+            $query->has('photos');
+        } elseif ($status === 'unregistered') {
+            $query->doesntHave('photos');
+        }
+
+        // Search
+        if ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->where('student_code', 'like', "%{$search}%")
+                  ->orWhere('full_name', 'like', "%{$search}%")
+                  ->orWhere('class_code', 'like', "%{$search}%");
+            });
+        }
+
+        $students = $query->orderBy('student_code')->paginate($limit);
+
+        return response()->json([
+            'success' => true,
+            'data' => $students->items(),
+            'pagination' => [
+                'current_page' => $students->currentPage(),
+                'last_page' => $students->lastPage(),
+                'per_page' => $students->perPage(),
+                'total' => $students->total(),
+                'from' => $students->firstItem(),
+                'to' => $students->lastItem(),
+            ],
         ]);
     }
 }

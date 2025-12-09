@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamSchedulesController;
 use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\StudentFaceRegistrationController;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\Schema;
@@ -41,6 +42,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         // DASHBOARD
         Route::get('/dashboard', [DashboardController::class, 'index'])->name('dashboard');
         Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
+        Route::get('/dashboard/face-registration-students', [DashboardController::class, 'faceRegistrationStudents'])->name('dashboard.face-registration-students');
 
         // USERS
         Route::get('/user', function () {
@@ -241,6 +243,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('admin.face-registration.index');
         })->name('face-registration');
         Route::post('/students/generate-upload-url', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
+        Route::post('/students/confirm-upload', [StudentFaceRegistrationController::class, 'confirmUpload']);
     });
 
 });

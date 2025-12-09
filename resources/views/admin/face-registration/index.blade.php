@@ -440,9 +440,59 @@
                     }));
 
                     const results = await Promise.all(uploadPromises);
-                    showStatus('--- KẾT QUẢ TẢI LÊN ---', 'info');
-                    results.forEach(r => appendStatus((r.ok ? '✅ ' : '❌ ') + r.file + (r.msg ? ' (' + r
-                        .msg + ')' : ''), r.ok ? 'success' : 'error'));
+
+                    // Gọi API confirm upload cho những file thành công
+                    const successfulUploads = results.filter(r => r.ok).map(r => {
+                        const studentCode = r.file.replace(/\.[^/.]+$/, '').replace(/_.+$/, '')
+                            .trim();
+                        return {
+                            student_code: studentCode,
+                            file_name: r.file
+                        };
+                    });
+
+                    console.log('Successful uploads to confirm:', successfulUploads);
+
+                    if (successfulUploads.length > 0) {
+                        try {
+                            const confirmResponse = await fetch('/students/confirm-upload', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    uploads: successfulUploads
+                                })
+                            });
+
+                            const confirmData = await confirmResponse.json();
+                            console.log('Confirm response:', confirmData);
+                            if (confirmData.success) {
+                                showStatus('✅ ' + confirmData.message, 'success');
+                            } else {
+                                showStatus('⚠️ ' + (confirmData.message || 'Lỗi khi lưu database'),
+                                    'warning');
+                            }
+                        } catch (confirmErr) {
+                            console.error('Confirm upload error:', confirmErr);
+                            showStatus('⚠️ Upload thành công nhưng lỗi khi lưu database', 'warning');
+                        }
+                    }
+
+                    // Hiển thị kết quả
+                    const successCount = results.filter(r => r.ok).length;
+                    const failedResults = results.filter(r => !r.ok);
+
+                    showStatus(`✅ Tải lên thành công: ${successCount}/${results.length} ảnh`,
+                        'success');
+
+                    if (failedResults.length > 0) {
+                        showStatus('--- CÁC ẢNH THẤT BẠI ---', 'error');
+                        failedResults.forEach(r => appendStatus('❌ ' + r.file + (r.msg ? ' (' + r.msg +
+                            ')' : ''), 'error'));
+                    }
 
                 } catch (err) {
                     console.error(err);
@@ -723,12 +773,58 @@
                     const success = results.filter(r => r.ok).length;
                     const failed = results.filter(r => !r.ok).length;
 
-                    showFolderStatus(`✅ Hoàn thành: ${success} thành công, ${failed} thất bại`,
-                        success > 0 ? 'success' : 'error');
-                    results.forEach(r => {
-                        if (!r.ok) appendFolderStatus('❌ ' + r.file + ': ' + (r.msg ||
-                            'Unknown error'), 'error');
+                    // Gọi API confirm upload cho những file thành công
+                    const successfulUploads = results.filter(r => r.ok).map(r => {
+                        const studentCode = extractStudentCode(r.file);
+                        return {
+                            student_code: studentCode,
+                            file_name: r.file
+                        };
                     });
+
+                    console.log('Folder - Successful uploads to confirm:', successfulUploads);
+
+                    if (successfulUploads.length > 0) {
+                        try {
+                            const confirmResponse = await fetch('/students/confirm-upload', {
+                                method: 'POST',
+                                headers: {
+                                    'Content-Type': 'application/json',
+                                    'Accept': 'application/json',
+                                    'X-CSRF-TOKEN': csrfToken
+                                },
+                                body: JSON.stringify({
+                                    uploads: successfulUploads
+                                })
+                            });
+
+                            const confirmData = await confirmResponse.json();
+                            console.log('Folder - Confirm response:', confirmData);
+                            if (confirmData.success) {
+                                showFolderStatus('✅ ' + confirmData.message, 'success');
+                            } else {
+                                showFolderStatus('⚠️ ' + (confirmData.message ||
+                                    'Lỗi khi lưu database'), 'warning');
+                            }
+                        } catch (confirmErr) {
+                            console.error('Confirm upload error:', confirmErr);
+                            showFolderStatus('⚠️ Upload thành công nhưng lỗi khi lưu database',
+                                'warning');
+                        }
+                    }
+
+                    // Hiển thị kết quả
+                    showFolderStatus(`✅ Tải lên thành công: ${success}/${results.length} ảnh`,
+                        success > 0 ? 'success' : 'error');
+
+                    const failedResults = results.filter(r => !r.ok);
+                    if (failedResults.length > 0) {
+                        appendFolderStatus('--- CÁC ẢNH THẤT BẠI ---', 'error');
+                        failedResults.forEach(r => {
+                            appendFolderStatus('❌ ' + r.file + ': ' + (r.msg ||
+                                'Unknown error'), 'error');
+                        });
+                    }
 
                 } catch (err) {
                     console.error(err);

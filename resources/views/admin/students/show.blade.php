@@ -1,5 +1,6 @@
 <!-- Modal Xem chi tiết sinh viên -->
-<div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true" data-bs-backdrop="false">
+<div class="modal fade" id="viewStudentModal" tabindex="-1" aria-labelledby="viewStudentModalLabel" aria-hidden="true"
+    data-bs-backdrop="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -8,6 +9,22 @@
             </div>
             <div class="modal-body">
                 <div class="row g-3">
+                    <!-- Ảnh sinh viên bên trái -->
+                    <div class="col-md-4 text-center">
+                        @php
+                            $studentPhoto = $student->photos()->first();
+                            $photoUrl = $studentPhoto ? $studentPhoto->image_url : asset('images/avatar/default-avatar.png');
+                        @endphp
+                        <img src="{{ $photoUrl }}" alt="Ảnh {{ $student->full_name }}"
+                            class="img-fluid rounded border shadow-sm"
+                            style="max-height: 300px; object-fit: cover; width: 100%;"
+                            onerror="this.src='{{ asset('images/default-avatar.png') }}'">
+                        <div class="mt-2 small text-muted">
+                            {{ $studentPhoto ? 'Đã đăng ký khuôn mặt' : 'Chưa đăng ký khuôn mặt' }}
+                        </div>
+                    </div>
+
+                    <!-- Thông tin sinh viên bên phải -->
                     <div class="col-md-8">
                         <dl class="row mb-0">
                             <dt class="col-sm-4 text-muted">Mã Sinh Viên</dt>

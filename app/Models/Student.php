@@ -68,7 +68,7 @@ class Student extends Model
      */
     public function photos(): HasMany
     {
-        return $this->hasMany(StudentPhoto::class, 'student_code', 'student_code');
+        return $this->hasMany(Student_Photos::class, 'student_code', 'student_code');
     }
 
     /**

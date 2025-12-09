@@ -3,10 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Http\Controllers\Controller;
+use App\Models\Student;
+use App\Models\Student_Photos;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
+use Illuminate\Support\Facades\Log;
 
 class StudentFaceRegistrationController extends Controller
 {
@@ -91,6 +94,94 @@ class StudentFaceRegistrationController extends Controller
             return response()->json([
                 'success' => false,
                 'message' => 'Không thể tạo URL: ' . $e->getMessage()
+            ], 500);
+        }
+    }
+
+    /**
+     * Callback sau khi upload thành công lên S3
+     * Lưu thông tin vào bảng student_photos
+     */
+    public function confirmUpload(Request $request)
+    {
+        try {
+            $validated = $request->validate([
+                'uploads' => 'required|array',
+                'uploads.*.student_code' => 'required|string|regex:/^DH\d{8}$/i',
+                'uploads.*.file_name' => 'required|string',
+            ]);
+
+            $results = [];
+            $bucket = config('filesystems.disks.s3.bucket');
+            $region = config('filesystems.disks.s3.region');
+
+            foreach ($validated['uploads'] as $upload) {
+                $studentCode = strtoupper($upload['student_code']);
+                $fileName = $upload['file_name'];
+                
+                // Kiểm tra sinh viên có tồn tại không
+                $student = Student::where('student_code', $studentCode)->first();
+                if (!$student) {
+                    $results[] = [
+                        'student_code' => $studentCode,
+                        'file_name' => $fileName,
+                        'success' => false,
+                        'message' => 'Không tìm thấy sinh viên'
+                    ];
+                    continue;
+                }
+
+                // Tạo S3 URL
+                $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
+                $s3Key = "images_to_register/{$safeFileName}";
+                $s3Url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$s3Key}";
+
+                // Lưu vào database
+                try {
+                    $photo = Student_Photos::create([
+                        'student_code' => $studentCode,
+                        'image_url' => $s3Url,
+                    ]);
+
+                    $results[] = [
+                        'student_code' => $studentCode,
+                        'file_name' => $fileName,
+                        'success' => true,
+                        'message' => 'Đã lưu thông tin ảnh'
+                    ];
+
+                    Log::info("Saved photo for student {$studentCode}: {$s3Url}");
+                } catch (\Exception $e) {
+                    $results[] = [
+                        'student_code' => $studentCode,
+                        'file_name' => $fileName,
+                        'success' => false,
+                        'message' => 'Lỗi lưu database: ' . $e->getMessage()
+                    ];
+                    Log::error("Failed to save photo for {$studentCode}: " . $e->getMessage());
+                }
+            }
+
+            $successCount = collect($results)->where('success', true)->count();
+            $totalCount = count($results);
+
+            return response()->json([
+                'success' => true,
+                'message' => "Đã lưu {$successCount}/{$totalCount} ảnh vào hệ thống",
+                'data' => $results
+            ]);
+
+        } catch (\Illuminate\Validation\ValidationException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Dữ liệu không hợp lệ',
+                'errors' => $e->errors()
+            ], 422);
+        } catch (\Exception $e) {
+            Log::error('Confirm upload error: ' . $e->getMessage());
+            return response()->json([
+                'success' => false,
+                'message' => 'Lỗi hệ thống: ' . $e->getMessage()
             ], 500);
         }
     }
