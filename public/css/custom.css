@@ -689,3 +689,19 @@ body {
                 padding: 12px 0;
             }
         }
+        @media (max-width: 768px) {
+    .camera-controls {
+        display: flex;
+        flex-wrap: nowrap; /* Không cho xuống dòng */
+        justify-content: space-between; /* Chia đều khoảng cách */
+        width: 100%;
+    }
+    
+    .camera-controls .tf-button {
+        flex: 1; /* Chia đều độ rộng cho các nút đang hiện */
+        text-align: center;
+        margin: 0 4px; /* Tạo khoảng cách nhỏ */
+        white-space: nowrap; /* Không cho chữ trong nút xuống dòng */
+        padding: 8px 5px !important; /* Padding nhỏ để không bị vỡ */
+    }
+}

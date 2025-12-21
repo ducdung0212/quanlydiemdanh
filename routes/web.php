@@ -35,7 +35,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //attendance - visible/usable by lecturers
     Route::get('/attendance', function () {
         return view('admin.attendance.index');
-     })->name('attendance');
+    })->name('attendance');
 
     // ==================== ADMIN-ONLY ROUTES ====================
     Route::middleware('role:admin')->group(function () {
@@ -199,6 +199,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             return view('admin.exam-schedules.students-modal');
         });
 
+        Route::get('/exam-schedules/{id}/modals/import-students', function ($id) {
+            return view('admin.exam-schedules.import-students-modal');
+        });
+
         Route::get('/exam-schedules/{id}/modals/supervisors', function ($id) {
             return view('admin.exam-schedules.supervisors-modal');
         });
@@ -214,7 +218,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/exam-supervisors/modals/import', function () {
             return view('admin.exam-supervisors.import');
         });
-        
+
         // Edit supervisor modal
         Route::get('/exam-supervisors/modals/edit/{id}', function ($id) {
             $supervisor = \App\Models\ExamSupervisor::find($id);
@@ -245,9 +249,8 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::post('/students/generate-upload-url', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
         Route::post('/students/confirm-upload', [StudentFaceRegistrationController::class, 'confirmUpload']);
     });
-
 });
 
 
 
-require __DIR__.'/auth.php';
+require __DIR__ . '/auth.php';

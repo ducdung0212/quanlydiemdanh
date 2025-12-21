@@ -671,7 +671,7 @@
                         file_type: f.type
                     }));
 
-                    const response = await fetch('/api/generate-upload-urls', {
+                    const response = await fetch('/api/students/generate-upload-urls', {
                         method: 'POST',
                         headers: {
                             'Content-Type': 'application/json',

@@ -70,6 +70,12 @@ class StudentModalManager {
                 }
             });
         }
+
+        // Import Excel button
+        const importBtn = this.dom.modal?.querySelector('#btnImportStudentsExcel');
+        if (importBtn) {
+            importBtn.addEventListener('click', () => this.openImportModal());
+        }
     }
 
     async loadStudents() {
@@ -216,5 +222,245 @@ class StudentModalManager {
         } catch (error) {
             showToast('Lỗi', error.message || 'Không thể xóa sinh viên', 'danger');
         }
+    }
+
+    async openImportModal() {
+        try {
+            // Load modal import
+            const importModal = await loadModal(
+                `/exam-schedules/${this.scheduleId}/modals/import-students`,
+                'importStudentsExcelModal'
+            );
+
+            if (importModal) {
+                this.setupImportModalHandlers();
+                importModal.show();
+            }
+        } catch (error) {
+            showToast('Lỗi', 'Không thể tải modal import', 'danger');
+        }
+    }
+
+    setupImportModalHandlers() {
+        const form = document.getElementById('importStudentsExcelForm');
+        const fileInput = document.getElementById('students_excel_file');
+        const btnSubmit = document.getElementById('btnImportStudentsSubmit');
+        const btnText = btnSubmit?.querySelector('.btn-text');
+        const spinner = btnSubmit?.querySelector('.spinner-border');
+
+        if (!form || !fileInput || !btnSubmit) return;
+
+        // Reset form khi mở modal
+        form.reset();
+        document.getElementById('studentsHeadingsPreview')?.classList.add('d-none');
+        document.getElementById('studentsMappingSection')?.classList.add('d-none');
+        form.dataset.isPreviewMode = 'true';
+        if (btnText) btnText.textContent = btnText.dataset.textPreview;
+
+        // Xử lý khi chọn file mới
+        fileInput.addEventListener('change', () => {
+            document.getElementById('studentsHeadingsPreview')?.classList.add('d-none');
+            document.getElementById('studentsMappingSection')?.classList.add('d-none');
+            form.dataset.isPreviewMode = 'true';
+            if (btnText) btnText.textContent = btnText.dataset.textPreview;
+        });
+
+        form.addEventListener('submit', async (e) => {
+            e.preventDefault();
+
+            const isPreviewMode = form.dataset.isPreviewMode === 'true';
+
+            if (isPreviewMode) {
+                // Bước 1: Preview - lấy tiêu đề cột
+                await this.handlePreviewImport(form, fileInput, btnSubmit, spinner, btnText);
+            } else {
+                // Bước 2: Import thực tế
+                await this.handleImportStudents(form, btnSubmit, spinner, btnText);
+            }
+        });
+    }
+
+    async handlePreviewImport(form, fileInput, btnSubmit, spinner, btnText) {
+        const file = fileInput.files[0];
+        if (!file) {
+            showToast('Lỗi', 'Vui lòng chọn file Excel', 'danger');
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('excel_file', file);
+
+        btnSubmit.disabled = true;
+        spinner?.classList.remove('d-none');
+
+        try {
+            const response = await fetch(`/api/exam-schedules/${this.scheduleId}/students/import/preview`, {
+                method: 'POST',
+                body: formData,
+                headers: {
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').content,
+                    'Accept': 'application/json',
+                }
+            });
+
+            const result = await response.json();
+
+            if (result.success) {
+                // Lưu token và heading row
+                document.getElementById('import_students_token').value = result.token;
+                document.getElementById('import_students_heading_row').value = result.heading_row;
+
+                // Hiển thị các heading
+                this.displayHeadings(result.headings);
+
+                // Populate mapping selects
+                this.populateMappingSelects(result.headings);
+
+                // Hiển thị phần mapping
+                document.getElementById('studentsMappingSection')?.classList.remove('d-none');
+
+                // Đổi chế độ sang import
+                if (btnText) btnText.textContent = btnText.dataset.textImport;
+
+                // Đánh dấu là không còn preview mode
+                form.dataset.isPreviewMode = 'false';
+
+                showToast('Thành công', 'Đã tải tiêu đề cột. Vui lòng ghép cột với trường dữ liệu.', 'success');
+            } else {
+                showToast('Lỗi', result.message || 'Không thể đọc file', 'danger');
+            }
+        } catch (error) {
+            showToast('Lỗi', error.message || 'Lỗi khi tải file', 'danger');
+        } finally {
+            btnSubmit.disabled = false;
+            spinner?.classList.add('d-none');
+        }
+    }
+
+    async handleImportStudents(form, btnSubmit, spinner, btnText) {
+        const token = document.getElementById('import_students_token')?.value;
+        const headingRow = document.getElementById('import_students_heading_row')?.value;
+
+        if (!token) {
+            showToast('Lỗi', 'Token không hợp lệ', 'danger');
+            return;
+        }
+
+        // Thu thập mapping
+        const mapping = {};
+        const mappingSelects = document.querySelectorAll('.column-mapping-students');
+
+        for (const select of mappingSelects) {
+            const field = select.dataset.field;
+            const required = select.dataset.required === 'true';
+            const value = select.value;
+
+            if (required && !value) {
+                showToast('Lỗi', `Vui lòng chọn cột cho trường "${select.previousElementSibling?.textContent || field}"`, 'danger');
+                return;
+            }
+
+            if (value) {
+                mapping[field] = value;
+            }
+        }
+
+        btnSubmit.disabled = true;
+        spinner?.classList.remove('d-none');
+
+        try {
+            const result = await apiFetch(`/api/exam-schedules/${this.scheduleId}/students/import`, {
+                method: 'POST',
+                body: JSON.stringify({
+                    token,
+                    heading_row: parseInt(headingRow),
+                    mapping
+                })
+            });
+
+            if (result.success) {
+                showToast('Thành công', result.message, 'success');
+
+                // Hiển thị thông tin chi tiết nếu có
+                if (result.data) {
+                    const { added_count, skipped_count } = result.data;
+                    console.log('Import result:', result.data);
+
+                    if (skipped_count > 0 && result.data.skipped) {
+                        console.warn('Skipped students:', result.data.skipped);
+                    }
+                }
+
+                // Đóng modal import
+                const importModalEl = document.getElementById('importStudentsExcelModal');
+                const importModal = bootstrap.Modal.getInstance(importModalEl);
+                if (importModal) {
+                    importModal.hide();
+                }
+
+                // Reload danh sách sinh viên
+                await this.loadStudents();
+            } else {
+                showToast('Lỗi', result.message || 'Import thất bại', 'danger');
+            }
+        } catch (error) {
+            showToast('Lỗi', error.message || 'Lỗi khi import', 'danger');
+        } finally {
+            btnSubmit.disabled = false;
+            spinner?.classList.add('d-none');
+        }
+    }
+
+    displayHeadings(headings) {
+        const headingsList = document.getElementById('studentsHeadingsList');
+        const headingsPreview = document.getElementById('studentsHeadingsPreview');
+
+        if (!headingsList || !headingsPreview) return;
+
+        headingsList.innerHTML = headings.map(h =>
+            `<span class="badge bg-secondary">${escapeHtml(h)}</span>`
+        ).join('');
+
+        headingsPreview.classList.remove('d-none');
+    }
+
+    populateMappingSelects(headings) {
+        const selects = document.querySelectorAll('.column-mapping-students');
+
+        selects.forEach(select => {
+            // Clear existing options except first one
+            while (select.options.length > 1) {
+                select.remove(1);
+            }
+
+            // Add heading options
+            headings.forEach(heading => {
+                const option = document.createElement('option');
+                option.value = this.normalizeColumnKey(heading);
+                option.textContent = heading;
+                select.appendChild(option);
+            });
+
+            // Auto-select matching column
+            const field = select.dataset.field;
+            const normalizedField = this.normalizeColumnKey(field);
+
+            for (let i = 0; i < select.options.length; i++) {
+                if (select.options[i].value === normalizedField) {
+                    select.selectedIndex = i;
+                    break;
+                }
+            }
+        });
+    }
+
+    normalizeColumnKey(column) {
+        if (!column) return '';
+        return column
+            .toLowerCase()
+            .normalize('NFD')
+            .replace(/[\u0300-\u036f]/g, '')
+            .replace(/[^a-z0-9]+/g, '_')
+            .replace(/^_+|_+$/g, '');
     }
 }

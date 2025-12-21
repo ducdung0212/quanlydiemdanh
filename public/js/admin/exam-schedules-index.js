@@ -583,6 +583,13 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // State
             let currentPage = 1;
+            // Nested sort state between full_name and class_code
+            let primarySortBy = '';
+            let primarySortDir = 'asc';
+            const sortDirMap = {
+                full_name: 'asc',
+                class_code: 'asc'
+            };
 
             // DOM Elements
             const examSessionCode = document.getElementById('exam-session-code');
@@ -604,6 +611,41 @@ document.addEventListener('DOMContentLoaded', function () {
             const paginationEnd = document.getElementById('attendance-pagination-end');
             const paginationTotal = document.getElementById('attendance-pagination-total');
             const paginationContainer = document.getElementById('attendance-pagination-container');
+
+            // Sortable headers
+            const attendanceTable = document.getElementById('attendance-table');
+            const sortableHeaders = attendanceTable ? attendanceTable.querySelectorAll('th[data-sort]') : [];
+
+            function attendance_updateSortIndicators() {
+                if (!attendanceTable) return;
+                const indicators = attendanceTable.querySelectorAll('[data-sort-indicator]');
+                indicators.forEach(el => {
+                    const key = el.getAttribute('data-sort-indicator');
+                    if (!key) return;
+                    if (!primarySortBy) {
+                        el.textContent = '↕';
+                        return;
+                    }
+                    const dir = sortDirMap[key] || 'asc';
+                    el.textContent = dir === 'asc' ? '▲' : '▼';
+                });
+            }
+
+            function attendance_setSort(nextSortBy) {
+                if (!nextSortBy) return;
+                if (primarySortBy === nextSortBy) {
+                    sortDirMap[nextSortBy] = sortDirMap[nextSortBy] === 'asc' ? 'desc' : 'asc';
+                } else {
+                    sortDirMap[nextSortBy] = sortDirMap[nextSortBy] || 'asc';
+                }
+
+                primarySortBy = nextSortBy;
+                primarySortDir = sortDirMap[nextSortBy] || 'asc';
+
+                currentPage = 1;
+                attendance_updateSortIndicators();
+                attendance_loadAttendanceData(1);
+            }
 
             function attendance_formatDate(dateStr) {
                 if (!dateStr) return '';
@@ -684,7 +726,16 @@ document.addEventListener('DOMContentLoaded', function () {
                     if (!attendanceTableBody) return;
                     attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
 
-                    const url = `${API_BASE_URL}?page=${page}`; // Thêm page vào API call
+                    const secondarySortBy = primarySortBy
+                        ? (primarySortBy === 'full_name' ? 'class_code' : 'full_name')
+                        : '';
+                    const secondarySortDir = secondarySortBy ? (sortDirMap[secondarySortBy] || 'asc') : 'asc';
+
+                    const url = `${API_BASE_URL}?page=${page}`
+                        + (primarySortBy ? `&sort_by=${encodeURIComponent(primarySortBy)}` : '')
+                        + (primarySortBy ? `&sort_dir=${encodeURIComponent(primarySortDir)}` : '')
+                        + (primarySortBy ? `&sort_by2=${encodeURIComponent(secondarySortBy)}` : '')
+                        + (primarySortBy ? `&sort_dir2=${encodeURIComponent(secondarySortDir)}` : '');
                     const response = await fetch(url);
 
                     if (!response.ok) {
@@ -744,6 +795,8 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     attendanceTableBody.innerHTML = rowsHtml;
 
+                    attendance_updateSortIndicators();
+
                     // Render Pagination
                     attendance_renderPagination(studentsPaginator);
 
@@ -755,10 +808,22 @@ document.addEventListener('DOMContentLoaded', function () {
                 }
             }
 
-            async function attendance_exportToExcel() {
+            async function attendance_exportToExcel(e) {
                 try {
+                    if (e && typeof e.preventDefault === 'function') e.preventDefault();
                     const examId = window.location.pathname.split('/').pop();
-                    window.location.href = `/exam-schedules/${examId}/export`;
+                    const secondarySortBy = primarySortBy
+                        ? (primarySortBy === 'full_name' ? 'class_code' : 'full_name')
+                        : '';
+                    const secondarySortDir = secondarySortBy ? (sortDirMap[secondarySortBy] || 'asc') : 'asc';
+
+                    const url = `/exam-schedules/${examId}/export`
+                        + (primarySortBy ? `?sort_by=${encodeURIComponent(primarySortBy)}` : '')
+                        + (primarySortBy ? `&sort_dir=${encodeURIComponent(primarySortDir)}` : '')
+                        + (primarySortBy ? `&sort_by2=${encodeURIComponent(secondarySortBy)}` : '')
+                        + (primarySortBy ? `&sort_dir2=${encodeURIComponent(secondarySortDir)}` : '');
+
+                    window.location.href = url;
                 } catch (error) {
                     console.error('Error exporting Excel:', error);
                     swal('Lỗi', 'Lỗi khi xuất file Excel', 'error');
@@ -767,6 +832,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
             if (btnRefresh) btnRefresh.addEventListener('click', () => attendance_loadAttendanceData(currentPage));
             if (btnExportExcel) btnExportExcel.addEventListener('click', attendance_exportToExcel);
+
+            // Click-to-sort headers
+            if (sortableHeaders && sortableHeaders.length > 0) {
+                sortableHeaders.forEach(th => {
+                    th.addEventListener('click', () => {
+                        const key = th.getAttribute('data-sort');
+                        attendance_setSort(key);
+                    });
+                });
+            }
+
+            // Ensure arrows are visible on first render
+            attendance_updateSortIndicators();
 
             // Xử lý sự kiện click phân trang
             if (paginationContainer) {

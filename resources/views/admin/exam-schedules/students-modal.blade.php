@@ -8,11 +8,16 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
-                    <div class="input-group input-group-lg">
-                        <input type="text" class="form-control" id="searchStudent"
-                            placeholder="Nhập mã sinh viên...">
-                        <button class="btn btn-primary" type="button" id="btnAddStudent">
-                            <i class="icon-plus"></i> Thêm
+                    <div class="d-flex gap-2">
+                        <div class="input-group input-group-lg flex-grow-1">
+                            <input type="text" class="form-control" id="searchStudent"
+                                placeholder="Nhập mã sinh viên...">
+                            <button class="btn btn-primary" type="button" id="btnAddStudent">
+                                <i class="icon-plus"></i> Thêm
+                            </button>
+                        </div>
+                        <button class="btn btn-success btn-lg" type="button" id="btnImportStudentsExcel">
+                            <i class="icon-upload"></i> Import Excel
                         </button>
                     </div>
                 </div>

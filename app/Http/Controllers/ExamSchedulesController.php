@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Exports\MultiExamSchedulesExport;
 use App\Http\Requests\ExamScheduleRequest;
 use App\Imports\ExamSchedulesImport;
+use App\Imports\ExamScheduleStudentsImport;
 use App\Models\AttendanceRecord;
 use App\Models\ExamSchedule;
 use Carbon\Carbon;
@@ -84,10 +85,7 @@ class ExamSchedulesController extends Controller
     /**
      * Show the form for creating a new resource.
      */
-    public function create()
-    {
-        
-    }
+    public function create() {}
 
     /**
      * Store a newly created resource in storage.
@@ -96,7 +94,7 @@ class ExamSchedulesController extends Controller
     {
         try {
             $validated = $request->validated();
-            
+
             $examSchedule = ExamSchedule::create($validated);
 
             return response()->json([
@@ -118,7 +116,7 @@ class ExamSchedulesController extends Controller
      */
     public function exportAttendance($id)
     {
-        $examSchedule = ExamSchedule::with(['subject', 'attendanceRecords.student'])->find($id);
+        $examSchedule = ExamSchedule::with(['subject'])->find($id);
 
         if (!$examSchedule) {
             return response()->json([
@@ -128,11 +126,70 @@ class ExamSchedulesController extends Controller
         }
 
         try {
-            $fileName = 'Ca_Thi_' . $examSchedule->subject_code . '_' . 
-                        Carbon::parse($examSchedule->exam_date)->format('Y-m-d') . '.xlsx';
+            $fileName = 'Ca_Thi_' . $examSchedule->subject_code . '_' .
+                Carbon::parse($examSchedule->exam_date)->format('Y-m-d') . '.xlsx';
+
+            // Lấy sort params (nếu user đang sắp xếp trong bảng)
+            $sortBy = (string) request()->query('sort_by', '');
+            $sortDir = strtolower((string) request()->query('sort_dir', 'asc'));
+            $sortDir = in_array($sortDir, ['asc', 'desc'], true) ? $sortDir : 'asc';
+            $sortBy2 = (string) request()->query('sort_by2', '');
+            $sortDir2 = strtolower((string) request()->query('sort_dir2', 'asc'));
+            $sortDir2 = in_array($sortDir2, ['asc', 'desc'], true) ? $sortDir2 : 'asc';
+
+            $recordsQuery = AttendanceRecord::with('student')
+                ->where('exam_schedule_id', $examSchedule->id);
+
+            $allowedSorts = ['full_name', 'class_code'];
+            $sorts = [];
+            if (in_array($sortBy, $allowedSorts, true)) {
+                $sorts[] = ['by' => $sortBy, 'dir' => $sortDir];
+            }
+            if (in_array($sortBy2, $allowedSorts, true) && $sortBy2 !== $sortBy) {
+                $sorts[] = ['by' => $sortBy2, 'dir' => $sortDir2];
+            }
+
+            if (!empty($sorts)) {
+                $recordsQuery
+                    ->leftJoin('students', 'students.student_code', '=', 'attendance_records.student_code')
+                    ->select('attendance_records.*');
+
+                $applySort = function (string $by, string $dir) use ($recordsQuery) {
+                    if ($by === 'full_name') {
+                        $recordsQuery
+                            ->orderByRaw("CASE WHEN students.full_name IS NULL OR students.full_name = '' THEN 1 ELSE 0 END ASC")
+                            ->orderByRaw('SUBSTRING_INDEX(students.full_name, " ", -1) ' . $dir)
+                            ->orderByRaw('students.full_name ' . $dir);
+                        return;
+                    }
+
+                    if ($by === 'class_code') {
+                        $recordsQuery
+                            ->orderByRaw("CASE WHEN students.class_code IS NULL OR students.class_code = '' THEN 1 ELSE 0 END ASC")
+                            ->orderByRaw("CASE WHEN students.class_code REGEXP '^D[0-9]{2}' THEN 0 ELSE 1 END ASC")
+                            ->orderByRaw('CAST(SUBSTRING(students.class_code, 2, 2) AS UNSIGNED) ' . $dir)
+                            ->orderByRaw('CAST(RIGHT(students.class_code, 2) AS UNSIGNED) ' . $dir)
+                            ->orderByRaw('students.class_code ' . $dir);
+                        return;
+                    }
+                };
+
+                foreach ($sorts as $s) {
+                    $applySort($s['by'], $s['dir']);
+                }
+
+                $recordsQuery->orderBy('attendance_records.student_code', 'asc');
+            } else {
+                // Default export order: giống mặc định trang chi tiết (mới điểm danh lên đầu)
+                $recordsQuery->orderByRaw('attendance_time DESC, student_code ASC');
+            }
+
+            $sortedRecords = $recordsQuery->get();
+            // Pre-load records theo đúng thứ tự để Excel sheet dùng lại
+            $examSchedule->setRelation('attendanceRecords', $sortedRecords);
 
             return Excel::download(
-                new MultiExamSchedulesExport(collect([$examSchedule])), 
+                new MultiExamSchedulesExport(collect([$examSchedule])),
                 $fileName
             );
         } catch (\Exception $e) {
@@ -155,7 +212,7 @@ class ExamSchedulesController extends Controller
         ]);
 
         $examScheduleIds = $request->exam_schedule_ids;
-        
+
         $examSchedules = ExamSchedule::with(['subject', 'attendanceRecords.student'])
             ->whereIn('id', $examScheduleIds)
             ->orderBy('exam_date')
@@ -173,7 +230,7 @@ class ExamSchedulesController extends Controller
             $fileName = 'Danh_Sach_Ca_Thi_' . Carbon::now()->format('Y-m-d_His') . '.xlsx';
 
             return Excel::download(
-                new MultiExamSchedulesExport($examSchedules), 
+                new MultiExamSchedulesExport($examSchedules),
                 $fileName
             );
         } catch (\Exception $e) {
@@ -195,7 +252,7 @@ class ExamSchedulesController extends Controller
         ]);
 
         $date = $request->date;
-        
+
         $examSchedules = ExamSchedule::with(['subject', 'attendanceRecords.student'])
             ->whereDate('exam_date', $date)
             ->orderBy('exam_time')
@@ -213,7 +270,7 @@ class ExamSchedulesController extends Controller
             $fileName = 'Ca_Thi_Ngay_' . $dateFormatted . '.xlsx';
 
             return Excel::download(
-                new MultiExamSchedulesExport($examSchedules), 
+                new MultiExamSchedulesExport($examSchedules),
                 $fileName
             );
         } catch (\Exception $e) {
@@ -295,14 +352,14 @@ class ExamSchedulesController extends Controller
         // 2. Tính toán thống kê (Stats) trên TOÀN BỘ danh sách (không phân trang)
         // Đây là phần tối ưu: Dùng database count thay vì loop PHP
         $baseQuery = AttendanceRecord::where('exam_schedule_id', $examSchedule->id);
-        
+
         $total = $baseQuery->count();
         $present = (clone $baseQuery)->where('rekognition_result', 'match')->count();
-        
+
         if ($isExamEnded) {
             // Đã kết thúc: Những ai chưa match thì tính là vắng
             $absent = $total - $present;
-            $pending = 0; 
+            $pending = 0;
         } else {
             // Chưa kết thúc: Null là pending
             $pending = (clone $baseQuery)->whereNull('rekognition_result')->count();
@@ -310,13 +367,75 @@ class ExamSchedulesController extends Controller
             $absent = (clone $baseQuery)->whereNotNull('rekognition_result')->where('rekognition_result', '!=', 'match')->count();
         }
 
-        // 3. Lấy dữ liệu sinh viên có phân trang (Pagination)
-        $limit = request()->query('limit', 10); // Mặc định 10 dòng mỗi trang
-        $paginatedRecords = AttendanceRecord::with('student')
-            ->where('exam_schedule_id', $examSchedule->id)
-            // Sắp xếp: Ưu tiên người mới điểm danh lên đầu, sau đó theo mã sinh viên
-            ->orderByRaw('attendance_time DESC, student_code ASC') 
-            ->paginate($limit);
+        // 3. Lấy dữ liệu sinh viên có phân trang (Pagination) + Sắp xếp
+        $limit = (int) request()->query('limit', 10); // Mặc định 10 dòng mỗi trang
+
+        $sortBy = (string) request()->query('sort_by', '');
+        $sortDir = strtolower((string) request()->query('sort_dir', 'asc'));
+        $sortDir = in_array($sortDir, ['asc', 'desc'], true) ? $sortDir : 'asc';
+
+        $sortBy2 = (string) request()->query('sort_by2', '');
+        $sortDir2 = strtolower((string) request()->query('sort_dir2', 'asc'));
+        $sortDir2 = in_array($sortDir2, ['asc', 'desc'], true) ? $sortDir2 : 'asc';
+
+        $attendanceQuery = AttendanceRecord::with('student')
+            ->where('exam_schedule_id', $examSchedule->id);
+
+        $allowedSorts = ['full_name', 'class_code'];
+        $sorts = [];
+        if (in_array($sortBy, $allowedSorts, true)) {
+            $sorts[] = ['by' => $sortBy, 'dir' => $sortDir];
+        }
+        if (in_array($sortBy2, $allowedSorts, true) && $sortBy2 !== $sortBy) {
+            $sorts[] = ['by' => $sortBy2, 'dir' => $sortDir2];
+        }
+
+        if (!empty($sorts)) {
+            $attendanceQuery
+                ->leftJoin('students', 'students.student_code', '=', 'attendance_records.student_code')
+                ->select('attendance_records.*');
+
+            $applySort = function (string $by, string $dir) use ($attendanceQuery) {
+                // NOTE: Sort theo "Tên" (từ cuối) cho full_name.
+                // MySQL: SUBSTRING_INDEX(full_name, ' ', -1) lấy từ cuối.
+                if ($by === 'full_name') {
+                    $attendanceQuery
+                        // Đẩy giá trị null/empty xuống cuối
+                        ->orderByRaw("CASE WHEN students.full_name IS NULL OR students.full_name = '' THEN 1 ELSE 0 END ASC")
+                        // Sort theo Tên (từ cuối)
+                        ->orderByRaw('SUBSTRING_INDEX(students.full_name, " ", -1) ' . $dir)
+                        // Tie-break: toàn bộ họ tên theo cùng chiều
+                        ->orderByRaw('students.full_name ' . $dir);
+                    return;
+                }
+
+                if ($by === 'class_code') {
+                    $attendanceQuery
+                        ->orderByRaw("CASE WHEN students.class_code IS NULL OR students.class_code = '' THEN 1 ELSE 0 END ASC")
+                        // Đẩy các class_code không đúng format xuống cuối
+                        ->orderByRaw("CASE WHEN students.class_code REGEXP '^D[0-9]{2}' THEN 0 ELSE 1 END ASC")
+                        // Sort theo 2 số sau chữ D (D21 < D22)
+                        ->orderByRaw('CAST(SUBSTRING(students.class_code, 2, 2) AS UNSIGNED) ' . $dir)
+                        // Sort theo 2 số cuối (TH01 < TH03)
+                        ->orderByRaw('CAST(RIGHT(students.class_code, 2) AS UNSIGNED) ' . $dir)
+                        // Tie-break: full class_code theo cùng chiều
+                        ->orderByRaw('students.class_code ' . $dir);
+                    return;
+                }
+            };
+
+            foreach ($sorts as $s) {
+                $applySort($s['by'], $s['dir']);
+            }
+
+            // Tie-break cuối cùng
+            $attendanceQuery->orderBy('attendance_records.student_code', 'asc');
+        } else {
+            // Mặc định (giữ nguyên behavior cũ): ưu tiên người mới điểm danh lên đầu, sau đó theo mã sinh viên
+            $attendanceQuery->orderByRaw('attendance_time DESC, student_code ASC');
+        }
+
+        $paginatedRecords = $attendanceQuery->paginate($limit);
 
         // Transform dữ liệu cho trang hiện tại
         $studentsData = $paginatedRecords->getCollection()->map(function ($record) {
@@ -1074,5 +1193,214 @@ class ExamSchedulesController extends Controller
             'success' => true,
             'message' => 'Đã xóa giám thị khỏi ca thi',
         ]);
+    }
+
+    /**
+     * Preview import students - đọc tiêu đề file Excel
+     */
+    public function previewImportStudents(Request $request, $id)
+    {
+        $request->validate([
+            'excel_file' => 'required|file|mimes:xlsx,xls',
+        ]);
+
+        // Kiểm tra ca thi có tồn tại
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        try {
+            $file = $request->file('excel_file');
+            $storedPath = $file->store('imports/tmp');
+            $fullPath = Storage::path($storedPath);
+
+            $reader = IOFactory::createReaderForFile($fullPath);
+            $reader->setReadDataOnly(true);
+            $spreadsheet = $reader->load($fullPath);
+            $sheet = $spreadsheet->getActiveSheet();
+
+            $highestColumn = $sheet->getHighestDataColumn();
+            $highestRow = min($sheet->getHighestDataRow(), 50);
+
+            $rows = [];
+            for ($rowIndex = 1; $rowIndex <= $highestRow; $rowIndex++) {
+                $range = sprintf('A%d:%s%d', $rowIndex, $highestColumn, $rowIndex);
+                $rowValues = $sheet->rangeToArray($range, null, true, true, false);
+                if (!empty($rowValues)) {
+                    $rows[$rowIndex] = $rowValues[0];
+                }
+            }
+
+            $spreadsheet->disconnectWorksheets();
+            unset($spreadsheet);
+
+            $expectedKeys = [
+                'student',
+                'student-code',
+                'student_code',
+                'ma-sv',
+                'ma-sinh-vien',
+                'masv',
+                'full-name',
+                'full_name',
+                'ho-ten',
+                'hoten',
+                'class',
+                'class-code',
+                'class_code',
+                'lop',
+                'ma-lop',
+            ];
+
+            $visibleHeadings = [];
+            $visibleHeadingRow = null;
+            $fallbackHeadings = [];
+            $fallbackHeadingRow = null;
+
+            foreach ($rows as $rowNumber => $row) {
+                if (!is_array($row)) {
+                    continue;
+                }
+
+                $values = array_map(static fn($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn($value) => $value !== ''));
+
+                if (empty($nonEmpty)) {
+                    continue;
+                }
+
+                $normalized = array_map(static function ($value) {
+                    $ascii = Str::lower(Str::ascii($value));
+                    $slug = preg_replace('/[^a-z0-9]+/i', '-', $ascii);
+                    return trim((string) $slug, '-');
+                }, $nonEmpty);
+
+                if (array_intersect($normalized, $expectedKeys)) {
+                    $visibleHeadings = $nonEmpty;
+                    $visibleHeadingRow = $rowNumber;
+                    break;
+                }
+
+                if (empty($fallbackHeadings)) {
+                    $fallbackHeadings = $nonEmpty;
+                    $fallbackHeadingRow = $rowNumber;
+                }
+            }
+
+            if (empty($visibleHeadings)) {
+                $visibleHeadings = $fallbackHeadings;
+                $visibleHeadingRow = $fallbackHeadingRow;
+            }
+
+            if (empty($visibleHeadings)) {
+                Storage::delete($storedPath);
+
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Không thể tìm thấy hàng tiêu đề trong file. Vui lòng kiểm tra lại định dạng.',
+                ], 422);
+            }
+
+            return response()->json([
+                'success' => true,
+                'token' => $storedPath,
+                'headings' => $visibleHeadings,
+                'heading_row' => $visibleHeadingRow,
+            ]);
+        } catch (Throwable $e) {
+            if (isset($storedPath)) {
+                Storage::delete($storedPath);
+            }
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể đọc file: ' . $e->getMessage(),
+            ], 500);
+        }
+    }
+
+    /**
+     * Import danh sách sinh viên cho ca thi
+     */
+    public function importStudents(Request $request, $id)
+    {
+        $validated = $request->validate([
+            'token' => 'required|string',
+            'heading_row' => 'nullable|integer|min:1',
+            'mapping' => 'required|array',
+            'mapping.student_code' => 'required|string',
+            'mapping.full_name' => 'nullable|string',
+            'mapping.class_code' => 'nullable|string',
+        ]);
+
+        // Kiểm tra ca thi có tồn tại
+        $examSchedule = ExamSchedule::find($id);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi',
+            ], 404);
+        }
+
+        $filePath = $validated['token'];
+        $headingRow = (int) ($validated['heading_row'] ?? 1);
+
+        if (!Storage::exists($filePath)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'File tạm không tồn tại hoặc đã hết hạn.',
+            ], 410);
+        }
+
+        try {
+            $importer = new ExamScheduleStudentsImport($id, $validated['mapping'], $headingRow);
+
+            Excel::import(
+                $importer,
+                Storage::path($filePath)
+            );
+
+            $addedCount = count($importer->addedStudents);
+            $skippedCount = count($importer->skippedStudents);
+
+            $message = sprintf(
+                'Import hoàn tất: %d sinh viên đã thêm, %d bị bỏ qua.',
+                $addedCount,
+                $skippedCount
+            );
+
+            return response()->json([
+                'success' => true,
+                'message' => $message,
+                'data' => [
+                    'added' => $importer->addedStudents,
+                    'skipped' => $importer->skippedStudents,
+                    'added_count' => $addedCount,
+                    'skipped_count' => $skippedCount,
+                ],
+            ]);
+        } catch (InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 422);
+        } catch (Throwable $e) {
+            Log::error('Import students error', [
+                'schedule_id' => $id,
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Đã có lỗi xảy ra trong quá trình import: ' . $e->getMessage(),
+            ], 500);
+        } finally {
+            Storage::delete($filePath);
+        }
     }
 }

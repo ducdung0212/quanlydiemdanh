@@ -31,6 +31,55 @@ document.addEventListener('DOMContentLoaded', function () {
     // Table elements
     const attendanceTableBody = document.getElementById('attendance-table-body');
 
+    // Sort state (client triggers backend sorting)
+    // Supports nested sorting between: full_name (Tên) and class_code
+    let primarySortBy = '';
+    let primarySortDir = 'asc';
+    const sortDirMap = {
+        full_name: 'asc',
+        class_code: 'asc'
+    };
+    const attendanceTable = document.getElementById('attendance-table');
+    const sortableHeaders = attendanceTable ? attendanceTable.querySelectorAll('th[data-sort]') : [];
+
+    function updateSortIndicators() {
+        if (!attendanceTable) return;
+        const indicators = attendanceTable.querySelectorAll('[data-sort-indicator]');
+        indicators.forEach(el => {
+            const key = el.getAttribute('data-sort-indicator');
+            if (!key) return;
+
+            if (!primarySortBy) {
+                el.textContent = '↕';
+                return;
+            }
+
+            // When sorting is active, always show arrows for both columns.
+            const dir = sortDirMap[key] || 'asc';
+            el.textContent = dir === 'asc' ? '▲' : '▼';
+        });
+    }
+
+    function setSort(nextSortBy) {
+        if (!nextSortBy) return;
+        // Toggle direction for the clicked column
+        if (primarySortBy === nextSortBy) {
+            sortDirMap[nextSortBy] = sortDirMap[nextSortBy] === 'asc' ? 'desc' : 'asc';
+        } else {
+            // Keep previous direction if user already toggled it before, otherwise default asc
+            sortDirMap[nextSortBy] = sortDirMap[nextSortBy] || 'asc';
+        }
+
+        // Primary sort is the last-clicked column
+        primarySortBy = nextSortBy;
+        primarySortDir = sortDirMap[nextSortBy] || 'asc';
+
+        updateSortIndicators();
+        if (currentExamScheduleId) {
+            loadExamAttendanceData(currentExamScheduleId);
+        }
+    }
+
     // Camera Elements
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
@@ -309,9 +358,21 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!attendanceTableBody) return;
 
             attendanceTableBody.innerHTML = '<tr><td colspan="6" class="text-center">Đang tải dữ liệu...</td></tr>';
-            
-            // Mẹo: Thêm limit lớn nếu bạn muốn hiện tất cả sinh viên (vì backend đang mặc định limit=10)
-            const response = await fetch(`/api/exam-schedules/${examScheduleId}?limit=100`);
+
+            // Hiển thị đầy đủ danh sách (trang này không có phân trang)
+            const limit = 100000;
+            // Nested sort: primary + secondary (other column)
+            const secondarySortBy = primarySortBy
+                ? (primarySortBy === 'full_name' ? 'class_code' : 'full_name')
+                : '';
+            const secondarySortDir = secondarySortBy ? (sortDirMap[secondarySortBy] || 'asc') : 'asc';
+
+            const url = `/api/exam-schedules/${examScheduleId}?limit=${limit}`
+                + (primarySortBy ? `&sort_by=${encodeURIComponent(primarySortBy)}` : '')
+                + (primarySortBy ? `&sort_dir=${encodeURIComponent(primarySortDir)}` : '')
+                + (primarySortBy ? `&sort_by2=${encodeURIComponent(secondarySortBy)}` : '')
+                + (primarySortBy ? `&sort_dir2=${encodeURIComponent(secondarySortDir)}` : '');
+            const response = await fetch(url);
             const result = await response.json();
 
             if (!response.ok) {
@@ -322,7 +383,7 @@ document.addEventListener('DOMContentLoaded', function () {
 
             // --- SỬA ĐOẠN NÀY ---
             const { exam, stats, students: studentsData } = result.data;
-            
+
             // Kiểm tra: Nếu là Paginator Object thì lấy .data, nếu là mảng thì lấy chính nó
             const studentsList = (studentsData && studentsData.data) ? studentsData.data : (Array.isArray(studentsData) ? studentsData : []);
             // --------------------
@@ -332,7 +393,7 @@ document.addEventListener('DOMContentLoaded', function () {
             examSubjectName.textContent = exam.subject_name || '-';
             examDate.textContent = formatDate(exam.exam_date);
             examTime.textContent = formatTime(exam.exam_time);
-            
+
             const examDuration = document.getElementById('exam-duration');
             if (examDuration) examDuration.textContent = formatDuration(exam.duration);
             examRoom.textContent = exam.room || '-';
@@ -384,6 +445,8 @@ document.addEventListener('DOMContentLoaded', function () {
                     <td class="text-center">${getStatusBadge(student.rekognition_result)}</td>
                 </tr>
             `).join('');
+
+            updateSortIndicators();
 
         } catch (error) {
             console.error('Error loading attendance data:', error);
@@ -546,7 +609,7 @@ document.addEventListener('DOMContentLoaded', function () {
         showResult(`Đã chụp ${crops.length} khuôn mặt. Vui lòng gửi để điểm danh.`, 'info');
     }
 
-    function retakePhoto() {
+    function retakePhoto(clearResult = true) {
         capturedImage.classList.add('d-none');
         // --- BẮT ĐẦU KHỐI SỬA ---
         document.getElementById('capturedImage').innerHTML = ''; // Dọn dẹp các ảnh đã tạo
@@ -556,7 +619,7 @@ document.addEventListener('DOMContentLoaded', function () {
         btnRetake.classList.add('d-none');
         btnSubmit.classList.add('d-none');
         capturedPhoto = null;
-        attendanceResult.innerHTML = '';
+        if (clearResult) attendanceResult.innerHTML = '';
     }
 
     async function submitAttendance() {
@@ -626,8 +689,6 @@ document.addEventListener('DOMContentLoaded', function () {
                 successMsg = `Điểm danh thành công cho: ${names}`;
                 // Tải lại bảng điểm danh
                 setTimeout(() => loadExamAttendanceData(currentExamScheduleId), 800);
-                // Ẩn modal sau 2.5 giây
-                setTimeout(() => attendanceModal.hide(), 2500);
             }
 
             if (failures.length > 0) {
@@ -645,9 +706,16 @@ document.addEventListener('DOMContentLoaded', function () {
                 showResult('Không có kết quả xử lý.', 'info');
             }
 
+            // Giữ camera luôn bật: không tự đóng modal.
+            // Quay về camera NGAY LẬP TỨC để chụp tiếp (kể cả lỗi/không nhận diện được).
+            // Giữ lại message kết quả để user vẫn nhìn thấy.
+            retakePhoto(false);
+
         } catch (error) {
             console.error('Error submitting attendance:', error);
             showResult('Lỗi nghiêm trọng khi gửi điểm danh: ' + error.message, 'error');
+            // Quay về camera ngay cả khi lỗi nghiêm trọng
+            retakePhoto(false);
         } finally {
             btnSubmit.disabled = false;
         }
@@ -715,6 +783,19 @@ document.addEventListener('DOMContentLoaded', function () {
 
     // Khởi tạo
     const userRole = window.userRole || 'guest';
+
+    // Click-to-sort headers
+    if (sortableHeaders && sortableHeaders.length > 0) {
+        sortableHeaders.forEach(th => {
+            th.addEventListener('click', () => {
+                const key = th.getAttribute('data-sort');
+                setSort(key);
+            });
+        });
+    }
+
+    // Ensure arrows are visible on first render
+    updateSortIndicators();
 
     // Chỉ giảng viên mới có thể sử dụng chức năng điểm danh
     if (userRole === 'lecturer') {

@@ -46,17 +46,19 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);
     Route::post('exam-schedules/export/multiple', [ExamSchedulesController::class, 'exportMultipleAttendance'])->name('exam-schedules.export.multiple');
     Route::post('exam-schedules/export/by-date', [ExamSchedulesController::class, 'exportByDate'])->name('exam-schedules.export.by-date');
-    
+
     // Quản lý sinh viên tham gia ca thi
     Route::get('exam-schedules/{id}/students', [ExamSchedulesController::class, 'getStudents']);
     Route::post('exam-schedules/{id}/students', [ExamSchedulesController::class, 'addStudent']);
     Route::delete('exam-schedules/{id}/students/{recordId}', [ExamSchedulesController::class, 'removeStudent']);
-    
+    Route::post('exam-schedules/{id}/students/import/preview', [ExamSchedulesController::class, 'previewImportStudents']);
+    Route::post('exam-schedules/{id}/students/import', [ExamSchedulesController::class, 'importStudents']);
+
     // Quản lý giám thị ca thi
     Route::get('exam-schedules/{id}/supervisors', [ExamSchedulesController::class, 'getSupervisors']);
     Route::post('exam-schedules/{id}/supervisors', [ExamSchedulesController::class, 'addSupervisor']);
     Route::delete('exam-schedules/{id}/supervisors/{supervisor_id}', [ExamSchedulesController::class, 'removeSupervisor']);
-    
+
     // apiResource phải đặt SAU các route cụ thể
     Route::apiResource('exam-schedules', ExamSchedulesController::class);
 

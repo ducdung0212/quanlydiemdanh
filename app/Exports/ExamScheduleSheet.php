@@ -31,7 +31,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
     {
         $subjectCode = $this->examSchedule->subject_code;
         $examDate = Carbon::parse($this->examSchedule->exam_date)->format('d/m');
-        
+
         // Giới hạn độ dài tên sheet (Excel limit 31 ký tự)
         $title = "Ca {$this->sheetNumber} - {$subjectCode} - {$examDate}";
         return substr($title, 0, 31);
@@ -58,18 +58,24 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
      */
     public function collection()
     {
-        // Load attendance records với student
-        $examSchedule = $this->examSchedule->load(['attendanceRecords.student']);
-        
-        // Lấy tất cả attendance records, không sắp xếp để giữ nguyên thứ tự ban đầu
+        // Nếu controller đã pre-load attendanceRecords theo thứ tự mong muốn (đã sort),
+        // thì không load lại để tránh mất thứ tự.
+        $examSchedule = $this->examSchedule;
+        if (!$examSchedule->relationLoaded('attendanceRecords')) {
+            $examSchedule->load(['attendanceRecords.student', 'subject']);
+        } else {
+            $examSchedule->attendanceRecords->loadMissing('student');
+            $examSchedule->loadMissing('subject');
+        }
+
         $records = $examSchedule->attendanceRecords;
-        
+
         $students = collect([]);
         $stt = 1;
-        
+
         foreach ($records as $record) {
             $student = $record->student;
-            
+
             // Format thời gian điểm danh
             $checkInTime = '';
             if ($record->attendance_time) {
@@ -79,16 +85,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
                     $checkInTime = $record->attendance_time;
                 }
             }
-            
-            // Debug: Log dữ liệu
-            \Log::info('Export record', [
-                'stt' => $stt,
-                'student_code' => $student ? $student->student_code : 'N/A',
-                'status' => $record->status,
-                'check_in_time' => $record->attendance_time,
-                'formatted_time' => $checkInTime
-            ]);
-            
+
             $students->push([
                 $stt,  // STT
                 $student ? $student->student_code : 'N/A',  // Mã SV
@@ -98,7 +95,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
                 $checkInTime,  // Thời gian điểm danh
                 $record->note ?? ''  // Ghi chú
             ]);
-            
+
             $stt++;
         }
 
@@ -124,7 +121,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
     {
         // Thêm thông tin ca thi ở đầu sheet
         $sheet->insertNewRowBefore(1, 5);
-        
+
         // Thông tin ca thi
         $sheet->setCellValue('A1', 'DANH SÁCH ĐIỂM DANH CA THI');
         $sheet->setCellValue('A2', 'Môn học: ' . ($this->examSchedule->subject->name ?? $this->examSchedule->subject_code));
@@ -136,7 +133,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
 
         // Merge cells cho tiêu đề
         $sheet->mergeCells('A1:G1');
-        
+
         // Style cho tiêu đề chính
         $sheet->getStyle('A1')->applyFromArray([
             'font' => [
@@ -179,7 +176,7 @@ class ExamScheduleSheet implements FromCollection, WithHeadings, WithTitle, With
 
         // Đếm số hàng có dữ liệu
         $lastRow = $sheet->getHighestRow();
-        
+
         // Style cho bảng dữ liệu (từ hàng 7 trở đi)
         if ($lastRow > 6) {
             $sheet->getStyle('A7:G' . $lastRow)->applyFromArray([
