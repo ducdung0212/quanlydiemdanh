@@ -12,13 +12,13 @@
             <li class="nav-item" role="presentation">
                 <button class="nav-link active fs-5 py-3 px-4" id="individual-tab" data-bs-toggle="tab"
                     data-bs-target="#individual" type="button" role="tab">
-                    <i class="icon-user me-2" style="font-size: 1.2em;"></i>Đăng ký từng file
+                    <i class="icon-user me-2 fs-4"></i>Đăng ký từng file
                 </button>
             </li>
             <li class="nav-item" role="presentation">
                 <button class="nav-link fs-5 py-3 px-4" id="batch-tab" data-bs-toggle="tab" data-bs-target="#batch"
                     type="button" role="tab">
-                    <i class="icon-users me-2" style="font-size: 1.2em;"></i>Đăng ký theo lớp (Folder)
+                    <i class="icon-users me-2 fs-4"></i>Đăng ký theo lớp (Folder)
                 </button>
             </li>
         </ul>
@@ -63,10 +63,10 @@
                     <div class="d-flex gap-2">
                         <button id="btnRegisterFace" class="btn btn-primary"
                             style="padding: 12px 24px; font-size: 1.1rem; font-weight: 600;">
-                            <i class="icon-user-plus me-2" style="font-size: 1.2em;"></i> Đăng ký (các) khuôn mặt
+                            <i class="icon-user-plus me-2" style="font-size: 1.3em;"></i> Đăng ký (các) khuôn mặt
                         </button>
                         <button id="btnClear" class="btn btn-outline-secondary"
-                            style="padding: 12px 24px; font-size: 1.1rem;">Xóa danh sách</button>
+                            style="padding: 12px 24px; font-size: 1.3rem;">Xóa danh sách</button>
                     </div>
 
                     <div id="register_status" class="mt-3"></div>
@@ -112,10 +112,10 @@
                     <div class="d-flex gap-2">
                         <button id="btnRegisterFolder" class="btn btn-primary"
                             style="padding: 12px 24px; font-size: 1.1rem; font-weight: 600;">
-                            <i class="icon-users me-2" style="font-size: 1.2em;"></i> Đăng ký hàng loạt
+                            <i class="icon-users me-2" style="font-size: 1.3em;"></i> Đăng ký hàng loạt
                         </button>
                         <button id="btnClearFolder" class="btn btn-outline-secondary"
-                            style="padding: 12px 24px; font-size: 1.1rem;">Xóa danh sách</button>
+                            style="padding: 12px 24px; font-size: 1.3rem;">Xóa danh sách</button>
                     </div>
 
                     <div id="folder_status" class="mt-3"></div>
@@ -340,8 +340,6 @@
 
                     const uploadUrls = data.data;
                     showStatus('Đang tải ảnh lên S3 (song song)...', 'info');
-
-                    // perform uploads with progress using XHR
                     const uploadPromises = selectedFiles.map((file, idx) => new Promise((resolve) => {
                         const urlInfo = uploadUrls.find(u => u.file_name === file.name);
                         if (!urlInfo || !urlInfo.success) {
@@ -355,10 +353,7 @@
 
                         const xhr = new XMLHttpRequest();
                         xhr.open('PUT', urlInfo.upload_url, true);
-                        // Don't send cookies/credentials with S3 PUT
                         xhr.withCredentials = false;
-
-                        // If server included ContentType in the presign, set header to match
                         try {
                             xhr.setRequestHeader('Content-Type', file.type);
                         } catch (e) {
@@ -371,7 +366,6 @@
                             if (e.lengthComputable) {
                                 const percent = Math.round((e.loaded / e.total) *
                                     100);
-                                // update progress bar for this file
                                 const bar = fileListEl.querySelector(
                                     `.progress-bar-${idx}`);
                                 if (bar) {
@@ -411,7 +405,6 @@
                                         ok: true
                                     });
                                 } else {
-                                    // Log responseText to help diagnose (may be empty for S3)
                                     console.error('Upload failed for', file.name,
                                         'status=', xhr.status, 'response=', xhr
                                         .responseText);
@@ -425,8 +418,6 @@
                                 }
                             }
                         };
-
-                        // Send file
                         try {
                             xhr.send(file);
                         } catch (err) {
@@ -690,7 +681,6 @@
                     const urlsData = data.data;
                     showFolderStatus('📤 Bắt đầu tải lên ' + folderFiles.length + ' ảnh...', 'info');
 
-                    // Step 2: Upload files
                     const uploadPromises = urlsData.map((item, index) => new Promise((resolve) => {
                         if (!item.success) {
                             appendFolderStatus('❌ ' + item.file_name + ': ' + item.message,
@@ -716,8 +706,6 @@
                         const xhr = new XMLHttpRequest();
                         xhr.open('PUT', item.upload_url, true);
                         xhr.setRequestHeader('Content-Type', file.type);
-
-                        // Update progress
                         const code = extractStudentCode(file.name);
                         const fileIndex = folderFiles.findIndex(f => f === file);
 

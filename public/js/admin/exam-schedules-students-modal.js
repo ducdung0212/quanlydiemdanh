@@ -12,6 +12,25 @@ class StudentModalManager {
         this.dom = {};
     }
 
+    extractStudentCodes(rawInput) {
+        if (!rawInput || typeof rawInput !== 'string') return [];
+
+        const matches = rawInput.match(/[A-Za-z0-9_-]+/g) || [];
+        const unique = [];
+        const seen = new Set();
+
+        for (const token of matches) {
+            const code = token.trim();
+            if (!code || !/\d/.test(code)) continue;
+            const normalized = code.toUpperCase();
+            if (seen.has(normalized)) continue;
+            seen.add(normalized);
+            unique.push(normalized);
+        }
+
+        return unique;
+    }
+
     async open(scheduleId) {
         this.scheduleId = scheduleId;
 
@@ -175,30 +194,66 @@ class StudentModalManager {
     }
 
     async addStudent() {
-        const studentCode = this.dom.searchInput?.value.trim();
+        const rawInput = this.dom.searchInput?.value ?? '';
+        const studentCodes = this.extractStudentCodes(rawInput);
 
-        if (!studentCode) {
+        if (studentCodes.length === 0) {
             showToast('Lỗi', 'Vui lòng nhập mã sinh viên', 'danger');
             return;
         }
 
-        try {
-            const result = await apiFetch(`/api/exam-schedules/${this.scheduleId}/students`, {
-                method: 'POST',
-                body: JSON.stringify({ student_code: studentCode })
-            });
+        const previousBtnDisabled = !!this.dom.addBtn?.disabled;
+        const previousInputDisabled = !!this.dom.searchInput?.disabled;
+        if (this.dom.addBtn) this.dom.addBtn.disabled = true;
+        if (this.dom.searchInput) this.dom.searchInput.disabled = true;
 
-            if (result.success) {
-                showToast('Thành công', result.message, 'success');
-                if (this.dom.searchInput) {
-                    this.dom.searchInput.value = '';
+        let addedCount = 0;
+        const failed = [];
+
+        try {
+            for (const studentCode of studentCodes) {
+                try {
+                    const result = await apiFetch(`/api/exam-schedules/${this.scheduleId}/students`, {
+                        method: 'POST',
+                        body: JSON.stringify({ student_code: studentCode })
+                    });
+
+                    if (result && result.success) {
+                        addedCount++;
+                    } else {
+                        failed.push(studentCode);
+                    }
+                } catch (e) {
+                    failed.push(studentCode);
                 }
-                await this.loadStudents();
-            } else {
-                showToast('Lỗi', result.message, 'danger');
             }
-        } catch (error) {
-            showToast('Lỗi', error.message || 'Không thể thêm sinh viên', 'danger');
+
+            if (this.dom.searchInput) {
+                this.dom.searchInput.value = '';
+            }
+
+            if (addedCount > 0) {
+                await this.loadStudents();
+            }
+
+            if (failed.length === 0) {
+                const msg = studentCodes.length === 1
+                    ? 'Đã thêm sinh viên vào ca thi'
+                    : `Đã thêm ${addedCount}/${studentCodes.length} sinh viên`;
+                showToast('Thành công', msg, 'success');
+                return;
+            }
+
+            const previewFailed = failed.slice(0, 5).join(', ');
+            const more = failed.length > 5 ? ` (+${failed.length - 5})` : '';
+            showToast(
+                'Hoàn tất',
+                `Đã thêm ${addedCount}/${studentCodes.length}. Không thêm được: ${previewFailed}${more}`,
+                addedCount > 0 ? 'warning' : 'danger'
+            );
+        } finally {
+            if (this.dom.addBtn) this.dom.addBtn.disabled = previousBtnDisabled;
+            if (this.dom.searchInput) this.dom.searchInput.disabled = previousInputDisabled;
         }
     }
 

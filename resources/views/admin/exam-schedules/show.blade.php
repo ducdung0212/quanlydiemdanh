@@ -37,7 +37,7 @@
 
             <div class="card-body p-3">
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Mã ca thi
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-session-code">
@@ -46,7 +46,7 @@
                 </div>
 
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Mã môn học
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-subject-code">
@@ -55,7 +55,7 @@
                 </div>
 
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Tên môn học
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-subject-name">
@@ -64,7 +64,7 @@
                 </div>
 
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Ngày thi
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-date">
@@ -73,7 +73,7 @@
                 </div>
 
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Giờ thi
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-time">
@@ -82,7 +82,7 @@
                 </div>
 
                 <div class="row border-bottom py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Thời lượng
                     </div>
                     <div class="col-7 col-md-9 text-dark fs-4 fw-bold" id="exam-duration">
@@ -91,7 +91,7 @@
                 </div>
 
                 <div class="row py-3 align-items-center">
-                    <div class="col-5 col-md-3 text-secondary fw-bold fs-5">
+                    <div class="col-5 col-md-3 text-secondary fw-bold fs-4">
                         Phòng thi
                     </div>
                     <div class="col-7 col-md-9 text-primary fs-3 fw-bold" id="exam-room">
@@ -107,7 +107,7 @@
                 <div
                     class="p-2 border rounded bg-white text-center h-100 shadow-sm d-flex flex-column justify-content-center">
                     <div class="fw-bolder mb-1 text-dark fs-2" id="total-students">0</div>
-                    <div class="text-secondary fw-bold fs-6">Tổng sinh viên</div>
+                    <div class="text-secondary fw-bold fs-4">Tổng sinh viên</div>
                 </div>
             </div>
 
@@ -115,7 +115,7 @@
                 <div
                     class="p-2 border rounded bg-white text-center h-100 shadow-sm d-flex flex-column justify-content-center">
                     <div class="fw-bolder mb-1 text-success fs-2" id="present-count">0</div>
-                    <div class="text-secondary fw-bold fs-6">Có mặt</div>
+                    <div class="text-secondary fw-bold fs-4">Có mặt</div>
                 </div>
             </div>
 
@@ -123,7 +123,7 @@
                 <div
                     class="p-2 border rounded bg-white text-center h-100 shadow-sm d-flex flex-column justify-content-center">
                     <div class="fw-bolder mb-1 text-warning fs-2" id="pending-count">0</div>
-                    <div class="text-secondary fw-bold fs-6">Chưa điểm danh</div>
+                    <div class="text-secondary fw-bold fs-4">Chưa điểm danh</div>
                 </div>
             </div>
 
@@ -131,7 +131,7 @@
                 <div
                     class="p-2 border rounded bg-white text-center h-100 shadow-sm d-flex flex-column justify-content-center">
                     <div class="fw-bolder mb-1 text-danger fs-2" id="absent-count">0</div>
-                    <div class="text-secondary fw-bold fs-6">Vắng mặt</div>
+                    <div class="text-secondary fw-bold fs-4">Vắng mặt</div>
                 </div>
             </div>
 
@@ -154,10 +154,10 @@
                         <th style="width: 60px">STT</th>
                         <th>Mã SV</th>
                         <th data-sort="full_name" style="cursor: pointer; user-select: none;">
-                            Họ và tên <span class="ms-1" data-sort-indicator="full_name">↕</span>
+                            Họ và tên <span class="ms-1" data-sort-indicator="full_name">                          </span>
                         </th>
                         <th data-sort="class_code" style="cursor: pointer; user-select: none;">
-                            Lớp <span class="ms-1" data-sort-indicator="class_code">↕</span>
+                            Lớp <span class="ms-1" data-sort-indicator="class_code"></span>
                         </th>
                         <th>Thời gian điểm danh</th>
                         <th style="width: 150px">Trạng thái</th>

@@ -79,8 +79,6 @@
             </div>
         </div>
     </div>
-
-    <!-- Modals will be loaded here -->
     <div id="modal-container"></div>
 @endsection
 

@@ -146,9 +146,6 @@ const AdminHelpers = {
         }
     },
 
-    /**
-     * Debounce function
-     */
     debounce: function (func, delay) {
         let timeout;
         return (...args) => {
@@ -156,10 +153,6 @@ const AdminHelpers = {
             timeout = setTimeout(() => func(...args), delay);
         };
     },
-
-    /**
-     * Escape HTML để tránh XSS
-     */
     escapeHtml: function (text) {
         if (typeof text !== 'string') return text;
         const map = {
@@ -171,10 +164,6 @@ const AdminHelpers = {
         };
         return text.replace(/[&<>"']/g, m => map[m]);
     },
-
-    /**
-     * Update URL với pagination và search params
-     */
     updateURL: function (page, query) {
         const url = new URL(window.location);
         if (page > 1) {
@@ -189,10 +178,6 @@ const AdminHelpers = {
         }
         window.history.pushState({}, '', url);
     },
-
-    /**
-     * Get URL params
-     */
     getURLParams: function () {
         const params = new URLSearchParams(window.location.search);
         return {
@@ -200,10 +185,6 @@ const AdminHelpers = {
             query: params.get('q') || ''
         };
     },
-
-    /**
-     * Render pagination HTML
-     */
     renderPaginationHTML: function (paginationData) {
         if (!paginationData || paginationData.last_page <= 1) {
             return '';
@@ -253,7 +234,6 @@ const AdminHelpers = {
             }
         });
 
-        // Next button
         html += `<li class="page-item ${current_page === last_page ? 'disabled' : ''}">
             <a class="page-link" href="#" data-page="${current_page + 1}" ${current_page === last_page ? 'tabindex="-1"' : ''}>
                 <i class="icon-chevron-right"></i>
@@ -262,10 +242,6 @@ const AdminHelpers = {
 
         return html;
     },
-
-    /**
-     * Update pagination info text
-     */
     updatePaginationInfo: function (paginationInfo, paginationData) {
         if (!paginationInfo || !paginationData) return;
 
@@ -274,11 +250,7 @@ const AdminHelpers = {
         paginationInfo.total.textContent = paginationData.total || 0;
     }
 };
-
-// Expose globally
 window.AdminHelpers = AdminHelpers;
-
-// Also expose individual functions for backward compatibility
 window.apiFetch = AdminHelpers.apiFetch.bind(AdminHelpers);
 window.toggleButtonLoading = AdminHelpers.toggleButtonLoading.bind(AdminHelpers);
 window.clearValidationErrors = AdminHelpers.clearValidationErrors.bind(AdminHelpers);

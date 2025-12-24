@@ -151,17 +151,12 @@
             </div>
         </div>
     </div>
-
-    <!-- Modals will be loaded here -->
     <div id="modal-container"></div>
-
-    <!-- Form Modal -->
     @include('admin.exam-schedules.form-modal')
 @endsection
 
 @push('scripts')
     <script>
-        // Test function
         function testModal() {
             console.log('Test button clicked');
             const modalElement = document.getElementById('examScheduleFormModal');

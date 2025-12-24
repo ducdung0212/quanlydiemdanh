@@ -30,7 +30,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $users->paginate($limit),
-            'message'=>'List Users'
+            'message' => 'List Users'
         ]);
     }
 
@@ -56,7 +56,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'data' => $user,
-            'message'=>'Create User Successfully'
+            'message' => 'Create User Successfully'
         ], 201);
     }
 
@@ -66,32 +66,27 @@ class UserController extends Controller
     public function show($id)
     {
 
-        $user=User::find($id);
-        if(!$user){
-        return response()->json([
-            'success' => false,
-            'message'=>'User Not Found'
-        ],
-        404);
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'User Not Found'
+                ],
+                404
+            );
         }
-         return response()->json([
+        return response()->json([
             'success' => true,
             'data' => $user,
-            'message'=>'Detail User'
+            'message' => 'Detail User'
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
+    public function edit(string $id) {}
     public function update(UserRequest $request, string $id)
     {
         $validated = $request->validated();
@@ -136,18 +131,20 @@ class UserController extends Controller
      */
     public function destroy(string $id)
     {
-        $user=User::find($id);
-        if(!$user){
-        return response()->json([
-            'success' => false,
-            'message'=>'User Not Found'
-        ],
-        404);
+        $user = User::find($id);
+        if (!$user) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'User Not Found'
+                ],
+                404
+            );
         }
         $user->delete();
-         return response()->json([
+        return response()->json([
             'success' => true,
-            'message'=>'Delete User Successfully'
+            'message' => 'Delete User Successfully'
         ]);
     }
 }

@@ -14,7 +14,7 @@
                     <div class="row">
                         <!-- Môn học -->
                         <div class="col-md-6 mb-3">
-                            <label for="subject_code" class="form-label">Môn học <span
+                            <label for="subject_code" class="form-label fs-4">Môn học <span
                                     class="text-danger">*</span></label>
                             <select class="form-select-xl" id="subject_code" name="subject_code" required>
                                 <option value="">-- Chọn môn học --</option>
@@ -28,7 +28,7 @@
 
                         <!-- Phòng thi -->
                         <div class="col-md-6 mb-3">
-                            <label for="room" class="form-label">Phòng thi <span
+                            <label for="room" class="form-label fs-4">Phòng thi <span
                                     class="text-danger">*</span></label>
                             <input type="text" class="form-control" id="room" name="room" required
                                 maxlength="50">
@@ -39,7 +39,7 @@
                     <div class="row">
                         <!-- Ngày thi -->
                         <div class="col-md-4 mb-3">
-                            <label for="exam_date" class="form-label">Ngày thi <span
+                            <label for="exam_date" class="form-label fs-4">Ngày thi <span
                                     class="text-danger">*</span></label>
                             <input type="date" class="form-control" id="exam_date" name="exam_date" required>
                             <div class="invalid-feedback" id="error_exam_date"></div>
@@ -47,7 +47,7 @@
 
                         <!-- Giờ thi -->
                         <div class="col-md-4 mb-3">
-                            <label for="exam_time" class="form-label">Giờ thi <span class="text-danger">*</span></label>
+                            <label for="exam_time" class="form-label fs-4">Giờ thi <span class="text-danger">*</span></label>
                             <input type="time" class="form-control" id="exam_time" name="exam_time" required
                                 step="1">
                             <div class="invalid-feedback" id="error_exam_time"></div>
@@ -55,7 +55,7 @@
 
                         <!-- Thời lượng -->
                         <div class="col-md-4 mb-3">
-                            <label for="duration" class="form-label">Thời lượng (phút) <span
+                            <label for="duration" class="form-label fs-4">Thời lượng (phút) <span
                                     class="text-danger">*</span></label>
                             <input type="number" class="form-control" id="duration" name="duration" required
                                 min="1" max="300" value="90">
@@ -65,15 +65,15 @@
 
                     <!-- Ghi chú -->
                     <div class="mb-3">
-                        <label for="note" class="form-label">Ghi chú</label>
+                        <label for="note" class="form-label fs-4">Ghi chú</label>
                         <textarea class="form-control" id="note" name="note" rows="3" maxlength="500"></textarea>
                         <div class="invalid-feedback" id="error_note"></div>
                     </div>
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Hủy</button>
+                    <button type="button" class="btn btn-secondary fs-4" data-bs-dismiss="modal">Hủy</button>
                     <button type="submit" class="btn btn-primary" id="btnSubmitExamSchedule">
-                        <span class="btn-text">Lưu</span>
+                        <span class="btn-text fs-4">Lưu</span>
                         <span class="spinner-border spinner-border-sm d-none" role="status" aria-hidden="true"></span>
                     </button>
                 </div>

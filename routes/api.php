@@ -41,6 +41,7 @@ Route::middleware(['web', 'auth'])->group(function () {
     Route::get('exam-schedules/my/schedule', [ExamSchedulesController::class, 'mySchedule']);
     Route::get('exam-schedules/today/all', [ExamSchedulesController::class, 'todayExams']);
     Route::get('exam-schedules/current/exam', [ExamSchedulesController::class, 'currentExam']);
+    Route::get('exam-schedules/student-today-exam', [ExamSchedulesController::class, 'studentTodayExam']);
     Route::post('exam-schedules/bulk-delete', [ExamSchedulesController::class, 'bulkDelete'])->name('exam-schedules.bulk-delete');
     Route::post('exam-schedules/import/preview', [ExamSchedulesController::class, 'previewImport']);
     Route::post('exam-schedules/import', [ExamSchedulesController::class, 'import']);

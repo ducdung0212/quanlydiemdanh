@@ -8,16 +8,22 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
+                    <div class="alert alert-info mt-3 fs-4">
+                        <i class="icon-info"></i> <strong>Lưu ý:</strong>Gõ để tra cứu theo mã giảng viên / họ tên /
+                        email, sau đó bấm chọn để phân công giảng viên.
+                    </div>
                     <div class="input-group input-group-lg">
                         <input type="text" class="form-control" id="searchSupervisor"
-                            placeholder="Nhập mã giảng viên để thêm vào ca thi...">
-                        <button class="btn btn-primary" type="button" id="btnAddSupervisor">
-                            <i class="icon-plus"></i> Thêm
-                        </button>
+                            placeholder="Mã giảng viên, họ tên, email...">
+                    </div>
+                    <div id="lecturerLookupSection" class="mt-2 d-none">
+                        <div id="lecturerLookupStatus" class="small text-muted mb-1 fs-4"></div>
+                        <div id="lecturerLookupList" class="list-group fs-4"></div>
                     </div>
                 </div>
                 <div style="overflow-x: auto;">
-                    <table class="table table-striped table-bordered" style="table-layout: fixed; width: 100%;">
+                    <table class="table table-striped table-bordered align-middle"
+                        style="table-layout: fixed; width: 100%;">
                         <thead>
                             <tr>
                                 <th class="align-middle text-center" style="width: 80px; ">STT</th>
@@ -35,7 +41,7 @@
                 </div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-secondary btn-lg fs-4" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>

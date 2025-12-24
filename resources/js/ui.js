@@ -47,7 +47,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
   if (startBtn) startBtn.addEventListener('click', () => startCamera());
   if (captureBtn) captureBtn.addEventListener('click', () => {
-    // snapshot from video and send to backend
     if (!video || !video.srcObject) {
       if (result) result.textContent = 'Camera chưa bật.';
       return;
@@ -61,17 +60,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const dataUrl = canvas.toDataURL('image/jpeg');
 
     if (result) result.textContent = 'Đang gửi ảnh để nhận diện... (demo frontend)';
-
-    // TODO: send dataUrl to backend endpoint for Rekognition processing
   });
 
   if (upload) upload.addEventListener('change', (e) => {
     const file = e.target.files[0];
     if (!file) return;
     if (result) result.textContent = `Đã chọn ảnh: ${file.name}`;
-    // TODO: send file to backend for Rekognition processing
   });
-
-  // Clean up when navigating away
   window.addEventListener('beforeunload', stopCamera);
 });

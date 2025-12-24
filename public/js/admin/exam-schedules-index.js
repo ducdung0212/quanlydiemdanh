@@ -623,7 +623,7 @@ document.addEventListener('DOMContentLoaded', function () {
                     const key = el.getAttribute('data-sort-indicator');
                     if (!key) return;
                     if (!primarySortBy) {
-                        el.textContent = '↕';
+                        el.textContent = '▲';
                         return;
                     }
                     const dir = sortDirMap[key] || 'asc';
@@ -631,13 +631,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 });
             }
 
+
             function attendance_setSort(nextSortBy) {
                 if (!nextSortBy) return;
-                if (primarySortBy === nextSortBy) {
-                    sortDirMap[nextSortBy] = sortDirMap[nextSortBy] === 'asc' ? 'desc' : 'asc';
-                } else {
-                    sortDirMap[nextSortBy] = sortDirMap[nextSortBy] || 'asc';
-                }
+                const currentDir = sortDirMap[nextSortBy] || 'asc';
+                sortDirMap[nextSortBy] = currentDir === 'asc' ? 'desc' : 'asc';
 
                 primarySortBy = nextSortBy;
                 primarySortDir = sortDirMap[nextSortBy] || 'asc';
@@ -748,8 +746,6 @@ document.addEventListener('DOMContentLoaded', function () {
 
                     const { exam, stats, students: studentsPaginator } = result.data;
                     const studentsList = studentsPaginator.data;
-
-                    // Update exam info
                     if (examSessionCode) examSessionCode.textContent = exam.session_code || exam.id || '-';
                     if (examSubjectCode) examSubjectCode.textContent = exam.subject_code || '-';
                     if (examSubjectName) examSubjectName.textContent = exam.subject_name || '-';
@@ -758,14 +754,10 @@ document.addEventListener('DOMContentLoaded', function () {
                     const examDuration = document.getElementById('exam-duration');
                     if (examDuration) examDuration.textContent = formatDuration(exam.duration);
                     if (examRoom) examRoom.textContent = exam.room || '-';
-
-                    // Update stats
                     if (totalStudents) totalStudents.textContent = stats.total_students || 0;
                     if (presentCount) presentCount.textContent = stats.present || 0;
                     if (pendingCount) pendingCount.textContent = stats.pending || 0;
                     if (absentCount) absentCount.textContent = stats.absent || 0;
-
-                    // Update students table
                     if (!studentsList || studentsList.length === 0) {
                         attendanceTableBody.innerHTML = `
                             <tr>

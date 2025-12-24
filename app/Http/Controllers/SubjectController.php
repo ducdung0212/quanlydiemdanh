@@ -20,19 +20,19 @@ class SubjectController extends Controller
      */
     public function index()
     {
-        $q=request()->query('q','');
-        $limit=request()->query('limit',10);
-        $subjects=Subject::latest();
-        if($q){
-            $subjects->where(function($query) use ($q){
-                $query->where('subject_code','like',"%$q%")
-                      ->orWhere('name','like',"%$q%");
+        $q = request()->query('q', '');
+        $limit = request()->query('limit', 10);
+        $subjects = Subject::latest();
+        if ($q) {
+            $subjects->where(function ($query) use ($q) {
+                $query->where('subject_code', 'like', "%$q%")
+                    ->orWhere('name', 'like', "%$q%");
             });
         }
         return response()->json([
-            'success'=>true,
-            'data'=>$subjects->paginate($limit),
-            'message'=>'List Subjects.'
+            'success' => true,
+            'data' => $subjects->paginate($limit),
+            'message' => 'List Subjects.'
         ]);
     }
 
@@ -49,72 +49,63 @@ class SubjectController extends Controller
      */
     public function store(SubjectRequest $request)
     {
-        try{
-            $subject=new Subject();
+        try {
+            $subject = new Subject();
             $subject->fill($request->all());
             $subject->save();
             return response()->json([
-                'success'=>true,
-                'data'=>$subject,
-                'message'=>'Subject created successfully.'
-            ],201);
-        }catch(ValidationException $e){
+                'success' => true,
+                'data' => $subject,
+                'message' => 'Subject created successfully.'
+            ], 201);
+        } catch (ValidationException $e) {
             return response()->json([
-                'success'=>false,
-                'error'=>$e->errors()
-            ],422);
+                'success' => false,
+                'error' => $e->errors()
+            ], 422);
         }
     }
 
     /**
      * Display the specified resource.
      */
-    public function show(string $id)
-    {
-    }
+    public function show(string $id) {}
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
+    public function edit(string $id) {}
     public function update(SubjectRequest $request, string $subject_code)
     {
-        try{
-            $subject=Subject::find($subject_code);
-            if(!$subject){
+        try {
+            $subject = Subject::find($subject_code);
+            if (!$subject) {
                 return response()->json([
-                    'success'=>false,
-                    'data'=>null,
-                    'message'=>'Subject not found.'
-                ],404);
+                    'success' => false,
+                    'data' => null,
+                    'message' => 'Subject not found.'
+                ], 404);
             }
-            if($request->subject_code){
-                $subject->subject_code=$request->subject_code;
+            if ($request->subject_code) {
+                $subject->subject_code = $request->subject_code;
             }
-            if($request->name){
-                $subject->name=$request->name;
+            if ($request->name) {
+                $subject->name = $request->name;
             }
-            if($request->credit){
-                $subject->credit=$request->credit;
+            if ($request->credit) {
+                $subject->credit = $request->credit;
             }
             $subject->save();
             return response()->json([
-                'success'=>true,
-                'data'=>$subject,
-                'message'=>'Subject updated successfully.'
+                'success' => true,
+                'data' => $subject,
+                'message' => 'Subject updated successfully.'
             ]);
-        }catch(ValidationException $e){
+        } catch (ValidationException $e) {
             return response()->json([
-                'success'=>false,
-                'error'=>$e->errors()
-            ],422);
+                'success' => false,
+                'error' => $e->errors()
+            ], 422);
         }
     }
 
@@ -123,33 +114,33 @@ class SubjectController extends Controller
      */
     public function destroy(string $subject_code)
     {
-        $subject=Subject::find($subject_code);
-        if(!$subject){
+        $subject = Subject::find($subject_code);
+        if (!$subject) {
             return response()->json([
-                'success'=>false,
-                'data'=>null,
-                'message'=>'Subject not found.'
-            ],404);
+                'success' => false,
+                'data' => null,
+                'message' => 'Subject not found.'
+            ], 404);
         }
         $subject->delete();
         return response()->json([
-            'success'=>true,
-            'message'=>'Subject deleted successfully.'
+            'success' => true,
+            'message' => 'Subject deleted successfully.'
         ]);
     }
     public function bulkDelete(Request $request)
     {
         $subjectCodes = $request->input('subject_codes', []);
-        if(empty($subjectCodes)){
+        if (empty($subjectCodes)) {
             return response()->json([
-                'success'=>false,
-                'message'=>'Không có môn học nào được chọn'
-            ],400);
+                'success' => false,
+                'message' => 'Không có môn học nào được chọn'
+            ], 400);
         }
         Subject::whereIn('subject_code', $subjectCodes)->delete();
         return response()->json([
-            'success'=>true,
-            'message'=>'Subjects deleted successfully.'
+            'success' => true,
+            'message' => 'Subjects deleted successfully.'
         ]);
     }
 
@@ -208,8 +199,8 @@ class SubjectController extends Controller
                     continue;
                 }
 
-                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
-                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+                $values = array_map(static fn($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn($value) => $value !== ''));
 
                 if (empty($nonEmpty)) {
                     continue;

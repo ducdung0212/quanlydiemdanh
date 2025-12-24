@@ -16,7 +16,7 @@ use PhpOffice\PhpSpreadsheet\IOFactory;
 use Throwable;
 
 class ExamSupervisorController extends Controller
-{   
+{
     public function index()
     {
         $q = request()->query('q');
@@ -65,7 +65,6 @@ class ExamSupervisorController extends Controller
                     $examScheduleQuery->whereDate('exam_date', $normalizedDate);
                 });
             } catch (\Throwable $e) {
-                // If the provided date cannot be parsed, ignore the filter.
             }
         }
 
@@ -110,11 +109,24 @@ class ExamSupervisorController extends Controller
             unset($spreadsheet);
 
             $expectedKeys = [
-                'subject', 'subject-code', 'subject_code', 'ma-mon', 'ma-hoc-phan',
-                'exam-date', 'exam-time', 'exam_date', 'exam_time',
-                'room', 'phong',
-                'lecturer', 'lecturer-code', 'lecturer_code', 'ma-giang-vien',
-                'role', 'note', 'ghi-chu',
+                'subject',
+                'subject-code',
+                'subject_code',
+                'ma-mon',
+                'ma-hoc-phan',
+                'exam-date',
+                'exam-time',
+                'exam_date',
+                'exam_time',
+                'room',
+                'phong',
+                'lecturer',
+                'lecturer-code',
+                'lecturer_code',
+                'ma-giang-vien',
+                'role',
+                'note',
+                'ghi-chu',
             ];
 
             $visibleHeadings = [];
@@ -127,8 +139,8 @@ class ExamSupervisorController extends Controller
                     continue;
                 }
 
-                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
-                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+                $values = array_map(static fn($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn($value) => $value !== ''));
 
                 if (empty($nonEmpty)) {
                     continue;
@@ -236,13 +248,9 @@ class ExamSupervisorController extends Controller
             Storage::delete($filePath);
         }
     }
-
-    /**
-     * Remove a single supervisor assignment.
-     */
     public function destroy(string $id)
     {
-       $examSupervisor = ExamSupervisor::find($id);
+        $examSupervisor = ExamSupervisor::find($id);
 
         if (!$examSupervisor) {
             return response()->json([
@@ -278,7 +286,7 @@ class ExamSupervisorController extends Controller
             return response()->json([
                 'success' => true,
                 'data' => $supervisor,
-                'message'=>'Update Supervisor Successfully'
+                'message' => 'Update Supervisor Successfully'
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -287,11 +295,6 @@ class ExamSupervisorController extends Controller
             ], 422);
         }
     }
-
-
-    /**
-     * Remove all supervisor assignments.
-     */
     public function bulkDelete(Request $request)
     {
         $ids = $request->input('ids', []);

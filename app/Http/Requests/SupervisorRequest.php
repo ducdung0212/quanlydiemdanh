@@ -11,7 +11,6 @@ class SupervisorRequest extends FormRequest
      */
     public function authorize(): bool
     {
-        // Allow access; controller will handle authorization/permissions elsewhere
         return true;
     }
 
@@ -22,15 +21,12 @@ class SupervisorRequest extends FormRequest
      */
     public function rules(): array
     {
-        // Different rules for create (POST) vs update (PUT/PATCH)
         if ($this->isMethod('post')) {
             return [
                 'exam_schedule_id' => ['required', 'integer', 'exists:exam_schedules,id'],
                 'lecturer_code' => ['required', 'string', 'exists:lecturers,lecturer_code'],
             ];
         }
-
-        // For update allow changing the lecturer_code
         return [
             'lecturer_code' => ['required', 'string', 'exists:lecturers,lecturer_code'],
         ];

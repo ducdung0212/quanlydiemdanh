@@ -10,6 +10,7 @@ use App\Models\AttendanceRecord;
 use App\Models\ExamSchedule;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -28,7 +29,7 @@ class ExamSchedulesController extends Controller
         $q = request()->query('q');
         $date = request()->query('date');
         $limit = (int) request()->query('limit', 10);
-        $user = auth()->user();
+        $user = Auth::user();
 
         $examSchedules = ExamSchedule::query()
             ->with('subject')
@@ -71,7 +72,6 @@ class ExamSchedulesController extends Controller
                 $examSchedules->whereDate('exam_date', $normalizedDate);
             } catch (Throwable $e) {
                 Log::info('Date parse error: ' . $e->getMessage());
-                // If the provided date cannot be parsed, ignore the filter.
             }
         }
 
@@ -284,11 +284,10 @@ class ExamSchedulesController extends Controller
 
     /**
      * Display the specified resource.
-     * UPDATE: Đã tối ưu hóa và thêm phân trang
      */
     public function show(string $id)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $examSchedule = ExamSchedule::with('subject')->find($id);
 
         if (!$examSchedule) {
@@ -396,8 +395,6 @@ class ExamSchedulesController extends Controller
                 ->select('attendance_records.*');
 
             $applySort = function (string $by, string $dir) use ($attendanceQuery) {
-                // NOTE: Sort theo "Tên" (từ cuối) cho full_name.
-                // MySQL: SUBSTRING_INDEX(full_name, ' ', -1) lấy từ cuối.
                 if ($by === 'full_name') {
                     $attendanceQuery
                         // Đẩy giá trị null/empty xuống cuối
@@ -476,22 +473,11 @@ class ExamSchedulesController extends Controller
                     'pending' => $pending,
                     'absent' => $absent,
                 ],
-                'students' => $paginatedRecords, // Trả về object phân trang đầy đủ
+                'students' => $paginatedRecords,
             ],
         ]);
     }
-
-    /**
-     * Show the form for editing the specified resource.
-     */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
+    public function edit(string $id) {}
     public function update(ExamScheduleRequest $request, string $id)
     {
         try {
@@ -733,7 +719,7 @@ class ExamSchedulesController extends Controller
      */
     public function mySchedule()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user || $user->role !== 'lecturer') {
             return response()->json([
@@ -780,7 +766,6 @@ class ExamSchedulesController extends Controller
                 $normalizedDate = Carbon::parse($date)->toDateString();
                 $examSchedules->whereDate('exam_date', $normalizedDate);
             } catch (Throwable $e) {
-                // If the provided date cannot be parsed, ignore the filter.
             }
         }
 
@@ -796,7 +781,7 @@ class ExamSchedulesController extends Controller
      */
     public function todayExams()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user || $user->role !== 'lecturer') {
             return response()->json([
@@ -881,7 +866,7 @@ class ExamSchedulesController extends Controller
 
     public function currentExam()
     {
-        $user = auth()->user();
+        $user = Auth::user();
 
         if (!$user || $user->role !== 'lecturer') {
             return response()->json([
@@ -953,6 +938,68 @@ class ExamSchedulesController extends Controller
             'success' => true,
             'data' => $examSchedule,
             'message' => 'Ca thi hiện tại',
+        ]);
+    }
+
+    /**
+     * Tra cứu ca thi trong ngày của một sinh viên theo mã số.
+     */
+    public function studentTodayExam(Request $request)
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ giảng viên mới có thể tra cứu ca thi trong ngày',
+            ], 403);
+        }
+
+        $validated = $request->validate([
+            'student_code' => ['required', 'string'],
+        ]);
+
+        $studentCode = trim($validated['student_code']);
+        $today = Carbon::now()->toDateString();
+
+        $exam = ExamSchedule::query()
+            ->with(['subject'])
+            ->whereDate('exam_date', $today)
+            ->whereHas('attendanceRecords', function ($query) use ($studentCode) {
+                $query->where('student_code', $studentCode);
+            })
+            ->orderBy('exam_time')
+            ->first();
+
+        if (!$exam) {
+            return response()->json([
+                'success' => true,
+                'has_exam' => false,
+                'data' => null,
+                'message' => 'Sinh viên không có ca thi nào trong ngày',
+            ]);
+        }
+
+        $examTime = null;
+        try {
+            $examTime = $exam->exam_time instanceof Carbon
+                ? $exam->exam_time->format('H:i:s')
+                : (string) $exam->exam_time;
+        } catch (Throwable $e) {
+            $examTime = (string) $exam->exam_time;
+        }
+
+        return response()->json([
+            'success' => true,
+            'has_exam' => true,
+            'data' => [
+                'session_code' => $exam->session_code ?? $exam->id,
+                'subject_code' => $exam->subject_code,
+                'subject_name' => optional($exam->subject)->name,
+                'room' => $exam->room,
+                'exam_time' => $examTime,
+            ],
+            'message' => 'Sinh viên có ca thi trong ngày',
         ]);
     }
 
@@ -1176,8 +1223,10 @@ class ExamSchedulesController extends Controller
      */
     public function removeSupervisor($id, $supervisor_id)
     {
-        $supervisor = \App\Models\ExamSupervisor::where('id', $supervisor_id)
-            ->where('exam_schedule_id', $id)
+        $lecturerCode = $supervisor_id;
+
+        $supervisor = \App\Models\ExamSupervisor::where('exam_schedule_id', $id)
+            ->where('lecturer_code', $lecturerCode)
             ->first();
 
         if (!$supervisor) {

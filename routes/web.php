@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ExamSchedulesController;
+use App\Http\Controllers\LecturerExamSchedulesController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\StudentFaceRegistrationController;
 use Illuminate\Support\Facades\DB;
@@ -34,8 +35,14 @@ Route::middleware(['auth', 'verified'])->group(function () {
 
     //attendance - visible/usable by lecturers
     Route::get('/attendance', function () {
-        return view('admin.attendance.index');
+        return view('lecturer.attendance.index');
     })->name('attendance');
+
+    // Lecturer-only pages
+    Route::middleware('role:lecturer')->group(function () {
+        Route::get('/lecturer/exam-schedules', [LecturerExamSchedulesController::class, 'index'])
+            ->name('lecturer.exam-schedules');
+    });
 
     // ==================== ADMIN-ONLY ROUTES ====================
     Route::middleware('role:admin')->group(function () {

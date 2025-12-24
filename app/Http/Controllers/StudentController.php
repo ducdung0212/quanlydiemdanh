@@ -19,22 +19,22 @@ class StudentController extends Controller
      */
     public function index()
     {
-        $q=request()->query('q');
-        $limit=request()->query('limit',10);
-        $students=Student::latest();
-        if($q){
-            $students->where(function($query) use ($q){
-                $query->where('student_code','LIKE',"%{$q}%")
-                      ->orWhere('full_name','LIKE',"%{$q}%")
-                      ->orWhere('email','LIKE',"%{$q}%")
-                      ->orWhere('phone','LIKE',"%{$q}%")
-                      ->orWhere('class_code','LIKE',"%{$q}%");
+        $q = request()->query('q');
+        $limit = request()->query('limit', 10);
+        $students = Student::latest();
+        if ($q) {
+            $students->where(function ($query) use ($q) {
+                $query->where('student_code', 'LIKE', "%{$q}%")
+                    ->orWhere('full_name', 'LIKE', "%{$q}%")
+                    ->orWhere('email', 'LIKE', "%{$q}%")
+                    ->orWhere('phone', 'LIKE', "%{$q}%")
+                    ->orWhere('class_code', 'LIKE', "%{$q}%");
             });
         }
         return response()->json([
             'success' => true,
             'data' => $students->paginate($limit),
-            'message'=>'List Students'
+            'message' => 'List Students'
         ]);
     }
 
@@ -52,13 +52,13 @@ class StudentController extends Controller
     public function store(StudentRequest $request)
     {
         try {
-            $student =new Student;
+            $student = new Student;
             $student->fill($request->all());
             $student->save();
             return response()->json([
                 'success' => true,
                 'data' => $student,
-                'message'=>'Create Student Successfully'
+                'message' => 'Create Student Successfully'
             ], 201);
         } catch (ValidationException $e) {
             return response()->json([
@@ -73,63 +73,56 @@ class StudentController extends Controller
      */
     public function show($student_code)
     {
-        $student=Student::find($student_code);
-        if(!$student){
+        $student = Student::find($student_code);
+        if (!$student) {
             return response()->json([
                 'success' => false,
                 'data' => null,
-                'message'=>'Student Not Found'
+                'message' => 'Student Not Found'
             ], 404);
         }
         return response()->json([
             'success' => true,
             'data' => $student,
-            'message'=>'Detail Student'
+            'message' => 'Detail Student'
         ]);
     }
 
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(Student $student)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
-    public function update(StudentRequest $request,string $student_code)
+    public function edit(Student $student) {}
+    public function update(StudentRequest $request, string $student_code)
     {
         try {
-            $student=Student::find($student_code);
-            if(!$student){
+            $student = Student::find($student_code);
+            if (!$student) {
                 return response()->json([
                     'success' => false,
                     'data' => null,
-                    'message'=>'Student Not Found'
+                    'message' => 'Student Not Found'
                 ], 404);
             }
-            if($request->student_code){
-                $student->student_code=$request->student_code;
+            if ($request->student_code) {
+                $student->student_code = $request->student_code;
             }
-            if($request->full_name){
-                $student->full_name=$request->full_name;
+            if ($request->full_name) {
+                $student->full_name = $request->full_name;
             }
-            if($request->class_code){
-                $student->class_code=$request->class_code;
+            if ($request->class_code) {
+                $student->class_code = $request->class_code;
             }
-            if($request->email){
-                $student->email=$request->email;
+            if ($request->email) {
+                $student->email = $request->email;
             }
-            if($request->phone){
-                $student->phone=$request->phone;
-            }   
+            if ($request->phone) {
+                $student->phone = $request->phone;
+            }
             $student->save();
             return response()->json([
                 'success' => true,
                 'data' => $student,
-                'message'=>'Update Student Successfully'
+                'message' => 'Update Student Successfully'
             ]);
         } catch (ValidationException $e) {
             return response()->json([
@@ -144,18 +137,20 @@ class StudentController extends Controller
      */
     public function destroy(string $student_code)
     {
-        $student=Student::find($student_code);
-        if(!$student){
-        return response()->json([
-            'success' => false,
-            'message'=>'Student Not Found'
-        ],
-        404);
+        $student = Student::find($student_code);
+        if (!$student) {
+            return response()->json(
+                [
+                    'success' => false,
+                    'message' => 'Student Not Found'
+                ],
+                404
+            );
         }
         $student->delete();
-         return response()->json([
+        return response()->json([
             'success' => true,
-            'message'=>'Delete Student Successfully'
+            'message' => 'Delete Student Successfully'
         ]);
     }
 
@@ -164,7 +159,7 @@ class StudentController extends Controller
         $studentCodes = $request->input('student_codes', []);
         if (empty($studentCodes)) {
             return response()->json([
-                'success' => false, 
+                'success' => false,
                 'message' => 'Không có sinh viên nào được chọn'
             ], 400);
         }
@@ -173,8 +168,8 @@ class StudentController extends Controller
 
         return response()->json([
             'success' => true,
-             'message' => 'Đã xóa ' . count($studentCodes) . ' sinh viên thành công.'
-            ]);
+            'message' => 'Đã xóa ' . count($studentCodes) . ' sinh viên thành công.'
+        ]);
     }
 
     public function previewImport(Request $request)
@@ -236,8 +231,8 @@ class StudentController extends Controller
                     continue;
                 }
 
-                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
-                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+                $values = array_map(static fn($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn($value) => $value !== ''));
 
                 if (empty($nonEmpty)) {
                     continue;

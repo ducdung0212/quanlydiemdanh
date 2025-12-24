@@ -8,15 +8,20 @@
             </div>
             <div class="modal-body">
                 <div class="mb-3">
+                    <div class="alert alert-info mt-3 fs-4">
+                        <i class="icon-info"></i> <strong>Lưu ý:</strong> Cho phép nhập nhiều mã sinh viên(Mỗi mã cách
+                        nhau bằng khoảng trắng hoặc dấu phẩy, dấu chấm.)
+                    </div>
                     <div class="d-flex gap-2">
+
                         <div class="input-group input-group-lg flex-grow-1">
-                            <input type="text" class="form-control" id="searchStudent"
+                            <input type="text" class="form-control fs-4" id="searchStudent"
                                 placeholder="Nhập mã sinh viên...">
-                            <button class="btn btn-primary" type="button" id="btnAddStudent">
+                            <button class="btn btn-primary fs-4" type="button" id="btnAddStudent">
                                 <i class="icon-plus"></i> Thêm
                             </button>
                         </div>
-                        <button class="btn btn-success btn-lg" type="button" id="btnImportStudentsExcel">
+                        <button class="btn btn-success btn-lg fs-4" type="button" id="btnImportStudentsExcel">
                             <i class="icon-upload"></i> Import Excel
                         </button>
                     </div>
@@ -42,7 +47,7 @@
                 <div id="students-pagination"></div>
             </div>
             <div class="modal-footer">
-                <button type="button" class="btn btn-secondary btn-lg" data-bs-dismiss="modal">Đóng</button>
+                <button type="button" class="btn btn-secondary btn-lg fs-4" data-bs-dismiss="modal">Đóng</button>
             </div>
         </div>
     </div>

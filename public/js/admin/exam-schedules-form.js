@@ -93,14 +93,14 @@ class ExamScheduleFormManager {
         const btnText = submitBtn.querySelector('.btn-text');
         const spinner = submitBtn.querySelector('.spinner-border');
 
-       
+
         this.clearErrors();
 
         // Get form data
         let examTime = document.getElementById('exam_time').value;
-      
 
-        
+
+
         if (examTime && examTime.split(':').length === 2) {
             examTime = examTime + ':00';
         }
@@ -116,8 +116,6 @@ class ExamScheduleFormManager {
         };
 
         console.log('Form data to submit:', formData);
-
-        // Show loading
         submitBtn.disabled = true;
         btnText.classList.add('d-none');
         spinner.classList.remove('d-none');
@@ -125,13 +123,11 @@ class ExamScheduleFormManager {
         try {
             let result;
             if (this.isEditMode) {
-                // Update
                 result = await apiFetch(`/api/exam-schedules/${this.currentId}`, {
                     method: 'PUT',
                     body: JSON.stringify(formData)
                 });
             } else {
-                // Create
                 result = await apiFetch('/api/exam-schedules', {
                     method: 'POST',
                     body: JSON.stringify(formData)
@@ -141,11 +137,8 @@ class ExamScheduleFormManager {
             if (result.success) {
                 showToast('Thành công', result.message, 'success');
                 this.modal.hide();
-
-                // Reload danh sách ca thi
                 document.dispatchEvent(new CustomEvent('examSchedulesUpdated'));
             } else {
-                // Hiển thị lỗi validation
                 if (result.errors) {
                     this.showErrors(result.errors);
                 } else {
@@ -154,15 +147,12 @@ class ExamScheduleFormManager {
             }
         } catch (error) {
             console.error('Error submitting form:', error);
-
-            // Xử lý lỗi validation từ Laravel
             if (error.errors) {
                 this.showErrors(error.errors);
             } else {
                 showToast('Lỗi', error.message || 'Không thể lưu ca thi', 'danger');
             }
         } finally {
-            // Hide loading
             submitBtn.disabled = false;
             btnText.classList.remove('d-none');
             spinner.classList.add('d-none');

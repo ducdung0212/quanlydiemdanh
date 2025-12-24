@@ -15,6 +15,12 @@ document.addEventListener('DOMContentLoaded', function () {
     const attendanceListSection = document.getElementById('attendanceListSection');
     const btnStartAttendance = document.getElementById('btnStartAttendance');
 
+    // Student lookup elements (visible only when an exam is active)
+    const studentLookupSection = document.getElementById('studentLookupSection');
+    const studentLookupForm = document.getElementById('studentLookupForm');
+    const studentLookupInput = document.getElementById('studentLookupInput');
+    const studentLookupResult = document.getElementById('studentLookupResult');
+
     // Exam info elements
     const examSessionCode = document.getElementById('exam-session-code');
     const examSubjectCode = document.getElementById('exam-subject-code');
@@ -50,7 +56,7 @@ document.addEventListener('DOMContentLoaded', function () {
             if (!key) return;
 
             if (!primarySortBy) {
-                el.textContent = '↕';
+                el.textContent = '▲';
                 return;
             }
 
@@ -62,13 +68,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     function setSort(nextSortBy) {
         if (!nextSortBy) return;
-        // Toggle direction for the clicked column
-        if (primarySortBy === nextSortBy) {
-            sortDirMap[nextSortBy] = sortDirMap[nextSortBy] === 'asc' ? 'desc' : 'asc';
-        } else {
-            // Keep previous direction if user already toggled it before, otherwise default asc
-            sortDirMap[nextSortBy] = sortDirMap[nextSortBy] || 'asc';
-        }
+        const currentDir = sortDirMap[nextSortBy] || 'asc';
+        // The table is already sorted by default (asc). Any click should reverse immediately,
+        // including when switching to a different column.
+        sortDirMap[nextSortBy] = currentDir === 'asc' ? 'desc' : 'asc';
 
         // Primary sort is the last-clicked column
         primarySortBy = nextSortBy;
@@ -84,12 +87,11 @@ document.addEventListener('DOMContentLoaded', function () {
     const video = document.getElementById('video');
     const canvas = document.getElementById('canvas');
     const overlay = document.getElementById('overlay');
-    // const photo = document.getElementById('photo'); // <-- ĐÃ XÓA DÒNG NÀY
     const btnCapture = document.getElementById('btnCapture');
     const btnRetake = document.getElementById('btnRetake');
     const btnSubmit = document.getElementById('btnSubmit');
     const cameraPreview = document.getElementById('cameraPreview');
-    const capturedImage = document.getElementById('capturedImage'); // Đây là div container
+    const capturedImage = document.getElementById('capturedImage');
     const attendanceResult = document.getElementById('attendanceResult');
     const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
 
@@ -226,6 +228,7 @@ document.addEventListener('DOMContentLoaded', function () {
             examInfoSection.style.display = 'none';
             statsSection.style.display = 'none';
             startAttendanceSection.style.display = 'none';
+            if (studentLookupSection) studentLookupSection.style.display = 'none';
 
             const response = await fetch('/api/exam-schedules/today/all');
             const result = await response.json();
@@ -299,6 +302,56 @@ document.addEventListener('DOMContentLoaded', function () {
         } catch (error) {
             console.error('Error loading today exams:', error);
             showToast('Lỗi', 'Không thể tải danh sách ca thi', 'danger');
+        }
+    }
+
+    async function lookupStudentTodayExam(studentCode) {
+        const code = (studentCode || '').trim();
+        if (!code) {
+            if (studentLookupResult) {
+                studentLookupResult.innerHTML = '<div class="alert alert-warning mb-0">Vui lòng nhập mã số sinh viên.</div>';
+            }
+            return;
+        }
+
+        if (studentLookupResult) {
+            studentLookupResult.innerHTML = '<div class="text-muted">Đang tra cứu...</div>';
+        }
+
+        try {
+            const resp = await fetch(`/api/exam-schedules/student-today-exam?student_code=${encodeURIComponent(code)}`);
+            const result = await resp.json();
+
+            if (!result || result.success !== true) {
+                const msg = (result && result.message) ? result.message : 'Không thể tra cứu ca thi trong ngày';
+                if (studentLookupResult) {
+                    studentLookupResult.innerHTML = `<div class="alert alert-danger mb-0">${escapeHtml(msg)}</div>`;
+                }
+                return;
+            }
+
+            if (result.has_exam && result.data) {
+                const subjectName = result.data.subject_name || '';
+                const room = result.data.room || '';
+                const examTime = (result.data.exam_time || '').toString().substring(0, 5);
+
+                if (studentLookupResult) {
+                    studentLookupResult.innerHTML = `
+                        <div class="alert alert-success mb-0">
+                            Sinh viên có ca thi môn <strong>${escapeHtml(subjectName)}</strong>, phòng <strong>${escapeHtml(room)}</strong>, giờ thi <strong>${escapeHtml(examTime)}</strong>.
+                        </div>
+                    `;
+                }
+            } else {
+                if (studentLookupResult) {
+                    studentLookupResult.innerHTML = '<div class="alert alert-info mb-0">Sinh viên không có ca thi nào trong ngày</div>';
+                }
+            }
+        } catch (e) {
+            console.error('lookupStudentTodayExam error:', e);
+            if (studentLookupResult) {
+                studentLookupResult.innerHTML = '<div class="alert alert-danger mb-0">Không thể tra cứu ca thi trong ngày</div>';
+            }
         }
     }
 
@@ -408,14 +461,15 @@ document.addEventListener('DOMContentLoaded', function () {
             statsSection.style.display = 'grid';
             startAttendanceSection.style.display = 'block';
             attendanceListSection.style.display = 'block';
+            if (studentLookupSection) studentLookupSection.style.display = 'block';
+            if (studentLookupResult) studentLookupResult.innerHTML = '';
 
-            // Xử lý nút điểm danh (giữ nguyên logic của bạn)
+            // Xử lý nút điểm danh 
             const canAttend = exam.can_attend;
             if (!canAttend) {
                 if (btnStartAttendance) {
                     btnStartAttendance.disabled = true;
                     btnStartAttendance.classList.add('disabled');
-                    // ... (logic hiển thị text nút giữ nguyên)
                     btnStartAttendance.innerHTML = '<i class="icon-camera"></i> Không thể điểm danh';
                 }
             } else {
@@ -458,7 +512,15 @@ document.addEventListener('DOMContentLoaded', function () {
             statsSection.style.display = 'none';
             startAttendanceSection.style.display = 'none';
             attendanceListSection.style.display = 'block';
+            if (studentLookupSection) studentLookupSection.style.display = 'none';
         }
+    }
+
+    if (studentLookupForm) {
+        studentLookupForm.addEventListener('submit', function (e) {
+            e.preventDefault();
+            lookupStudentTodayExam(studentLookupInput ? studentLookupInput.value : '');
+        });
     }
 
     async function startCamera() {
@@ -706,15 +768,11 @@ document.addEventListener('DOMContentLoaded', function () {
                 showResult('Không có kết quả xử lý.', 'info');
             }
 
-            // Giữ camera luôn bật: không tự đóng modal.
-            // Quay về camera NGAY LẬP TỨC để chụp tiếp (kể cả lỗi/không nhận diện được).
-            // Giữ lại message kết quả để user vẫn nhìn thấy.
             retakePhoto(false);
 
         } catch (error) {
             console.error('Error submitting attendance:', error);
             showResult('Lỗi nghiêm trọng khi gửi điểm danh: ' + error.message, 'error');
-            // Quay về camera ngay cả khi lỗi nghiêm trọng
             retakePhoto(false);
         } finally {
             btnSubmit.disabled = false;

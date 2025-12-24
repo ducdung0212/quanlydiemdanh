@@ -6,6 +6,7 @@ use App\Imports\AttendanceRecordImport;
 use App\Models\AttendanceRecord;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
@@ -15,19 +16,15 @@ use Throwable;
 
 class AttendanceRecordController extends Controller
 {
-    /**
-     * Display a listing of the resource.
-     */
     public function index()
     {
         $q = request()->query('q');
         $session = request()->query('session');
         $limit = (int) request()->query('limit', 10);
-        $user = auth()->user();
+        $user = Auth::user();
 
         $attendanceRecords = AttendanceRecord::with('student')->latest();
 
-        // Nếu là lecturer, chỉ xem điểm danh của ca thi được phân công
         if ($user && $user->role === 'lecturer') {
             $attendanceRecords->whereHas('examSchedule.supervisors', function ($query) use ($user) {
                 $query->where('lecturer_code', $user->lecturer_code);
@@ -93,14 +90,30 @@ class AttendanceRecordController extends Controller
             unset($spreadsheet);
 
             $expectedKeys = [
-                'subject', 'subject-code', 'subject_code', 'ma-mon', 'ma-hoc-phan',
-                'exam-date', 'exam-time', 'exam_date', 'exam_time',
-                'room', 'phong',
-                'student', 'student-code', 'student_code', 'ma-sinh-vien',
-                'attendance-time', 'attendance_time', 'thoi-gian',
-                'captured-image', 'captured_image_url',
-                'rekognition-result', 'rekognition_result',
-                'confidence', 'do-tin-cay',
+                'subject',
+                'subject-code',
+                'subject_code',
+                'ma-mon',
+                'ma-hoc-phan',
+                'exam-date',
+                'exam-time',
+                'exam_date',
+                'exam_time',
+                'room',
+                'phong',
+                'student',
+                'student-code',
+                'student_code',
+                'ma-sinh-vien',
+                'attendance-time',
+                'attendance_time',
+                'thoi-gian',
+                'captured-image',
+                'captured_image_url',
+                'rekognition-result',
+                'rekognition_result',
+                'confidence',
+                'do-tin-cay',
             ];
 
             $visibleHeadings = [];
@@ -113,8 +126,8 @@ class AttendanceRecordController extends Controller
                     continue;
                 }
 
-                $values = array_map(static fn ($value) => trim((string) $value), array_values($row));
-                $nonEmpty = array_values(array_filter($values, static fn ($value) => $value !== ''));
+                $values = array_map(static fn($value) => trim((string) $value), array_values($row));
+                $nonEmpty = array_values(array_filter($values, static fn($value) => $value !== ''));
 
                 if (empty($nonEmpty)) {
                     continue;
@@ -244,17 +257,10 @@ class AttendanceRecordController extends Controller
     /**
      * Show the form for editing the specified resource.
      */
-    public function edit(string $id)
-    {
-        //
-    }
-
-    /**
-     * Update the specified resource in storage.
-     */
+    public function edit(string $id) {}
     public function update(Request $request, string $id)
     {
-        $user = auth()->user();
+        $user = Auth::user();
         $attendanceRecord = AttendanceRecord::with('examSchedule')->find($id);
 
         if (!$attendanceRecord) {
@@ -263,13 +269,11 @@ class AttendanceRecordController extends Controller
                 'message' => 'Attendance Record not found',
             ], 404);
         }
-
-        // Nếu là lecturer, kiểm tra quyền sửa
         if ($user && $user->role === 'lecturer') {
             $hasAccess = $attendanceRecord->examSchedule->supervisors()
                 ->where('lecturer_code', $user->lecturer_code)
                 ->exists();
-            
+
             if (!$hasAccess) {
                 return response()->json([
                     'success' => false,

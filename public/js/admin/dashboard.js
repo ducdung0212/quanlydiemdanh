@@ -304,13 +304,9 @@ $(document).ready(function () {
         });
 
         tbody.html(html);
-
-        // Update pagination info
         $('#faceStudentFrom').text(pagination.from || 0);
         $('#faceStudentTo').text(pagination.to || 0);
         $('#faceStudentTotal').text(pagination.total);
-
-        // Render pagination
         renderFacePagination(pagination);
     }
 
@@ -324,12 +320,9 @@ $(document).ready(function () {
 
         let html = '';
 
-        // Previous
         html += `<li class="page-item ${pagination.current_page === 1 ? 'disabled' : ''}">
             <a class="page-link" href="#" data-page="${pagination.current_page - 1}">«</a>
         </li>`;
-
-        // Pages
         for (let i = 1; i <= pagination.last_page; i++) {
             if (i === 1 || i === pagination.last_page ||
                 (i >= pagination.current_page - 2 && i <= pagination.current_page + 2)) {
