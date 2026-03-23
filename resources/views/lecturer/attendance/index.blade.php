@@ -5,22 +5,21 @@
         <h3>Điểm danh sinh viên</h3>
     </div>
     <div class="card mb-3 shadow-sm" id="studentLookupSection" style="display: none;">
-            <div class="card-header bg-white py-3">
-                <h5 class="m-0 font-weight-bold text-primary">Tra cứu sinh viên</h5>
-            </div>
-            <div class="card-body p-3">
-                <form id="studentLookupForm" class="row g-2 align-items-center">
-                    <div class="col-12 col-md-6">
-                        <input type="text" class="form-control" id="studentLookupInput"
-                            placeholder="Nhập mã số sinh viên">
-                    </div>
-                    <div class="col-12 col-md-auto">
-                        <button type="submit" class="tf-button style-1">Tra cứu</button>
-                    </div>
-                </form>
-                <div id="studentLookupResult" class="mt-1 fs-4"></div>
-            </div>
+        <div class="card-header bg-white py-3">
+            <h5 class="m-0 font-weight-bold text-primary">Tra cứu sinh viên</h5>
         </div>
+        <div class="card-body p-3">
+            <form id="studentLookupForm" class="row g-2 align-items-center">
+                <div class="col-12 col-md-6">
+                    <input type="text" class="form-control" id="studentLookupInput" placeholder="Nhập mã số sinh viên">
+                </div>
+                <div class="col-12 col-md-auto">
+                    <button type="submit" class="tf-button style-1">Tra cứu</button>
+                </div>
+            </form>
+            <div id="studentLookupResult" class="mt-1 fs-4"></div>
+        </div>
+    </div>
     <div class="attendance-container">
         <div class="card mb-3 shadow-sm" id="examInfoSection" style="display: none;">
             <div class="card-header bg-white py-3">
@@ -94,7 +93,7 @@
             </div>
         </div>
 
-        
+
 
         <div class="row g-3 mb-3 d-flex justify-content-center" id="statsSection" style="display: none;">
             <div class="col-6 col-md-3">
@@ -132,7 +131,10 @@
     </div>
     <div class="text-center mb-27" id="startAttendanceSection" style="display: none;">
         <button class="tf-button style-1 w208" id="btnStartAttendance">
-            <i class="icon-camera"></i> Bắt đầu điểm danh
+            <i class="icon-camera"></i> Điểm danh bằng khuôn mặt
+        </button>
+        <button class="tf-button style-2 w208" id="btnStartQrAttendance" style="margin-left: 8px;">
+            <i class="icon-grid"></i> Điểm danh bằng QR
         </button>
     </div>
 
@@ -174,35 +176,77 @@
         <div class="modal-dialog modal-lg">
             <div class="modal-content">
                 <div class="modal-header">
-                    <h5 class="modal-title" id="attendanceModalLabel">Điểm danh bằng camera</h5>
+                    <h5 class="modal-title" id="attendanceModalLabel">Điểm danh sinh viên</h5>
                     <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                 </div>
                 <div class="modal-body">
-                    <div class="camera-container text-center">
-                        <div id="cameraPreview" class="camera-preview mb-3" style="position:relative;">
-                            <video id="video" autoplay playsinline class="w-100"
-                                style="max-height: 400px; background: #000; position:relative; z-index:1; display:block; object-fit:contain;">
-                            </video>
-                            <canvas id="overlay"
-                                style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2; display:block;"></canvas>
-                            <canvas id="canvas" class="d-none"></canvas>
-                        </div>
+                    <ul class="nav nav-pills mb-3" id="attendanceModeTabs">
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link active fs-4" id="tabFaceMode" type="button">Khuôn mặt</button>
+                        </li>
+                        <li class="nav-item" role="presentation">
+                            <button class="nav-link fs-4" id="tabQrMode" type="button">QR Code</button>
+                        </li>
+                    </ul>
 
-                        <div id="capturedImage" class="captured-image mb-3 d-none"
-                            style="max-height: 400px; overflow-y: auto; background: #f0f0f0; padding: 10px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                    <div id="faceAttendanceSection">
+                        <div class="camera-container text-center">
+                            <div id="cameraPreview" class="camera-preview mb-3" style="position:relative;">
+                                <video id="video" autoplay playsinline class="w-100"
+                                    style="max-height: 400px; background: #000; position:relative; z-index:1; display:block; object-fit:contain;">
+                                </video>
+                                <canvas id="overlay"
+                                    style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2; display:block;"></canvas>
+                                <canvas id="canvas" class="d-none"></canvas>
+                            </div>
+
+                            <div id="capturedImage" class="captured-image mb-3 d-none"
+                                style="max-height: 400px; overflow-y: auto; background: #f0f0f0; padding: 10px; border-radius: 6px; display: flex; flex-wrap: wrap; gap: 10px; justify-content: center;">
+                            </div>
+                            <div class="camera-controls d-flex justify-content-center flex-nowrap">
+                                <button id="btnCapture" class="tf-button style-1 me-2">
+                                    <i class="icon-camera"></i> Chụp ảnh
+                                </button>
+                                <button id="btnRetake" class="tf-button style-2 me-2 d-none">
+                                    <i class="icon-refresh-cw"></i> Chụp lại
+                                </button>
+                                <button id="btnSubmit" class="tf-button style-3 d-none">
+                                    <i class="icon-send"></i> Kiểm tra
+                                </button>
+                            </div>
+                            <div id="attendanceResult" class="mt-3"></div>
                         </div>
-                        <div class="camera-controls d-flex justify-content-center flex-nowrap">
-                            <button id="btnCapture" class="tf-button style-1 me-2">
-                                <i class="icon-camera"></i> Chụp ảnh
+                    </div>
+
+                    <div id="qrAttendanceSection" style="display:none;">
+                        <div class="text-center">
+                            <div class="camera-preview mb-3" style="position: relative; background: #000;">
+                                <video id="qrVideo" autoplay playsinline class="w-100"
+                                    style="max-height: 300px; object-fit: contain;"></video>
+                                <canvas id="qrOverlay"
+                                    style="position:absolute; top:0; left:0; width:100%; height:100%; pointer-events:none; z-index:2; display:none;"></canvas>
+                            </div>
+
+                            <div class="d-flex justify-content-center flex-wrap gap-2 mb-3">
+                                <button id="btnStartQrScanner" class="tf-button style-1" type="button">
+                                    <i class="icon-camera"></i> Bật quét QR
+                                </button>
+                                <button id="btnStopQrScanner" class="tf-button style-2" type="button">
+                                    <i class="icon-stop-circle"></i> Dừng quét
+                                </button>
+                            </div>
+
+                            <div class="mb-3 text-start">
+                                <label for="qrManualInput" class="form-label fs-4">Nhập mã sinh viên (nếu cần)</label>
+                                <input id="qrManualInput" type="text" class="form-control fs-3">
+                            </div>
+
+                            <button id="btnSubmitQrManual" class="tf-button style-3" type="button">
+                                <i class="icon-send"></i> Điểm danh từ mã QR
                             </button>
-                            <button id="btnRetake" class="tf-button style-2 me-2 d-none">
-                                <i class="icon-refresh-cw"></i> Chụp lại
-                            </button>
-                            <button id="btnSubmit" class="tf-button style-3 d-none">
-                                <i class="icon-send"></i> Kiểm tra
-                            </button>
+
+                            <div id="qrAttendanceResult" class="mt-3"></div>
                         </div>
-                        <div id="attendanceResult" class="mt-3"></div>
                     </div>
                 </div>
             </div>
@@ -216,5 +260,6 @@
     </script>
     <script src="{{ asset('js/vendor/tf.min.js') }}"></script>
     <script src="{{ asset('js/vendor/blazeface.min.js') }}"></script>
+    <script src="{{ asset('js/vendor/jsqr.min.js') }}"></script>
     <script src="{{ asset('js/admin/attendance-index.js') }}"></script>
 @endpush

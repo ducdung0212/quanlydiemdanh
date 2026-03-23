@@ -14,6 +14,7 @@ document.addEventListener('DOMContentLoaded', function () {
     const startAttendanceSection = document.getElementById('startAttendanceSection');
     const attendanceListSection = document.getElementById('attendanceListSection');
     const btnStartAttendance = document.getElementById('btnStartAttendance');
+    const btnStartQrAttendance = document.getElementById('btnStartQrAttendance');
 
     // Student lookup elements (visible only when an exam is active)
     const studentLookupSection = document.getElementById('studentLookupSection');
@@ -94,6 +95,38 @@ document.addEventListener('DOMContentLoaded', function () {
     const capturedImage = document.getElementById('capturedImage');
     const attendanceResult = document.getElementById('attendanceResult');
     const attendanceModal = new bootstrap.Modal(document.getElementById('attendanceModal'));
+    const qrAttendanceResult = document.getElementById('qrAttendanceResult');
+
+    // Mode switch elements
+    const tabFaceMode = document.getElementById('tabFaceMode');
+    const tabQrMode = document.getElementById('tabQrMode');
+    const faceAttendanceSection = document.getElementById('faceAttendanceSection');
+    const qrAttendanceSection = document.getElementById('qrAttendanceSection');
+
+    // QR elements
+    const qrVideo = document.getElementById('qrVideo');
+    const qrOverlay = document.getElementById('qrOverlay');
+    const qrOverlayCtx = qrOverlay ? qrOverlay.getContext('2d') : null;
+    const btnStartQrScanner = document.getElementById('btnStartQrScanner');
+    const btnStopQrScanner = document.getElementById('btnStopQrScanner');
+    const qrManualInput = document.getElementById('qrManualInput');
+    const btnSubmitQrManual = document.getElementById('btnSubmitQrManual');
+    let activeAttendanceMode = 'face';
+    let qrStream = null;
+    let qrScannerActive = false;
+    let lastQrValue = '';
+    let lastQrScanAt = 0;
+    let lastQrDecodeAt = 0;
+    const qrCooldownMs = 1500;
+    const qrDecodeIntervalMs = 220;
+    const isQrAutoScanSupported = ('BarcodeDetector' in window);
+    const isJsQrSupported = (typeof window.jsQR === 'function');
+    const isAnyQrDecoderSupported = isQrAutoScanSupported || isJsQrSupported;
+    const qrDetector = isQrAutoScanSupported
+        ? new BarcodeDetector({ formats: ['qr_code'] })
+        : null;
+    const qrCanvas = document.createElement('canvas');
+    const qrCanvasCtx = qrCanvas.getContext('2d', { willReadFrequently: true });
 
     // Face detection model (BlazeFace)
     let faceModel = null;
@@ -476,7 +509,7 @@ document.addEventListener('DOMContentLoaded', function () {
                 if (btnStartAttendance) {
                     btnStartAttendance.disabled = false;
                     btnStartAttendance.classList.remove('disabled');
-                    btnStartAttendance.innerHTML = '<i class="icon-camera"></i> Bắt đầu điểm danh';
+                    btnStartAttendance.innerHTML = '<i class="icon-camera"></i> Điểm danh bằng khuôn mặt';
                     btnStartAttendance.removeAttribute('title');
                 }
             }
@@ -578,6 +611,283 @@ document.addEventListener('DOMContentLoaded', function () {
             stream = null;
         }
         stopDetectionLoop();
+    }
+
+    function showQrResult(message, type) {
+        if (!qrAttendanceResult) return;
+        const className = type === 'success' ? 'result-success' :
+            type === 'error' ? 'result-error' : 'text-info';
+        qrAttendanceResult.innerHTML = `<div class="${className}">${message}</div>`;
+    }
+
+    function setAttendanceMode(mode) {
+        activeAttendanceMode = mode === 'qr' ? 'qr' : 'face';
+
+        if (faceAttendanceSection) faceAttendanceSection.style.display = activeAttendanceMode === 'face' ? 'block' : 'none';
+        if (qrAttendanceSection) qrAttendanceSection.style.display = activeAttendanceMode === 'qr' ? 'block' : 'none';
+
+        if (tabFaceMode) tabFaceMode.classList.toggle('active', activeAttendanceMode === 'face');
+        if (tabQrMode) tabQrMode.classList.toggle('active', activeAttendanceMode === 'qr');
+
+        if (activeAttendanceMode === 'face') {
+            stopQrScanner();
+            startCamera();
+        } else {
+            stopCamera();
+            retakePhoto();
+            if (isAnyQrDecoderSupported) {
+                startQrScanner();
+            } else {
+                showQrResult('Không tìm thấy bộ giải mã QR tự động. Bạn vẫn có thể nhập hoặc dán nội dung QR để điểm danh.', 'info');
+            }
+        }
+    }
+
+    async function startQrScanner() {
+        if (!qrVideo) return;
+        if (!isAnyQrDecoderSupported) {
+            showQrResult('Thiết bị chưa sẵn sàng bộ giải mã QR tự động. Hãy dùng ô nhập tay bên dưới.', 'info');
+            return;
+        }
+
+        try {
+            if (qrStream) stopQrScanner();
+            qrStream = await navigator.mediaDevices.getUserMedia({
+                audio: false,
+                video: {
+                    facingMode: { ideal: 'environment' },
+                    width: { ideal: 640 },
+                    height: { ideal: 480 },
+                }
+            });
+
+            qrVideo.srcObject = qrStream;
+            await qrVideo.play();
+            qrScannerActive = true;
+            showQrResult('Đang quét QR...', 'info');
+            requestAnimationFrame(scanQrFrame);
+        } catch (e) {
+            console.error('startQrScanner error:', e);
+            showQrResult('Không thể truy cập camera để quét QR.', 'error');
+        }
+    }
+
+    function stopQrScanner() {
+        qrScannerActive = false;
+        if (qrStream) {
+            qrStream.getTracks().forEach(track => track.stop());
+            qrStream = null;
+        }
+        if (qrVideo) {
+            qrVideo.srcObject = null;
+        }
+        clearQrOverlay(true);
+    }
+
+    function clearQrOverlay(hide = false) {
+        if (!qrOverlay || !qrOverlayCtx) return;
+        qrOverlayCtx.clearRect(0, 0, qrOverlay.width || 0, qrOverlay.height || 0);
+        if (hide) {
+            qrOverlay.style.display = 'none';
+        }
+    }
+
+    function syncQrOverlaySize(srcW, srcH) {
+        if (!qrOverlay || !qrVideo || !srcW || !srcH) return;
+
+        if (qrOverlay.width !== srcW) qrOverlay.width = srcW;
+        if (qrOverlay.height !== srcH) qrOverlay.height = srcH;
+
+        qrOverlay.style.width = qrVideo.clientWidth + 'px';
+        qrOverlay.style.height = qrVideo.clientHeight + 'px';
+        qrOverlay.style.display = 'block';
+    }
+
+    function drawQrOverlay(shape, srcW, srcH) {
+        if (!qrOverlay || !qrOverlayCtx || !srcW || !srcH) return;
+
+        syncQrOverlaySize(srcW, srcH);
+        clearQrOverlay(false);
+
+        if (!shape) return;
+
+        qrOverlayCtx.strokeStyle = 'rgba(0, 255, 0, 0.95)';
+        qrOverlayCtx.fillStyle = 'rgba(0, 255, 0, 0.15)';
+        qrOverlayCtx.lineWidth = Math.max(2, Math.round(srcW / 260));
+
+        if (shape.type === 'rect') {
+            const x = shape.x || 0;
+            const y = shape.y || 0;
+            const w = shape.w || 0;
+            const h = shape.h || 0;
+            qrOverlayCtx.beginPath();
+            qrOverlayCtx.rect(x, y, w, h);
+            qrOverlayCtx.fill();
+            qrOverlayCtx.stroke();
+            return;
+        }
+
+        if (shape.type === 'polygon' && Array.isArray(shape.points) && shape.points.length >= 4) {
+            const pts = shape.points;
+            qrOverlayCtx.beginPath();
+            qrOverlayCtx.moveTo(pts[0].x, pts[0].y);
+            for (let i = 1; i < pts.length; i++) {
+                qrOverlayCtx.lineTo(pts[i].x, pts[i].y);
+            }
+            qrOverlayCtx.closePath();
+            qrOverlayCtx.fill();
+            qrOverlayCtx.stroke();
+        }
+    }
+
+    async function scanQrFrame() {
+        if (!qrScannerActive || !qrVideo) return;
+
+        try {
+            if (qrVideo.readyState >= 2) {
+                const srcW = qrVideo.videoWidth || 0;
+                const srcH = qrVideo.videoHeight || 0;
+                const now = Date.now();
+                if (now - lastQrDecodeAt < qrDecodeIntervalMs) {
+                    if (srcW > 0 && srcH > 0) {
+                        syncQrOverlaySize(srcW, srcH);
+                    }
+                    return;
+                }
+
+                lastQrDecodeAt = now;
+                let value = '';
+                let detectedShape = null;
+
+                if (qrDetector) {
+                    const barcodes = await qrDetector.detect(qrVideo);
+                    if (Array.isArray(barcodes) && barcodes.length > 0) {
+                        const hit = barcodes[0];
+                        value = (hit.rawValue || '').trim();
+
+                        if (Array.isArray(hit.cornerPoints) && hit.cornerPoints.length >= 4) {
+                            detectedShape = {
+                                type: 'polygon',
+                                points: hit.cornerPoints.map(p => ({ x: p.x, y: p.y }))
+                            };
+                        } else if (hit.boundingBox) {
+                            detectedShape = {
+                                type: 'rect',
+                                x: hit.boundingBox.x,
+                                y: hit.boundingBox.y,
+                                w: hit.boundingBox.width,
+                                h: hit.boundingBox.height,
+                            };
+                        }
+                    }
+                } else if (isJsQrSupported && qrCanvasCtx) {
+                    if (srcW > 0 && srcH > 0) {
+                        const maxW = 640;
+                        let outW = srcW;
+                        let outH = srcH;
+
+                        if (srcW > maxW) {
+                            outW = maxW;
+                            outH = Math.round((srcH * maxW) / srcW);
+                        }
+
+                        qrCanvas.width = outW;
+                        qrCanvas.height = outH;
+                        qrCanvasCtx.drawImage(qrVideo, 0, 0, outW, outH);
+
+                        const imageData = qrCanvasCtx.getImageData(0, 0, outW, outH);
+                        const qrResult = window.jsQR(imageData.data, outW, outH, {
+                            inversionAttempts: 'attemptBoth'
+                        });
+
+                        if (qrResult && qrResult.data) {
+                            value = String(qrResult.data).trim();
+
+                            const scaleX = srcW / outW;
+                            const scaleY = srcH / outH;
+                            detectedShape = {
+                                type: 'polygon',
+                                points: [
+                                    qrResult.location.topLeftCorner,
+                                    qrResult.location.topRightCorner,
+                                    qrResult.location.bottomRightCorner,
+                                    qrResult.location.bottomLeftCorner,
+                                ].map(p => ({
+                                    x: p.x * scaleX,
+                                    y: p.y * scaleY,
+                                }))
+                            };
+                        }
+                    }
+                }
+
+                if (srcW > 0 && srcH > 0) {
+                    drawQrOverlay(detectedShape, srcW, srcH);
+                }
+
+                if (value && (value !== lastQrValue || (now - lastQrScanAt) > qrCooldownMs)) {
+                    lastQrValue = value;
+                    lastQrScanAt = now;
+                    if (qrManualInput) qrManualInput.value = value;
+                    await submitQrAttendance(value);
+                }
+            }
+        } catch (e) {
+            // Keep scanning even when a frame fails.
+        } finally {
+            if (qrScannerActive) {
+                requestAnimationFrame(scanQrFrame);
+            }
+        }
+    }
+
+    async function submitQrAttendance(rawQrValue) {
+        const qrContent = (rawQrValue || '').trim();
+        if (!qrContent) {
+            showQrResult('Vui lòng quét hoặc nhập nội dung QR.', 'error');
+            return;
+        }
+
+        if (!currentExamScheduleId) {
+            showQrResult('Không tìm thấy ca thi đang hoạt động.', 'error');
+            return;
+        }
+
+        try {
+            showQrResult('Đang xử lý mã QR...', 'info');
+            if (btnSubmitQrManual) btnSubmitQrManual.disabled = true;
+
+            const resp = await fetch('/api/attendance/qr-scan', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRF-TOKEN': document.querySelector('meta[name="csrf-token"]').getAttribute('content')
+                },
+                body: JSON.stringify({
+                    qr_content: qrContent,
+                    exam_schedule_id: currentExamScheduleId,
+                    commit: true,
+                })
+            });
+
+            const result = await resp.json();
+            if (!result.success) {
+                showQrResult(escapeHtml(result.message || 'Điểm danh QR thất bại'), 'error');
+                return;
+            }
+
+            const student = result.data && result.data.student ? result.data.student : null;
+            const msg = student
+                ? `Điểm danh thành công: ${escapeHtml(student.full_name)} (${escapeHtml(student.student_code)})`
+                : 'Điểm danh QR thành công';
+            showQrResult(msg, 'success');
+            setTimeout(() => loadExamAttendanceData(currentExamScheduleId), 500);
+        } catch (e) {
+            console.error('submitQrAttendance error:', e);
+            showQrResult('Lỗi khi gửi điểm danh QR: ' + escapeHtml(e.message), 'error');
+        } finally {
+            if (btnSubmitQrManual) btnSubmitQrManual.disabled = false;
+        }
     }
 
     function capturePhoto() {
@@ -827,8 +1137,53 @@ document.addEventListener('DOMContentLoaded', function () {
             return;
         }
         attendanceModal.show();
-        startCamera();
+        setAttendanceMode('face');
     });
+
+    if (btnStartQrAttendance) {
+        btnStartQrAttendance.addEventListener('click', () => {
+            if (!currentExamScheduleId) {
+                alert('Vui lòng chọn ca thi trước');
+                return;
+            }
+            attendanceModal.show();
+            setAttendanceMode('qr');
+        });
+    }
+
+    if (tabFaceMode) {
+        tabFaceMode.addEventListener('click', () => setAttendanceMode('face'));
+    }
+
+    if (tabQrMode) {
+        tabQrMode.addEventListener('click', () => setAttendanceMode('qr'));
+    }
+
+    if (btnStartQrScanner) {
+        btnStartQrScanner.addEventListener('click', startQrScanner);
+    }
+
+    if (qrManualInput) {
+        qrManualInput.addEventListener('keydown', (e) => {
+            if (e.key === 'Enter') {
+                e.preventDefault();
+                submitQrAttendance(qrManualInput.value);
+            }
+        });
+    }
+
+    if (btnStopQrScanner) {
+        btnStopQrScanner.addEventListener('click', () => {
+            stopQrScanner();
+            showQrResult('Đã dừng quét QR.', 'info');
+        });
+    }
+
+    if (btnSubmitQrManual) {
+        btnSubmitQrManual.addEventListener('click', () => {
+            submitQrAttendance(qrManualInput ? qrManualInput.value : '');
+        });
+    }
 
     btnCapture.addEventListener('click', capturePhoto);
     btnRetake.addEventListener('click', retakePhoto);
@@ -836,7 +1191,10 @@ document.addEventListener('DOMContentLoaded', function () {
 
     document.getElementById('attendanceModal').addEventListener('hidden.bs.modal', () => {
         stopCamera();
+        stopQrScanner();
         retakePhoto();
+        if (qrManualInput) qrManualInput.value = '';
+        if (qrAttendanceResult) qrAttendanceResult.innerHTML = '';
     });
 
     // Khởi tạo
@@ -858,6 +1216,11 @@ document.addEventListener('DOMContentLoaded', function () {
     // Chỉ giảng viên mới có thể sử dụng chức năng điểm danh
     if (userRole === 'lecturer') {
         loadTodayExamsForLecturer();
+
+        if (!isAnyQrDecoderSupported) {
+            if (btnStartQrScanner) btnStartQrScanner.disabled = true;
+            if (btnStopQrScanner) btnStopQrScanner.disabled = true;
+        }
     } else {
         attendanceListSection.style.display = 'block';
         if (attendanceTableBody) {

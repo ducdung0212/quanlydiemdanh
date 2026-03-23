@@ -11,13 +11,15 @@ document.addEventListener('DOMContentLoaded', () => {
                 addTriggerSelector: '[data-bs-target="#addUserModal"]',
                 importConfig: null // Users không có import
             });
-            
+
             this.escape = window.escapeHtml || ((value) => value);
         }
 
         /**
          * @override
          */
+        // Thêm vào trong class UserManager
+      
         renderTable() {
             const tb = this.dom.tableBody;
             const pd = this.state.paginationData;
@@ -68,7 +70,7 @@ document.addEventListener('DOMContentLoaded', () => {
             this.dom.tableBody.addEventListener('click', async (event) => {
                 const target = event.target.closest('[data-action]');
                 if (!target) return;
-                
+
                 const action = target.dataset.action;
                 const id = target.dataset.id;
 
@@ -103,7 +105,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                 });
             }
-            
+
             document.addEventListener('resourceUpdated', (e) => {
                 const isEdit = e.detail?.isEdit || false;
                 this.fetchData(isEdit ? this.state.currentPage : 1, this.state.currentQuery);
@@ -120,14 +122,14 @@ document.addEventListener('DOMContentLoaded', () => {
                     const formData = Object.fromEntries(new FormData(form).entries());
                     return await apiFetch(this.options.apiBaseUrl, { method: 'POST', body: formData });
                 }, modalInstance, 'resourceUpdated', null)
-                .then((res) => {
-                    if (res && res.success) {
-                        showToast('Thành công', res.message || 'Đã thêm', 'success');
-                        form.reset();
-                    }
-                }).catch(() => {});
+                    .then((res) => {
+                        if (res && res.success) {
+                            showToast('Thành công', res.message || 'Đã thêm', 'success');
+                            form.reset();
+                        }
+                    }).catch(() => { });
             });
-            
+
             const modalElement = modalInstance._element || modalInstance;
             modalElement.addEventListener('hidden.bs.modal', () => {
                 form.reset();
@@ -152,11 +154,11 @@ document.addEventListener('DOMContentLoaded', () => {
                     }
                     return await apiFetch(`${this.options.apiBaseUrl}/${id}`, { method: 'PUT', body: formEntries });
                 }, modalInstance, 'resourceUpdated', { isEdit: true })
-                .then((res) => {
-                    if (res && res.success) showToast('Thành công', res.message || 'Đã cập nhật', 'success');
-                }).catch(() => {});
+                    .then((res) => {
+                        if (res && res.success) showToast('Thành công', res.message || 'Đã cập nhật', 'success');
+                    }).catch(() => { });
             });
-            
+
             const modalElement = modalInstance._element || modalInstance;
             modalElement.addEventListener('hidden.bs.modal', () => {
                 clearValidationErrors(form);
@@ -164,7 +166,10 @@ document.addEventListener('DOMContentLoaded', () => {
 
             form.dataset.initialized = 'true';
         }
+
+        
     }
+
 
     const manager = new UserManager();
     manager.init();

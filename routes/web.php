@@ -14,12 +14,10 @@ use Illuminate\Support\Facades\Schema;
 | Web Routes
 |--------------------------------------------------------------------------
 */
-
 // Redirect root to login
 Route::get('/', function () {
     return view('auth/login');
 });
-
 /*
 |--------------------------------------------------------------------------
 | Authenticated Routes
@@ -51,7 +49,7 @@ Route::middleware(['auth', 'verified'])->group(function () {
         Route::get('/dashboard/stats', [DashboardController::class, 'stats'])->name('dashboard.stats');
         Route::get('/dashboard/face-registration-students', [DashboardController::class, 'faceRegistrationStudents'])->name('dashboard.face-registration-students');
 
-        // USERS
+        //USERS
         Route::get('/user', function () {
             return view('admin.users.index');
         })->name('user');

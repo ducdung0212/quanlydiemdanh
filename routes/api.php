@@ -23,8 +23,10 @@ use App\Http\Controllers\StudentFaceRegistrationController;
 |
 */
 
+
 // Protected routes - require authentication
 Route::middleware(['web', 'auth'])->group(function () {
+    //Route::apiResource('users', UserController::class);
     Route::apiResource('users', UserController::class);
 
     Route::apiResource('students', StudentController::class);
@@ -80,6 +82,7 @@ Route::middleware(['web', 'auth'])->group(function () {
 
     // Face Recognition Attendance
     Route::post('attendance/face-recognition', [FaceAttendanceController::class, 'authenticate']);
+    Route::post('attendance/qr-scan', [FaceAttendanceController::class, 'authenticateQr']);
     Route::get('attendance/test-lambda', [FaceAttendanceController::class, 'testLambda']);
 
     // Presigned URLs for bulk face registration

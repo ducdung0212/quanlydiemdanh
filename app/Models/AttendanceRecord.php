@@ -28,6 +28,7 @@ class AttendanceRecord extends Model
         'rekognition_result',
         'confidence',
         'attendance_time',
+        'attendance_method',
     ];
 
     /**

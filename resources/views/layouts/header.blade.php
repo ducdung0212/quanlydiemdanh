@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en-US" lang="en-US">
+
 <head>
     <title>Điểm danh sinh viên STU</title>
     <meta charset="utf-8">
@@ -10,7 +11,6 @@
     <link rel="stylesheet" type="text/css" href="{{ asset('css/animation.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/bootstrap.css') }}">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/bootstrap-select.min.css') }}">
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ asset('css/style.css') }}">
     <link rel="stylesheet" href="{{ asset('font/fonts.css') }}">
     <link rel="stylesheet" href="{{ asset('icon/style.css') }}">
@@ -28,14 +28,16 @@
         <div class="header-grid" style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
             <div class="popup-wrap user type-header">
                 <div class="dropdown">
-                    <a class="dropdown-toggle d-flex align-items-center" href="#" role="button" id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
+                    <a class="dropdown-toggle d-flex align-items-center" href="#" role="button"
+                        id="dropdownMenuLink" data-bs-toggle="dropdown" aria-expanded="false">
                         <span class="header-user wg-user d-flex align-items-center">
                             <span class="image me-2">
-                                <img src="{{ asset('images/avatar/user-1.png') }}" alt="" style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
+                                <img src="{{ asset('images/avatar/user-1.png') }}" alt=""
+                                    style="width:40px;height:40px;border-radius:50%;object-fit:cover;">
                             </span>
                             <span class="flex flex-column text-start">
-                                <span class="body-title mb-0">{{ Auth::user()->name }}</span>
-                                <span class="text-tiny">{{ Auth::user()->role }}</span>
+                                <span class="body-title mb-0">{{ Auth::user()->name }}</span> 
+                                <span class="text-tiny">{{ Auth::user()->role }}</span> 
                             </span>
                         </span>
                     </a>
@@ -53,8 +55,8 @@
                 </div>
             </div>
 
-     
-            
+
+
         </div>
     </div>
 </div>
@@ -62,10 +64,10 @@
 
 
 <script>
-    document.addEventListener('DOMContentLoaded', function () {
+    document.addEventListener('DOMContentLoaded', function() {
         const btn = document.getElementById('openProfileEdit');
         if (btn) {
-            btn.addEventListener('click', function (e) {
+            btn.addEventListener('click', function(e) {
                 e.preventDefault();
                 const modalEl = document.getElementById('profileEditModal');
                 if (modalEl) {
