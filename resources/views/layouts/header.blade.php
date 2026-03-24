@@ -25,7 +25,7 @@
         <div class="button-show-hide" style="cursor: pointer; padding: 10px; display: flex; align-items: center;">
             <i class="icon-menu-left" style="font-size: 24px;"></i>
         </div>
-        <div class="header-grid" style="display: flex; align-items: center; gap: 5px; margin-left: auto;">
+        <div class="header-grid" style="display: flex; align-items: center; gap: 5px; margin-left: auto; margin-right:3%;">
             <div class="popup-wrap user type-header">
                 <div class="dropdown">
                     <a class="dropdown-toggle d-flex align-items-center" href="#" role="button"

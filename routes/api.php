@@ -11,6 +11,8 @@ use App\Http\Controllers\LecturerController;
 use App\Http\Controllers\SubjectController;
 use App\Http\Controllers\FaceAttendanceController;
 use App\Http\Controllers\StudentFaceRegistrationController;
+use App\Http\Controllers\StudentPortalController;
+use App\Http\Controllers\FaceRegistrationWindowController;
 
 /*
 |--------------------------------------------------------------------------
@@ -88,4 +90,19 @@ Route::middleware(['web', 'auth'])->group(function () {
     // Presigned URLs for bulk face registration
     Route::post('students/generate-upload-urls', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
     Route::post('/students/generate-upload-urls', [StudentFaceRegistrationController::class, 'generateUploadUrls']);
+
+    Route::middleware('role:student')->prefix('student')->group(function () {
+        Route::get('exam-schedules', [StudentPortalController::class, 'myExamSchedules']);
+        Route::get('attendance-results', [StudentPortalController::class, 'myAttendanceResults']);
+
+        Route::get('face-registration/window', [StudentPortalController::class, 'currentFaceRegistrationWindow']);
+        Route::post('face-registration/generate-upload-url', [StudentPortalController::class, 'generateSelfUploadUrl']);
+        Route::post('face-registration/confirm-upload', [StudentPortalController::class, 'confirmSelfUpload']);
+    });
+
+    Route::middleware('role:admin')->prefix('admin')->group(function () {
+        Route::get('face-registration-window/current', [FaceRegistrationWindowController::class, 'current']);
+        Route::post('face-registration-window', [FaceRegistrationWindowController::class, 'store']);
+        Route::post('face-registration-window/close-current', [FaceRegistrationWindowController::class, 'closeCurrent']);
+    });
 });

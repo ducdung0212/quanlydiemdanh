@@ -1,13 +1,13 @@
 <div class="section-menu-left">
     <div class="box-logo">
         <!-- Completely new logo with different ID -->
-        <a href="{{ route('dashboard') }}" id="stu-logo-main" style="display: block !important;">
+        <a href="{{ route('home') }}" id="stu-logo-main" style="display: block !important;">
             <img src="{{ asset('images/logo/STU_logo.webp') }}" alt="STU" id="main-logo-img"
                 style="display: block !important; visibility: visible !important; opacity: 1 !important; height: 100px !important; width: auto !important; max-width: 330px !important; object-fit: contain !important;">
         </a>
 
         <!-- Keep old logo hidden -->
-        <a href="{{ route('dashboard') }}" id="site-logo-inner" style="display: none !important;">
+        <a href="{{ route('home') }}" id="site-logo-inner" style="display: none !important;">
             <img id="logo_header" alt="" src="{{ asset('images/logo/STU_logo.webp') }}"
                 data-light="{{ asset('images/logo/STU_logo.webp') }}"
                 data-dark="{{ asset('images/logo/STU_logo.webp') }}">
@@ -112,7 +112,7 @@
                     </li>
                 </ul>
             </div>
-        @else
+        @elseif (auth()->check() && auth()->user()->role === 'lecturer')
             <!-- LECTURER MENU -->
             <div class="center-item">
                 <div class="center-heading">Quản lý thi cử</div>
@@ -133,6 +133,40 @@
                                     class="svg-icon">
                             </div>
                             <div class="text">Điểm danh</div>
+                        </a>
+                    </li>
+                </ul>
+            </div>
+        @else
+            <!-- STUDENT MENU -->
+            <div class="center-item">
+                <div class="center-heading">Sinh viên</div>
+                <ul class="menu-list">
+                    <li class="menu-item">
+                        <a href="{{ route('student.exam-schedules') }}" class="menu-item-button">
+                            <div class="icon">
+                                <img src="{{ asset('images/icon/exam_schedule.svg') }}" alt="Lịch thi"
+                                    class="svg-icon">
+                            </div>
+                            <div class="text">Lịch thi của tôi</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{{ route('student.attendance-results') }}" class="menu-item-button">
+                            <div class="icon">
+                                <img src="{{ asset('images/icon/attendance.svg') }}" alt="Kết quả điểm danh"
+                                    class="svg-icon">
+                            </div>
+                            <div class="text">Kết quả điểm danh</div>
+                        </a>
+                    </li>
+                    <li class="menu-item">
+                        <a href="{{ route('student.face-registration') }}" class="menu-item-button">
+                            <div class="icon">
+                                <img src="{{ asset('images/icon/registration.svg') }}" alt="Đăng ký ảnh"
+                                    class="svg-icon">
+                            </div>
+                            <div class="text">Đổi ảnh cá nhân</div>
                         </a>
                     </li>
                 </ul>

@@ -11,12 +11,14 @@
                     <input type="hidden" id="editUserId" value="{{ $user->id }}">
                     <div class="mb-4">
                         <label for="editName" class="form-label">Tên <span class="text-danger">*</span></label>
-                        <input type="text" class="form-control" id="editName" name="name" required value="{{ $user->name }}">
+                        <input type="text" class="form-control" id="editName" name="name" required
+                            value="{{ $user->name }}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
                         <label for="editEmail" class="form-label">Email <span class="text-danger">*</span></label>
-                        <input type="email" class="form-control" id="editEmail" name="email" required value="{{ $user->email }}">
+                        <input type="email" class="form-control" id="editEmail" name="email" required
+                            value="{{ $user->email }}">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
@@ -26,7 +28,8 @@
                     </div>
                     <div class="mb-4">
                         <label for="editPasswordConfirmation" class="form-label">Xác nhận mật khẩu mới</label>
-                        <input type="password" class="form-control" id="editPasswordConfirmation" name="password_confirmation">
+                        <input type="password" class="form-control" id="editPasswordConfirmation"
+                            name="password_confirmation">
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
@@ -35,7 +38,15 @@
                             <option value="">Chọn role</option>
                             <option value="admin" {{ $user->role == 'admin' ? 'selected' : '' }}>Admin</option>
                             <option value="lecturer" {{ $user->role == 'lecturer' ? 'selected' : '' }}>Lecturer</option>
+                            <option value="student" {{ $user->role == 'student' ? 'selected' : '' }}>Student</option>
                         </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-4 {{ $user->role == 'student' ? '' : 'd-none' }}" id="editStudentCodeField">
+                        <label for="editStudentCode" class="form-label">Mã sinh viên <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="editStudentCode" name="student_code"
+                            value="{{ $user->student_code }}" placeholder="VD: DH52025001">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>
@@ -50,4 +61,3 @@
         </div>
     </div>
 </div>
-

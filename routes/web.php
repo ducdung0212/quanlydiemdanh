@@ -25,6 +25,20 @@ Route::get('/', function () {
 */
 Route::middleware(['auth', 'verified'])->group(function () {
 
+    Route::get('/home', function () {
+        $role = request()->user()?->role;
+
+        if ($role === 'admin') {
+            return redirect()->route('dashboard');
+        }
+
+        if ($role === 'student') {
+            return redirect()->route('student.exam-schedules');
+        }
+
+        return redirect()->route('attendance');
+    })->name('home');
+
     // Routes accessible to all authenticated users (including lecturers)
     // ==================== PROFILE ====================
     Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
@@ -34,7 +48,22 @@ Route::middleware(['auth', 'verified'])->group(function () {
     //attendance - visible/usable by lecturers
     Route::get('/attendance', function () {
         return view('lecturer.attendance.index');
-    })->name('attendance');
+    })->middleware('role:lecturer')->name('attendance');
+
+    // Student-only pages
+    Route::middleware('role:student')->group(function () {
+        Route::get('/student/exam-schedules', function () {
+            return view('student.exam-schedules.index');
+        })->name('student.exam-schedules');
+
+        Route::get('/student/attendance-results', function () {
+            return view('student.attendance-results.index');
+        })->name('student.attendance-results');
+
+        Route::get('/student/face-registration', function () {
+            return view('student.face-registration.index');
+        })->name('student.face-registration');
+    });
 
     // Lecturer-only pages
     Route::middleware('role:lecturer')->group(function () {
@@ -65,6 +94,10 @@ Route::middleware(['auth', 'verified'])->group(function () {
             }
             return view('admin.users.edit', ['user' => $user]);
         });
+
+        // USERS IMPORT
+        Route::post('/users/import/preview', [\App\Http\Controllers\UserImportController::class, 'previewImport'])->name('admin.users.import.preview');
+        Route::post('/users/import', [\App\Http\Controllers\UserImportController::class, 'import'])->name('admin.users.import');
 
         // STUDENTS
         Route::get('/student', function () {

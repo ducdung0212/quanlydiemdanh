@@ -29,7 +29,14 @@ class UserRequest extends FormRequest
                 'name' => ['required', 'min:4'],
                 'email' => ['required', 'email', Rule::unique('users', 'email')],
                 'password' => ['required', 'min:6'],
-                'role' => ['required', Rule::in(['admin', 'lecturer'])],
+                'role' => ['required', Rule::in(['admin', 'lecturer', 'student'])],
+                'student_code' => [
+                    Rule::requiredIf($this->input('role') === 'student'),
+                    'nullable',
+                    'string',
+                    Rule::exists('students', 'student_code'),
+                    Rule::unique('users', 'student_code'),
+                ],
             ];
         }
 
@@ -38,25 +45,47 @@ class UserRequest extends FormRequest
                 'name' => ['sometimes', 'required', 'min:4'],
                 'email' => ['sometimes', 'required', 'email', Rule::unique('users', 'email')->ignore($userId)],
                 'password' => ['sometimes', 'nullable', 'min:6'],
-                'role' => ['sometimes', 'required', Rule::in(['admin', 'lecturer'])],
+                'role' => ['sometimes', 'required', Rule::in(['admin', 'lecturer', 'student'])],
+                'student_code' => [
+                    Rule::requiredIf(function () {
+                        $role = $this->input('role');
+                        if ($role === 'student') {
+                            return true;
+                        }
+
+                        if ($role === null) {
+                            $routeParam = $this->route('user') ?? $this->route('id');
+                            $user = $routeParam ? \App\Models\User::find($routeParam) : null;
+                            return $user && $user->role === 'student';
+                        }
+
+                        return false;
+                    }),
+                    'nullable',
+                    'string',
+                    Rule::exists('students', 'student_code'),
+                    Rule::unique('users', 'student_code')->ignore($userId),
+                ],
             ];
         }
 
         return [];
     }
-    public function messages(){
-        return[
+    public function messages()
+    {
+        return [
             'required' => ':attribute bắt buộc phải nhập',
             'min' => ':attribute phải có độ dài ít nhất :min ký tự',
             'email' => ':attribute phải đúng định dạng email',
             'unique' => ':attribute đã tồn tại trong hệ thống',
         ];
     }
-    public function attributes(){
-        return[
-            'name'=>'Tên người dùng',
-            'email'=>'Email',
-            'password'=>'Mật khẩu',
+    public function attributes()
+    {
+        return [
+            'name' => 'Tên người dùng',
+            'email' => 'Email',
+            'password' => 'Mật khẩu',
             'role' => 'Chức vụ',
         ];
     }

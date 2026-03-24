@@ -50,7 +50,13 @@ class UserController extends Controller
         $validated = $request->validated();
 
         $user = new User;
-        $user->fill(collect($validated)->only(['name', 'email', 'role'])->toArray());
+        $payload = collect($validated)->only(['name', 'email', 'role', 'student_code'])->toArray();
+
+        if (($payload['role'] ?? null) !== 'student') {
+            $payload['student_code'] = null;
+        }
+
+        $user->fill($payload);
         $user->password = Hash::make($validated['password']);
         $user->save();
         return response()->json([
@@ -110,6 +116,13 @@ class UserController extends Controller
         }
         if (array_key_exists('role', $validated)) {
             $user->role = $validated['role'];
+
+            if ($validated['role'] !== 'student') {
+                $user->student_code = null;
+            }
+        }
+        if (array_key_exists('student_code', $validated)) {
+            $user->student_code = $validated['student_code'];
         }
         if (array_key_exists('password', $validated) && $validated['password']) {
             $user->password = Hash::make($validated['password']);

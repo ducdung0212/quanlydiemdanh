@@ -1,5 +1,6 @@
 <!-- Modal Thêm tài khoản -->
-<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true" data-bs-backdrop="false">
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true"
+    data-bs-backdrop="false">
     <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
@@ -24,8 +25,10 @@
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
-                        <label for="password_confirmation" class="form-label">Xác nhận mật khẩu <span class="text-danger">*</span></label>
-                        <input type="password" class="form-control" id="password_confirmation" name="password_confirmation" required>
+                        <label for="password_confirmation" class="form-label">Xác nhận mật khẩu <span
+                                class="text-danger">*</span></label>
+                        <input type="password" class="form-control" id="password_confirmation"
+                            name="password_confirmation" required>
                         <div class="invalid-feedback"></div>
                     </div>
                     <div class="mb-4">
@@ -34,7 +37,15 @@
                             <option value="">Chọn role</option>
                             <option value="admin">Admin</option>
                             <option value="lecturer" selected>Lecturer</option>
+                            <option value="student">Student</option>
                         </select>
+                        <div class="invalid-feedback"></div>
+                    </div>
+                    <div class="mb-4 d-none" id="studentCodeField">
+                        <label for="student_code" class="form-label">Mã sinh viên <span
+                                class="text-danger">*</span></label>
+                        <input type="text" class="form-control" id="student_code" name="student_code"
+                            placeholder="VD: DH52025001">
                         <div class="invalid-feedback"></div>
                     </div>
                 </div>

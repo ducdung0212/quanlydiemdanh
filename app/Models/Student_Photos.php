@@ -25,6 +25,10 @@ class Student_Photos extends Model
     protected $fillable = [
         'student_code',
         'image_url',
+        'uploaded_by_user_id',
+        'approved_by_user_id',
+        'approved_at',
+        'is_active',
     ];
 
     /**
@@ -33,6 +37,8 @@ class Student_Photos extends Model
      * @var array<string, string>
      */
     protected $casts = [
+        'approved_at' => 'datetime',
+        'is_active' => 'boolean',
         'created_at' => 'datetime',
         'updated_at' => 'datetime',
     ];
@@ -62,7 +68,7 @@ class Student_Photos extends Model
         if (str_starts_with($this->image_url, 'http')) {
             return $this->image_url;
         }
-        
+
         // Nếu là relative path, thêm base URL
         return url($this->image_url);
     }
@@ -76,7 +82,7 @@ class Student_Photos extends Model
             // URL từ S3 hoặc external storage
             return true; // Giả định URL hợp lệ
         }
-        
+
         // Local file
         return file_exists(public_path($this->image_url));
     }

@@ -5,6 +5,37 @@
 
         <div class="d-flex justify-content-between align-items-center mb-3">
             <h3 class="mb-0">Đăng ký khuôn mặt hàng loạt</h3>
+            <div class="d-flex gap-2">
+                <button type="button" class="btn btn-outline-primary fs-3" id="btnOpenWindowModal" data-bs-toggle="modal"
+                    data-bs-target="#faceWindowModal">
+                    Bật khung giờ đổi ảnh
+                </button>
+                <button type="button" class="btn btn-outline-danger fs-3" id="btnCloseWindow">
+                    Tắt khung giờ hiện tại
+                </button>
+            </div>
+        </div>
+
+        <div class="wg-box p-3 mb-3 border rounded shadow-sm bg-white">
+            <div class="d-flex justify-content-between align-items-center flex-wrap gap-3">
+                <div>
+                    <div class="text-muted small text-uppercase fw-semibold mb-1" style="letter-spacing: 0.5px;">
+                        Khung giờ đổi ảnh cho sinh viên
+                    </div>
+                    <div id="windowSummary" class="fw-bold fs-5 text-dark">
+                        Đang tải trạng thái...
+                    </div>
+                </div>
+                <span id="windowBadge" class="badge bg-secondary rounded-pill px-3 py-2">
+                    Đang kiểm tra
+                </span>
+            </div>
+
+            <hr class="text-muted opacity-25 my-2">
+
+            <div id="windowDetail" class="mt-2 text-muted small">
+                Vui lòng đợi trong giây lát...
+            </div>
         </div>
 
         <!-- Tabs Navigation -->
@@ -91,8 +122,8 @@
                                 <i class="icon-folder-plus me-2"></i>Chọn folder
                             </button>
                         </div>
-                        <input type="file" id="folder_input" class="form-control" accept="image/jpeg,image/png" multiple
-                            webkitdirectory directory
+                        <input type="file" id="folder_input" class="form-control" accept="image/jpeg,image/png"
+                            multiple webkitdirectory directory
                             style="opacity:0;position:absolute;inset:0;width:100%;height:100%;cursor:pointer;display:none;"
                             aria-label="Chọn folder">
                     </div>
@@ -124,6 +155,49 @@
         </div>
 
         <meta name="csrf-token" content="{{ csrf_token() }}">
+
+        <div class="modal fade" id="faceWindowModal" tabindex="-1" aria-labelledby="faceWindowModalLabel"
+            aria-hidden="true">
+            <div class="modal-dialog">
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h5 class="modal-title" id="faceWindowModalLabel">Bật khung giờ đổi ảnh cá nhân</h5>
+                        <button type="button" class="btn-close fs-3" data-bs-dismiss="modal" aria-label="Close"></button>
+                    </div>
+                    <form id="faceWindowForm">
+                        <div class="modal-body">
+                            <div class="mb-3">
+                                <label for="windowName" class="form-label fs-3">Tên đợt (tùy chọn)</label>
+                                <input type="text" class="form-control fs-3" id="windowName" name="name"
+                                    placeholder="Ví dụ: Đợt cập nhật ảnh tháng 03">
+                            </div>
+                            <div class="mb-3">
+                                <label for="windowStartsAt" class="form-label fs-3">Bắt đầu <span
+                                        class="text-danger fs-3">*</span></label>
+                                <input type="datetime-local" class="form-control fs-3" id="windowStartsAt" name="starts_at"
+                                    required>
+                            </div>
+                            <div class="mb-3">
+                                <label for="windowEndsAt" class="form-label fs-3">Kết thúc <span
+                                        class="text-danger fs-3">*</span></label>
+                                <input type="datetime-local" class="form-control fs-3" id="windowEndsAt" name="ends_at"
+                                    required>
+                            </div>
+                            <div class="mb-0">
+                                <label for="windowNote" class="form-label fs-3">Ghi chú</label>
+                                <textarea class="form-control fs-3" id="windowNote" name="note" rows="3"
+                                    placeholder="Nội dung thông báo cho sinh viên"></textarea>
+                            </div>
+                            <div id="windowFormStatus" class="mt-2"></div>
+                        </div>
+                        <div class="modal-footer">
+                            <button type="button" class="btn btn-secondary fs-3" data-bs-dismiss="modal">Hủy</button>
+                            <button type="submit" class="btn btn-primary fs-3" id="btnSubmitWindow">Lưu và bật</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
 
     </div>
 
@@ -174,6 +248,140 @@
             const fileListEl = document.getElementById('fileList');
             const statusDiv = document.getElementById('register_status');
             const csrfToken = document.querySelector('meta[name="csrf-token"]').getAttribute('content');
+            const windowSummaryEl = document.getElementById('windowSummary');
+            const windowBadgeEl = document.getElementById('windowBadge');
+            const windowDetailEl = document.getElementById('windowDetail');
+            const btnCloseWindow = document.getElementById('btnCloseWindow');
+            const windowForm = document.getElementById('faceWindowForm');
+            const windowFormStatus = document.getElementById('windowFormStatus');
+            const btnSubmitWindow = document.getElementById('btnSubmitWindow');
+            const faceWindowModalEl = document.getElementById('faceWindowModal');
+            const faceWindowModal = faceWindowModalEl ? new bootstrap.Modal(faceWindowModalEl) : null;
+
+            function formatDateTimeDisplay(dateTimeValue) {
+                if (!dateTimeValue) return '';
+                const d = new Date(dateTimeValue);
+                if (isNaN(d.getTime())) return dateTimeValue;
+                return d.toLocaleString('vi-VN');
+            }
+
+            function setWindowFormStatus(message, type = 'info') {
+                const cls = type === 'error' ? 'text-danger' : type === 'success' ? 'text-success' : 'text-info';
+                windowFormStatus.innerHTML = `<div class="${cls}">${message}</div>`;
+            }
+
+            async function loadCurrentWindowStatus() {
+                try {
+                    const response = await fetch('/api/admin/face-registration-window/current', {
+                        headers: {
+                            'Accept': 'application/json'
+                        }
+                    });
+
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Không tải được trạng thái khung giờ đổi ảnh.');
+                    }
+
+                    if (!payload.is_open || !payload.data) {
+                        windowBadgeEl.className = 'badge bg-danger';
+                        windowBadgeEl.textContent = 'Đang tắt';
+                        windowSummaryEl.textContent = 'Hiện chưa có khung giờ đổi ảnh đang hoạt động.';
+                        windowDetailEl.textContent = 'Sinh viên chưa thể tự đổi ảnh cá nhân.';
+                        return;
+                    }
+
+                    const windowData = payload.data;
+                    windowBadgeEl.className = 'badge bg-success';
+                    windowBadgeEl.textContent = 'Đang bật';
+                    windowSummaryEl.textContent = windowData.name || 'Khung giờ đổi ảnh đang hoạt động';
+
+                    const startsAt = formatDateTimeDisplay(windowData.starts_at);
+                    const endsAt = formatDateTimeDisplay(windowData.ends_at);
+                    const note = windowData.note ? ` | Ghi chú: ${windowData.note}` : '';
+                    windowDetailEl.textContent = `Từ ${startsAt} đến ${endsAt}${note}`;
+                } catch (error) {
+                    windowBadgeEl.className = 'badge bg-secondary';
+                    windowBadgeEl.textContent = 'Lỗi';
+                    windowSummaryEl.textContent = 'Không thể kiểm tra trạng thái khung giờ đổi ảnh.';
+                    windowDetailEl.textContent = error.message || 'Vui lòng thử lại sau.';
+                }
+            }
+
+            windowForm.addEventListener('submit', async function(e) {
+                e.preventDefault();
+                setWindowFormStatus('Đang lưu khung giờ...', 'info');
+                btnSubmitWindow.disabled = true;
+
+                const formData = new FormData(windowForm);
+                const body = {
+                    name: formData.get('name') || null,
+                    starts_at: formData.get('starts_at'),
+                    ends_at: formData.get('ends_at'),
+                    note: formData.get('note') || null,
+                };
+
+                try {
+                    const response = await fetch('/api/admin/face-registration-window', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                        body: JSON.stringify(body),
+                    });
+
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Không thể bật khung giờ đổi ảnh.');
+                    }
+
+                    setWindowFormStatus(payload.message || 'Đã bật khung giờ đổi ảnh.', 'success');
+                    await loadCurrentWindowStatus();
+
+                    setTimeout(() => {
+                        faceWindowModal?.hide();
+                        windowForm.reset();
+                        windowFormStatus.innerHTML = '';
+                    }, 600);
+                } catch (error) {
+                    setWindowFormStatus(error.message || 'Có lỗi xảy ra khi bật khung giờ.', 'error');
+                } finally {
+                    btnSubmitWindow.disabled = false;
+                }
+            });
+
+            btnCloseWindow.addEventListener('click', async function() {
+                if (!confirm('Bạn có chắc muốn tắt khung giờ đổi ảnh hiện tại?')) {
+                    return;
+                }
+
+                btnCloseWindow.disabled = true;
+                try {
+                    const response = await fetch('/api/admin/face-registration-window/close-current', {
+                        method: 'POST',
+                        headers: {
+                            'Accept': 'application/json',
+                            'X-CSRF-TOKEN': csrfToken,
+                        },
+                    });
+
+                    const payload = await response.json();
+                    if (!response.ok || !payload.success) {
+                        throw new Error(payload.message || 'Không thể tắt khung giờ hiện tại.');
+                    }
+
+                    await loadCurrentWindowStatus();
+                    showStatus(payload.message || 'Đã tắt khung giờ đổi ảnh.', 'success');
+                } catch (error) {
+                    showStatus(error.message || 'Có lỗi khi tắt khung giờ.', 'error');
+                } finally {
+                    btnCloseWindow.disabled = false;
+                }
+            });
+
+            loadCurrentWindowStatus();
 
             // Keep an internal list of selected files (File objects)
             let selectedFiles = [];

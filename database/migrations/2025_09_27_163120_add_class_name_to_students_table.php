@@ -11,8 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (!Schema::hasTable('students') || Schema::hasColumn('students', 'class_name')) {
+            return;
+        }
+
         Schema::table('students', function (Blueprint $table) {
-             $table->string('class_name')->nullable()->after('id');
+            // In this project, students may use student_code as PK and not have an id column.
+            if (Schema::hasColumn('students', 'student_code')) {
+                $table->string('class_name')->nullable()->after('student_code');
+            } else {
+                $table->string('class_name')->nullable();
+            }
         });
     }
 
@@ -21,11 +30,12 @@ return new class extends Migration
      */
     public function down(): void
     {
+        if (!Schema::hasTable('students') || !Schema::hasColumn('students', 'class_name')) {
+            return;
+        }
+
         Schema::table('students', function (Blueprint $table) {
-            // only drop if the column exists to avoid SQL errors on rollback
-            //if (Schema::hasColumn('students', 'class_name')) {
-                $table->dropColumn('class_name');
-            //}
+            $table->dropColumn('class_name');
         });
     }
 };

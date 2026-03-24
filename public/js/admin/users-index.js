@@ -19,7 +19,7 @@ document.addEventListener('DOMContentLoaded', () => {
          * @override
          */
         // Thêm vào trong class UserManager
-      
+
         renderTable() {
             const tb = this.dom.tableBody;
             const pd = this.state.paginationData;
@@ -116,6 +116,26 @@ document.addEventListener('DOMContentLoaded', () => {
             const form = document.getElementById('addUserForm');
             if (!form || form.dataset.initialized === 'true') return;
 
+            const roleSelect = form.querySelector('#role');
+            const studentCodeField = form.querySelector('#studentCodeField');
+            const studentCodeInput = form.querySelector('#student_code');
+
+            const syncAddStudentCodeField = () => {
+                const isStudent = roleSelect && roleSelect.value === 'student';
+                if (studentCodeField) {
+                    studentCodeField.classList.toggle('d-none', !isStudent);
+                }
+                if (studentCodeInput) {
+                    studentCodeInput.required = !!isStudent;
+                    if (!isStudent) {
+                        studentCodeInput.value = '';
+                    }
+                }
+            };
+
+            roleSelect?.addEventListener('change', syncAddStudentCodeField);
+            syncAddStudentCodeField();
+
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
                 this.handleFormSubmit(form, async () => {
@@ -134,6 +154,7 @@ document.addEventListener('DOMContentLoaded', () => {
             modalElement.addEventListener('hidden.bs.modal', () => {
                 form.reset();
                 clearValidationErrors(form);
+                syncAddStudentCodeField();
             });
 
             form.dataset.initialized = 'true';
@@ -142,6 +163,26 @@ document.addEventListener('DOMContentLoaded', () => {
         initializeEditForm(modalInstance, id) {
             const form = document.getElementById('editUserForm');
             if (!form || form.dataset.initialized === 'true') return;
+
+            const roleSelect = form.querySelector('#editRole');
+            const studentCodeField = form.querySelector('#editStudentCodeField');
+            const studentCodeInput = form.querySelector('#editStudentCode');
+
+            const syncEditStudentCodeField = () => {
+                const isStudent = roleSelect && roleSelect.value === 'student';
+                if (studentCodeField) {
+                    studentCodeField.classList.toggle('d-none', !isStudent);
+                }
+                if (studentCodeInput) {
+                    studentCodeInput.required = !!isStudent;
+                    if (!isStudent) {
+                        studentCodeInput.value = '';
+                    }
+                }
+            };
+
+            roleSelect?.addEventListener('change', syncEditStudentCodeField);
+            syncEditStudentCodeField();
 
             form.addEventListener('submit', (e) => {
                 e.preventDefault();
@@ -162,12 +203,13 @@ document.addEventListener('DOMContentLoaded', () => {
             const modalElement = modalInstance._element || modalInstance;
             modalElement.addEventListener('hidden.bs.modal', () => {
                 clearValidationErrors(form);
+                syncEditStudentCodeField();
             });
 
             form.dataset.initialized = 'true';
         }
 
-        
+
     }
 
 

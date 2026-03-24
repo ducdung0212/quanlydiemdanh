@@ -8,11 +8,15 @@ return new class extends Migration
 {
     public function up(): void
     {
+        if (Schema::hasTable('attendance_records')) {
+            return;
+        }
+
         Schema::create('attendance_records', function (Blueprint $table) {
             $table->bigIncrements('id');
             $table->unsignedBigInteger('exam_schedule_id');
             $table->string('student_code', 20);
-            $table->enum('rekognition_result', ['match','not_match','unknown'])->nullable();
+            $table->enum('rekognition_result', ['match', 'not_match', 'unknown'])->nullable();
             $table->decimal('confidence', 5, 2)->nullable();
             $table->timestamp('attendance_time')->nullable()->default(DB::raw('CURRENT_TIMESTAMP'));
             $table->timestamps();

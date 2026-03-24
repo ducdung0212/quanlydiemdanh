@@ -30,8 +30,7 @@ class RoleMiddleware
                 return response()->json(['message' => 'Forbidden'], 403);
             }
 
-            // Otherwise redirect to attendance page (lecturers' only area) with a flash message
-            return redirect()->to('/attendance')->with('error', 'Bạn không có quyền truy cập trang này.');
+            return redirect()->route('home')->with('error', 'Bạn không có quyền truy cập trang này.');
         }
 
         return $next($request);

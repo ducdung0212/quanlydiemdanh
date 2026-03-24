@@ -101,7 +101,7 @@ class Student extends Model
     public function faculty()
     {
         return $this->hasOneThrough(
-            Faculty::class,
+            Faculties::class,
             Classes::class,
             'class_code', // Foreign key on classes table
             'code',       // Foreign key on faculties table
