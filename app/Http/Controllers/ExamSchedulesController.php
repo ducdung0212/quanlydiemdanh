@@ -885,46 +885,7 @@ class ExamSchedulesController extends Controller
             ], 400);
         }
 
-        $now = \Carbon\Carbon::now();
-
-        // Tìm ca thi của giảng viên
-        $examSchedules = ExamSchedule::query()
-            ->with(['subject', 'supervisors.lecturer'])
-            ->whereHas('supervisors', function ($query) use ($lecturer) {
-                $query->where('lecturer_code', $lecturer->lecturer_code);
-            })
-            ->whereDate('exam_date', $now->toDateString())
-            ->get();
-
-        $examSchedule = $examSchedules->filter(function ($exam) use ($now) {
-            try {
-                $examDate = \Carbon\Carbon::parse($exam->exam_date)->format('Y-m-d');
-                $examTime = is_string($exam->exam_time) ? $exam->exam_time : $exam->exam_time->format('H:i:s');
-                $examDateTimeString = $examDate . ' ' . $examTime;
-
-                $examDateTime = \Carbon\Carbon::parse($examDateTimeString);
-                $examEndTime = $examDateTime->copy()->addMinutes($exam->duration ?? 90);
-
-                // Ca thi đang diễn ra
-                if ($now->between($examDateTime, $examEndTime)) {
-                    return true;
-                }
-
-                // Ca thi sắp diễn ra trong 30 phút
-                $thirtyMinutesLater = $now->copy()->addMinutes(30);
-                if ($examDateTime->between($now, $thirtyMinutesLater)) {
-                    return true;
-                }
-
-                return false;
-            } catch (\Exception $e) {
-                return false;
-            }
-        })
-            ->sortBy(function ($exam) {
-                return $exam->exam_date . ' ' . $exam->exam_time;
-            })
-            ->first();
+        $examSchedule = $this->resolveCurrentExamForLecturer($lecturer, true);
 
         if (!$examSchedule) {
             return response()->json([
@@ -939,6 +900,85 @@ class ExamSchedulesController extends Controller
             'data' => $examSchedule,
             'message' => 'Ca thi hiện tại',
         ]);
+    }
+
+    /**
+     * Lấy danh sách sinh viên và kết quả điểm danh của ca thi đang diễn ra.
+     */
+    public function currentAttendanceResults()
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ giảng viên mới có thể xem kết quả điểm danh ca thi hiện tại',
+            ], 403);
+        }
+
+        $lecturer = $user->lecturer;
+
+        if (!$lecturer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản chưa được liên kết với giảng viên',
+            ], 400);
+        }
+
+        $examSchedule = $this->resolveCurrentExamForLecturer($lecturer, false);
+
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không có ca thi nào đang diễn ra',
+                'data' => null,
+            ], 404);
+        }
+
+        return $this->show((string) $examSchedule->id);
+    }
+
+    /**
+     * Tìm ca thi hiện tại của giảng viên.
+     * includeUpcoming=true sẽ bao gồm ca sắp diễn ra trong 30 phút.
+     */
+    private function resolveCurrentExamForLecturer($lecturer, bool $includeUpcoming = true): ?ExamSchedule
+    {
+        $now = Carbon::now();
+
+        $examSchedules = ExamSchedule::query()
+            ->with(['subject', 'supervisors.lecturer'])
+            ->whereHas('supervisors', function ($query) use ($lecturer) {
+                $query->where('lecturer_code', $lecturer->lecturer_code);
+            })
+            ->whereDate('exam_date', $now->toDateString())
+            ->get();
+
+        return $examSchedules->filter(function ($exam) use ($now, $includeUpcoming) {
+            try {
+                $examDate = Carbon::parse($exam->exam_date)->format('Y-m-d');
+                $examTime = is_string($exam->exam_time) ? $exam->exam_time : $exam->exam_time->format('H:i:s');
+                $examDateTime = Carbon::parse($examDate . ' ' . $examTime);
+                $examEndTime = $examDateTime->copy()->addMinutes($exam->duration ?? 90);
+
+                if ($now->between($examDateTime, $examEndTime)) {
+                    return true;
+                }
+
+                if ($includeUpcoming) {
+                    $thirtyMinutesLater = $now->copy()->addMinutes(30);
+                    return $examDateTime->between($now, $thirtyMinutesLater);
+                }
+
+                return false;
+            } catch (\Exception $e) {
+                return false;
+            }
+        })
+            ->sortBy(function ($exam) {
+                return $exam->exam_date . ' ' . $exam->exam_time;
+            })
+            ->first();
     }
 
     /**

@@ -2,6 +2,7 @@
 
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
+use App\Http\Controllers\Api\AuthTokenController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\StudentController;
 use App\Http\Controllers\AttendanceRecordController;
@@ -24,6 +25,37 @@ use App\Http\Controllers\FaceRegistrationWindowController;
 | is assigned the "api" middleware group. Enjoy building your API!
 |
 */
+
+Route::prefix('v1')->group(function () {
+    Route::post('auth/login', [AuthTokenController::class, 'login'])->middleware('throttle:10,1');
+
+    Route::middleware('auth:sanctum')->group(function () {
+        Route::get('auth/me', [AuthTokenController::class, 'me']);
+        Route::post('auth/logout', [AuthTokenController::class, 'logout']);
+        Route::post('auth/logout-all', [AuthTokenController::class, 'logoutAll']);
+        Route::delete('auth/tokens/{tokenId}', [AuthTokenController::class, 'revokeToken']);
+
+        Route::middleware('role:student')->prefix('student')->group(function () {
+            Route::get('exam-schedules', [StudentPortalController::class, 'myExamSchedules']);
+            Route::get('attendance-results', [StudentPortalController::class, 'myAttendanceResults']);
+
+            Route::get('face-registration/window', [StudentPortalController::class, 'currentFaceRegistrationWindow']);
+            Route::post('face-registration/generate-upload-url', [StudentPortalController::class, 'generateSelfUploadUrl']);
+            Route::post('face-registration/confirm-upload', [StudentPortalController::class, 'confirmSelfUpload']);
+        });
+
+        Route::middleware('role:lecturer')->prefix('lecturer')->group(function () {
+            Route::get('exam-schedules', [ExamSchedulesController::class, 'mySchedule']);
+            Route::get('exam-schedules/today', [ExamSchedulesController::class, 'todayExams']);
+            Route::get('exam-schedules/current', [ExamSchedulesController::class, 'currentExam']);
+            Route::get('attendance/current', [ExamSchedulesController::class, 'currentAttendanceResults']);
+            Route::get('students/today-exam', [ExamSchedulesController::class, 'studentTodayExam']);
+            Route::post('attendance/face-recognition', [FaceAttendanceController::class, 'authenticateLecturer']);
+            Route::post('attendance/qr-scan', [FaceAttendanceController::class, 'authenticateLecturerQr']);
+            Route::patch('attendance-records/{id}', [AttendanceRecordController::class, 'update']);
+        });
+    });
+});
 
 
 // Protected routes - require authentication

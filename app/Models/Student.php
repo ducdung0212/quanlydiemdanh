@@ -135,8 +135,8 @@ class Student extends Model
     {
         return $query->where(function ($q) use ($search) {
             $q->where('student_code', 'like', "%{$search}%")
-              ->orWhere('full_name', 'like', "%{$search}%")
-              ->orWhere('email', 'like', "%{$search}%");
+                ->orWhere('full_name', 'like', "%{$search}%")
+                ->orWhere('email', 'like', "%{$search}%");
         });
     }
 
@@ -145,8 +145,8 @@ class Student extends Model
      */
     public function getFullInfoAttribute(): string
     {
-        return "{$this->student_code} - {$this->full_name}" . 
-               ($this->class ? " ({$this->class->class_name})" : "");
+        return "{$this->student_code} - {$this->full_name}" .
+            ($this->class ? " ({$this->class->class_name})" : "");
     }
 
     /**

@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\Auth;
 use App\Models\AttendanceRecord;
 use App\Models\ExamSchedule;
 use App\Models\Student;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
@@ -18,6 +19,56 @@ class FaceAttendanceController extends Controller
     public function __construct(FaceRecognitionService $faceRecognitionService)
     {
         $this->faceRecognitionService = $faceRecognitionService;
+    }
+
+    /**
+     * Lecturer API wrapper: enforce assignment + exam time window.
+     */
+    public function authenticateLecturer(Request $request)
+    {
+        $validated = $request->validate([
+            'exam_schedule_id' => 'required|exists:exam_schedules,id',
+        ]);
+
+        $examSchedule = ExamSchedule::find((int) $validated['exam_schedule_id']);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ca thi không tồn tại',
+            ], 404);
+        }
+
+        $guardError = $this->ensureLecturerCanAttendExam($examSchedule);
+        if ($guardError) {
+            return $guardError;
+        }
+
+        return $this->authenticate($request);
+    }
+
+    /**
+     * Lecturer API wrapper: enforce assignment + exam time window.
+     */
+    public function authenticateLecturerQr(Request $request)
+    {
+        $validated = $request->validate([
+            'exam_schedule_id' => 'required|exists:exam_schedules,id',
+        ]);
+
+        $examSchedule = ExamSchedule::find((int) $validated['exam_schedule_id']);
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ca thi không tồn tại',
+            ], 404);
+        }
+
+        $guardError = $this->ensureLecturerCanAttendExam($examSchedule);
+        if ($guardError) {
+            return $guardError;
+        }
+
+        return $this->authenticateQr($request);
     }
 
     /**
@@ -316,5 +367,71 @@ class FaceAttendanceController extends Controller
         $result = $this->faceRecognitionService->testConnection();
 
         return response()->json($result);
+    }
+
+    private function ensureLecturerCanAttendExam(ExamSchedule $examSchedule): ?JsonResponse
+    {
+        $user = Auth::user();
+
+        if (!$user || $user->role !== 'lecturer') {
+            return response()->json([
+                'success' => false,
+                'message' => 'Chỉ giảng viên mới được phép điểm danh qua API này.',
+            ], 403);
+        }
+
+        $lecturer = $user->lecturer;
+        if (!$lecturer) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Tài khoản chưa được liên kết với giảng viên. Vui lòng liên hệ quản trị viên.',
+            ], 400);
+        }
+
+        $hasAccess = $examSchedule->supervisors()
+            ->where('lecturer_code', $lecturer->lecturer_code)
+            ->exists();
+
+        if (!$hasAccess) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Bạn không được phân công coi thi ca này.',
+            ], 403);
+        }
+
+        try {
+            $examDate = Carbon::parse($examSchedule->exam_date)->format('Y-m-d');
+            $examTime = is_string($examSchedule->exam_time)
+                ? $examSchedule->exam_time
+                : $examSchedule->exam_time->format('H:i:s');
+
+            $examStartTime = Carbon::parse($examDate . ' ' . $examTime);
+            $examEndTime = $examStartTime->copy()->addMinutes((int) ($examSchedule->duration ?? 0));
+            $now = Carbon::now();
+
+            if (!$now->greaterThanOrEqualTo($examStartTime) || !$now->lessThanOrEqualTo($examEndTime)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hiện không nằm trong thời gian điểm danh của ca thi.',
+                    'data' => [
+                        'exam_start_time' => $examStartTime->toDateTimeString(),
+                        'exam_end_time' => $examEndTime->toDateTimeString(),
+                        'now' => $now->toDateTimeString(),
+                    ],
+                ], 422);
+            }
+        } catch (\Exception $e) {
+            Log::error('Failed to evaluate exam attendance window', [
+                'exam_schedule_id' => $examSchedule->id,
+                'error' => $e->getMessage(),
+            ]);
+
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xác định thời gian điểm danh của ca thi.',
+            ], 422);
+        }
+
+        return null;
     }
 }

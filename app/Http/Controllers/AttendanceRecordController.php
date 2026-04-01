@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Imports\AttendanceRecordImport;
 use App\Models\AttendanceRecord;
+use Carbon\Carbon;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -26,8 +27,16 @@ class AttendanceRecordController extends Controller
         $attendanceRecords = AttendanceRecord::with('student')->latest();
 
         if ($user && $user->role === 'lecturer') {
-            $attendanceRecords->whereHas('examSchedule.supervisors', function ($query) use ($user) {
-                $query->where('lecturer_code', $user->lecturer_code);
+            $lecturerCode = $this->resolveLecturerCode($user);
+            if (!$lecturerCode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài khoản chưa được liên kết với giảng viên. Vui lòng liên hệ quản trị viên.',
+                ], 400);
+            }
+
+            $attendanceRecords->whereHas('examSchedule.supervisors', function ($query) use ($lecturerCode) {
+                $query->where('lecturer_code', $lecturerCode);
             });
         }
 
@@ -270,8 +279,16 @@ class AttendanceRecordController extends Controller
             ], 404);
         }
         if ($user && $user->role === 'lecturer') {
+            $lecturerCode = $this->resolveLecturerCode($user);
+            if (!$lecturerCode) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Tài khoản chưa được liên kết với giảng viên. Vui lòng liên hệ quản trị viên.',
+                ], 400);
+            }
+
             $hasAccess = $attendanceRecord->examSchedule->supervisors()
-                ->where('lecturer_code', $user->lecturer_code)
+                ->where('lecturer_code', $lecturerCode)
                 ->exists();
 
             if (!$hasAccess) {
@@ -280,6 +297,11 @@ class AttendanceRecordController extends Controller
                     'message' => 'Bạn không có quyền sửa điểm danh ca thi này',
                 ], 403);
             }
+
+            $windowError = $this->ensureExamIsInAttendanceWindow($attendanceRecord);
+            if ($windowError) {
+                return $windowError;
+            }
         }
 
         $validated = $request->validate([
@@ -287,6 +309,7 @@ class AttendanceRecordController extends Controller
             'captured_image_url' => 'nullable|string',
             'rekognition_result' => 'nullable|string',
             'confidence' => 'nullable|numeric',
+            'attendance_method' => 'nullable|in:manual,face,qr_code',
         ]);
 
         $attendanceRecord->update($validated);
@@ -340,5 +363,59 @@ class AttendanceRecordController extends Controller
             'success' => true,
             'message' => 'Đã xóa ' . count($ids) . ' bản ghi thành công.',
         ]);
+    }
+
+    private function resolveLecturerCode($user): ?string
+    {
+        if (!empty($user->lecturer_code)) {
+            return (string) $user->lecturer_code;
+        }
+
+        if ($user->relationLoaded('lecturer') || method_exists($user, 'lecturer')) {
+            return optional($user->lecturer)->lecturer_code;
+        }
+
+        return null;
+    }
+
+    private function ensureExamIsInAttendanceWindow(AttendanceRecord $attendanceRecord): ?JsonResponse
+    {
+        $examSchedule = $attendanceRecord->examSchedule;
+        if (!$examSchedule) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không tìm thấy ca thi tương ứng với bản ghi điểm danh.',
+            ], 404);
+        }
+
+        try {
+            $examDate = Carbon::parse($examSchedule->exam_date)->format('Y-m-d');
+            $examTime = is_string($examSchedule->exam_time)
+                ? $examSchedule->exam_time
+                : $examSchedule->exam_time->format('H:i:s');
+
+            $examStartTime = Carbon::parse($examDate . ' ' . $examTime);
+            $examEndTime = $examStartTime->copy()->addMinutes((int) ($examSchedule->duration ?? 0));
+            $now = Carbon::now();
+
+            if (!$now->greaterThanOrEqualTo($examStartTime) || !$now->lessThanOrEqualTo($examEndTime)) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Hiện không nằm trong thời gian điểm danh của ca thi.',
+                    'data' => [
+                        'exam_start_time' => $examStartTime->toDateTimeString(),
+                        'exam_end_time' => $examEndTime->toDateTimeString(),
+                        'now' => $now->toDateTimeString(),
+                    ],
+                ], 422);
+            }
+        } catch (Throwable $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Không thể xác định thời gian điểm danh của ca thi: ' . $e->getMessage(),
+            ], 422);
+        }
+
+        return null;
     }
 }

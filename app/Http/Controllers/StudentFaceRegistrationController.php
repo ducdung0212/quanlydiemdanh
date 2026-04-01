@@ -10,9 +10,24 @@ use Illuminate\Support\Facades\Storage;
 use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Auth;
 
 class StudentFaceRegistrationController extends Controller
 {
+    protected S3Client $s3Client;
+
+    public function __construct()
+    {
+        $this->s3Client = new S3Client([
+            'region' => config('filesystems.disks.s3.region'),
+            'version' => 'latest',
+            'credentials' => [
+                'key' => config('filesystems.disks.s3.key'),
+                'secret' => config('filesystems.disks.s3.secret'),
+            ],
+        ]);
+    }
+
     /**
      * Tạo S3 Presigned URLs hàng loạt để đăng ký khuôn mặt.
      * Người dùng phải tự đổi tên tệp thành [student_code].jpg
@@ -31,17 +46,7 @@ class StudentFaceRegistrationController extends Controller
         $uploadUrls = []; // Mảng chứa kết quả trả về
 
         try {
-            // 2. Tạo S3 Client
-            $s3Client = new S3Client([
-                'region' => config('filesystems.disks.s3.region'),
-                'version' => 'latest',
-                'credentials' => [
-                    'key' => config('filesystems.disks.s3.key'),
-                    'secret' => config('filesystems.disks.s3.secret'),
-                ]
-            ]);
-            
-            // 3. Lặp qua mỗi tệp được yêu cầu
+            // 2. Lặp qua mỗi tệp được yêu cầu
             foreach ($validated['files'] as $file) {
                 $fileName = $file['file_name'];
                 $fileType = $file['file_type'];
@@ -64,18 +69,18 @@ class StudentFaceRegistrationController extends Controller
                 $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
                 $s3Key = "images_to_register/{$safeFileName}";
 
-                // 4. Tạo Presigned Request cho tệp này
-                $cmd = $s3Client->getCommand('PutObject', [
+                // 3. Tạo Presigned Request cho tệp này
+                $cmd = $this->s3Client->getCommand('PutObject', [
                     'Bucket' => $bucket,
                     'Key' => $s3Key,
                     'ContentType' => $fileType
                 ]);
 
-                // 5. Tạo URL (hợp lệ trong 15 phút)
-                $presignedRequest = $s3Client->createPresignedRequest($cmd, '+15 minutes');
+                // 4. Tạo URL (hợp lệ trong 15 phút)
+                $presignedRequest = $this->s3Client->createPresignedRequest($cmd, '+15 minutes');
                 $presignedUrl = (string) $presignedRequest->getUri();
 
-                // 6. Thêm vào mảng kết quả
+                // 5. Thêm vào mảng kết quả
                 $uploadUrls[] = [
                     'file_name' => $fileName,
                     'success' => true,
@@ -89,7 +94,6 @@ class StudentFaceRegistrationController extends Controller
                 'message' => 'Tạo URL tải lên thành công.',
                 'data' => $uploadUrls
             ]);
-
         } catch (AwsException $e) {
             return response()->json([
                 'success' => false,
@@ -118,7 +122,7 @@ class StudentFaceRegistrationController extends Controller
             foreach ($validated['uploads'] as $upload) {
                 $studentCode = strtoupper($upload['student_code']);
                 $fileName = $upload['file_name'];
-                
+
                 // Kiểm tra sinh viên có tồn tại không
                 $student = Student::where('student_code', $studentCode)->first();
                 if (!$student) {
@@ -134,13 +138,25 @@ class StudentFaceRegistrationController extends Controller
                 // Tạo S3 URL
                 $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
                 $s3Key = "images_to_register/{$safeFileName}";
+
+                if (!Storage::disk('s3')->exists($s3Key)) {
+                    $results[] = [
+                        'student_code' => $studentCode,
+                        'file_name' => $fileName,
+                        'success' => false,
+                        'message' => 'Ảnh chưa được upload lên S3'
+                    ];
+                    continue;
+                }
+
                 $s3Url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$s3Key}";
 
                 // Lưu vào database
                 try {
-                    $photo = Student_Photos::create([
+                    Student_Photos::create([
                         'student_code' => $studentCode,
                         'image_url' => $s3Url,
+                        'uploaded_by_user_id' => Auth::id(),
                     ]);
 
                     $results[] = [
@@ -170,7 +186,6 @@ class StudentFaceRegistrationController extends Controller
                 'message' => "Đã lưu {$successCount}/{$totalCount} ảnh vào hệ thống",
                 'data' => $results
             ]);
-
         } catch (\Illuminate\Validation\ValidationException $e) {
             return response()->json([
                 'success' => false,

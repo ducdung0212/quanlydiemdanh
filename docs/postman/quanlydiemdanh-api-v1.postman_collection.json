@@ -1,0 +1,513 @@
+{
+    "info": {
+        "_postman_id": "2d47e7fd-1c72-4f1d-a6f4-4d818d7b1ce9",
+        "name": "QuanLyDiemDanh API v1",
+        "description": "Sample collection for all /api/v1 endpoints.",
+        "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+    },
+    "variable": [
+        {
+            "key": "baseUrl",
+            "value": "http://127.0.0.1:8000/api/v1"
+        },
+        {
+            "key": "access_token",
+            "value": ""
+        },
+        {
+            "key": "token_id",
+            "value": "1"
+        },
+        {
+            "key": "student_code",
+            "value": "DH52100001"
+        },
+        {
+            "key": "exam_schedule_id",
+            "value": "1"
+        },
+        {
+            "key": "attendance_record_id",
+            "value": "1"
+        }
+    ],
+    "item": [
+        {
+            "name": "Auth",
+            "item": [
+                {
+                    "name": "Login",
+                    "event": [
+                        {
+                            "listen": "test",
+                            "script": {
+                                "type": "text/javascript",
+                                "exec": [
+                                    "const data = pm.response.json();",
+                                    "if (data && data.access_token) {",
+                                    "  pm.collectionVariables.set('access_token', data.access_token);",
+                                    "}",
+                                    "if (data && data.user && data.user.role) {",
+                                    "  pm.collectionVariables.set('last_login_role', data.user.role);",
+                                    "}",
+                                    "if (data && data.user && data.user.student_code) {",
+                                    "  pm.collectionVariables.set('student_code', data.user.student_code);",
+                                    "}"
+                                ]
+                            }
+                        }
+                    ],
+                    "request": {
+                        "auth": {
+                            "type": "noauth"
+                        },
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"email\": \"lecturer1@example.com\",\n  \"password\": \"12345678\",\n  \"device_name\": \"postman\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/login",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "login"
+                            ]
+                        },
+                        "description": "Create Sanctum token. Saves access_token to collection variable."
+                    }
+                },
+                {
+                    "name": "Me",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/me",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "me"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout Current Token",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Logout All Tokens",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "POST",
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/logout-all",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "logout-all"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Revoke Token By ID",
+                    "request": {
+                        "auth": {
+                            "type": "bearer",
+                            "bearer": [
+                                {
+                                    "key": "token",
+                                    "value": "{{access_token}}",
+                                    "type": "string"
+                                }
+                            ]
+                        },
+                        "method": "DELETE",
+                        "url": {
+                            "raw": "{{baseUrl}}/auth/tokens/{{token_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "auth",
+                                "tokens",
+                                "{{token_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Student",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{access_token}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "item": [
+                {
+                    "name": "My Exam Schedules",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/student/exam-schedules?limit=10&q=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "student",
+                                "exam-schedules"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "q",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "My Attendance Results",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/student/attendance-results?limit=10",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "student",
+                                "attendance-results"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Current Face Registration Window",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/student/face-registration/window",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "student",
+                                "face-registration",
+                                "window"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Generate Self Upload URL",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"file_name\": \"{{student_code}}.jpg\",\n  \"file_type\": \"image/jpeg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/student/face-registration/generate-upload-url",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "student",
+                                "face-registration",
+                                "generate-upload-url"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Confirm Self Upload",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"file_name\": \"{{student_code}}.jpg\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/student/face-registration/confirm-upload",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "student",
+                                "face-registration",
+                                "confirm-upload"
+                            ]
+                        }
+                    }
+                }
+            ]
+        },
+        {
+            "name": "Lecturer",
+            "auth": {
+                "type": "bearer",
+                "bearer": [
+                    {
+                        "key": "token",
+                        "value": "{{access_token}}",
+                        "type": "string"
+                    }
+                ]
+            },
+            "item": [
+                {
+                    "name": "My Invigilation Schedule",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/exam-schedules?limit=10&q=&date=",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "exam-schedules"
+                            ],
+                            "query": [
+                                {
+                                    "key": "limit",
+                                    "value": "10"
+                                },
+                                {
+                                    "key": "q",
+                                    "value": ""
+                                },
+                                {
+                                    "key": "date",
+                                    "value": ""
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Today Exams",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/exam-schedules/today",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "exam-schedules",
+                                "today"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Current Exam",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/exam-schedules/current",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "exam-schedules",
+                                "current"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Student Today Exam",
+                    "request": {
+                        "method": "GET",
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/students/today-exam?student_code={{student_code}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "students",
+                                "today-exam"
+                            ],
+                            "query": [
+                                {
+                                    "key": "student_code",
+                                    "value": "{{student_code}}"
+                                }
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Attendance Face Recognition",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"exam_schedule_id\": {{exam_schedule_id}},\n  \"image\": \"BASE64_IMAGE_STRING\",\n  \"commit\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/attendance/face-recognition",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "attendance",
+                                "face-recognition"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Attendance QR Scan",
+                    "request": {
+                        "method": "POST",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"exam_schedule_id\": {{exam_schedule_id}},\n  \"qr_content\": \"DH52100001_NGUYENVANA_2004-01-01\",\n  \"commit\": true\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/attendance/qr-scan",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "attendance",
+                                "qr-scan"
+                            ]
+                        }
+                    }
+                },
+                {
+                    "name": "Manual Update Attendance Record",
+                    "request": {
+                        "method": "PATCH",
+                        "header": [
+                            {
+                                "key": "Content-Type",
+                                "value": "application/json"
+                            }
+                        ],
+                        "body": {
+                            "mode": "raw",
+                            "raw": "{\n  \"attendance_time\": \"2026-03-30 08:15:00\",\n  \"rekognition_result\": \"match\",\n  \"confidence\": 99.8,\n  \"attendance_method\": \"manual\"\n}"
+                        },
+                        "url": {
+                            "raw": "{{baseUrl}}/lecturer/attendance-records/{{attendance_record_id}}",
+                            "host": [
+                                "{{baseUrl}}"
+                            ],
+                            "path": [
+                                "lecturer",
+                                "attendance-records",
+                                "{{attendance_record_id}}"
+                            ]
+                        }
+                    }
+                }
+            ]
+        }
+    ]
+}
