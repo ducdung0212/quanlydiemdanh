@@ -45,6 +45,28 @@ class AuthTokenController extends Controller
             'user' => $this->transformUser($request->user()),
         ]);
     }
+    public function changePassword(Request $request)
+    {
+        $request->validate([
+            'current_password' => ['required', 'current_password'], 
+            'password' => ['required', 'string', 'min:8', 'confirmed'], 
+        ], [
+            'current_password.current_password' => 'Mật khẩu hiện tại không chính xác.',
+            'password.confirmed' => 'Mật khẩu xác nhận không khớp.',
+            'password.min' => 'Mật khẩu mới phải có ít nhất 8 ký tự.',
+        ]);
+
+        $user = $request->user();
+        $user->update([
+            'password' => Hash::make($request->password)
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Đổi mật khẩu thành công!'
+        ]);
+    }
+
 
     public function logout(Request $request)
     {

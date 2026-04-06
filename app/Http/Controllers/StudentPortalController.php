@@ -10,6 +10,7 @@ use Aws\Exception\AwsException;
 use Aws\S3\S3Client;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StudentPortalController extends Controller
 {
@@ -154,7 +155,7 @@ class StudentPortalController extends Controller
             ]);
 
             $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
-            $s3Key = "images_to_register/self_service/{$safeFileName}";
+            $s3Key = "images_to_register/{$safeFileName}";
 
             $cmd = $s3Client->getCommand('PutObject', [
                 'Bucket' => $bucket,
@@ -214,21 +215,21 @@ class StudentPortalController extends Controller
         $bucket = config('filesystems.disks.s3.bucket');
         $region = config('filesystems.disks.s3.region');
         $safeFileName = preg_replace('/[^A-Za-z0-9_.-]/', '_', $fileName);
-        $s3Key = "images_to_register/self_service/{$safeFileName}";
+        $s3Key = "images_to_register/{$safeFileName}";
         $s3Url = "https://{$bucket}.s3.{$region}.amazonaws.com/{$s3Key}";
 
-        Student_Photos::where('student_code', $student->student_code)
-            ->where('is_active', true)
-            ->update(['is_active' => false]);
+        DB::transaction(function () use ($student, $s3Url) {
+            Student_Photos::where('student_code', $student->student_code)->delete();
 
-        Student_Photos::create([
-            'student_code' => $student->student_code,
-            'image_url' => $s3Url,
-            'uploaded_by_user_id' => Auth::id(),
-            'approved_by_user_id' => null,
-            'approved_at' => null,
-            'is_active' => true,
-        ]);
+            Student_Photos::create([
+                'student_code' => $student->student_code,
+                'image_url' => $s3Url,
+                'uploaded_by_user_id' => Auth::id(),
+                'approved_by_user_id' => null,
+                'approved_at' => null,
+                'is_active' => true,
+            ]);
+        });
 
         return response()->json([
             'success' => true,

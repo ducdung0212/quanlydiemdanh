@@ -31,6 +31,7 @@ Route::prefix('v1')->group(function () {
 
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('auth/me', [AuthTokenController::class, 'me']);
+        Route::patch('auth/change-password',[AuthTokenController::class,'changePassword']);
         Route::post('auth/logout', [AuthTokenController::class, 'logout']);
         Route::post('auth/logout-all', [AuthTokenController::class, 'logoutAll']);
         Route::delete('auth/tokens/{tokenId}', [AuthTokenController::class, 'revokeToken']);

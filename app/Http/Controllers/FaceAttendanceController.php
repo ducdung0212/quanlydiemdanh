@@ -205,7 +205,7 @@ class FaceAttendanceController extends Controller
             if (!$studentCode) {
                 return response()->json([
                     'success' => false,
-                    'message' => 'Nội dung QR không hợp lệ. Định dạng đúng: DHxxxxxxx_HoVaTen_NgaySinh'
+                    'message' => 'Nội dung QR không hợp lệ. Vui lòng đảm bảo chuỗi QR có chứa mã sinh viên (ví dụ: DHxxxxxxx).'
                 ], 422);
             }
 
@@ -253,17 +253,15 @@ class FaceAttendanceController extends Controller
 
     private function extractStudentCodeFromQr(string $qrContent): ?string
     {
-        $parts = explode('_', trim($qrContent));
-        if (count($parts) < 1) {
+        $content = strtoupper(trim($qrContent));
+        if ($content === '') {
+            return null;
+        }
+        if (!preg_match('/\b(DH[0-9A-Z]+)\b/i', $content, $matches)) {
             return null;
         }
 
-        $studentCode = strtoupper(trim($parts[0] ?? ''));
-        if (!preg_match('/^DH[0-9A-Z]+$/', $studentCode)) {
-            return null;
-        }
-
-        return $studentCode;
+        return strtoupper($matches[1]);
     }
 
     private function handleAttendanceByStudent(Student $student, int $examScheduleId, ?float $confidence, string $attendanceMethod, bool $commit)

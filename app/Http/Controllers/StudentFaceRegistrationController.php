@@ -11,6 +11,7 @@ use Aws\S3\S3Client;
 use Aws\Exception\AwsException;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Auth;
+use Illuminate\Support\Facades\DB;
 
 class StudentFaceRegistrationController extends Controller
 {
@@ -153,11 +154,18 @@ class StudentFaceRegistrationController extends Controller
 
                 // Lưu vào database
                 try {
-                    Student_Photos::create([
-                        'student_code' => $studentCode,
-                        'image_url' => $s3Url,
-                        'uploaded_by_user_id' => Auth::id(),
-                    ]);
+                    DB::transaction(function () use ($studentCode, $s3Url) {
+                        Student_Photos::where('student_code', $studentCode)->delete();
+
+                        Student_Photos::create([
+                            'student_code' => $studentCode,
+                            'image_url' => $s3Url,
+                            'uploaded_by_user_id' => Auth::id(),
+                            'approved_by_user_id' => null,
+                            'approved_at' => null,
+                            'is_active' => true,
+                        ]);
+                    });
 
                     $results[] = [
                         'student_code' => $studentCode,
