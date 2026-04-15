@@ -7,7 +7,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Validation\ValidationException;
 use Laravel\Sanctum\PersonalAccessToken;
-
+use App\Models\User;
 class AuthTokenController extends Controller
 {
     public function login(Request $request)
@@ -18,7 +18,7 @@ class AuthTokenController extends Controller
             'device_name' => ['nullable', 'string', 'max:100'],
         ]);
 
-        $user = \App\Models\User::query()->where('email', $credentials['email'])->first();
+        $user = User::query()->where('email', $credentials['email'])->first();
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw ValidationException::withMessages([

@@ -257,10 +257,9 @@ class FaceAttendanceController extends Controller
         if ($content === '') {
             return null;
         }
-        if (!preg_match('/\b(DH[0-9A-Z]+)\b/i', $content, $matches)) {
+        if (!preg_match('/(DH[0-9]{8})/i', $content, $matches)) {
             return null;
         }
-
         return strtoupper($matches[1]);
     }
 
